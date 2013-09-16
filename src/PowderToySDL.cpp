@@ -336,7 +336,7 @@ int SDLOpen()
 	SDL_WM_SetIcon(icon, NULL);
 #endif
 
-	SDL_WM_SetCaption("The Powder Toy", "Powder Toy");
+	SDL_WM_SetCaption("The Powder Toy nucular's Mod", "TPT nucular's Mod");
 	//SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 	atexit(SDL_Quit);
 
@@ -681,8 +681,20 @@ void BlueScreen(char * detailMessage){
 	engine->g->fillrect(0, 0, engine->GetWidth(), engine->GetHeight(), 17, 114, 169, 210);
 
 	std::string errorTitle = "ERROR";
-	std::string errorDetails = "Details: " + std::string(detailMessage);
-	std::string errorHelp = "An unrecoverable fault has occured, please report the error by visiting the website below\n"
+	switch(rand()%10) {
+		case 0: errorTitle = "Whoops!"; break;
+		case 1: errorTitle = "I'm so sorry!"; break;
+		case 2: errorTitle = "LOLDUNNO!"; break;
+		case 3: errorTitle = "Oh noes!"; break;
+		case 4: errorTitle = "WTF!"; break;
+		case 5: errorTitle = "OMG!"; break;
+		case 6: errorTitle = "My fault!"; break;
+		case 7: errorTitle = "Seems like I broke something..."; break;
+		case 8: errorTitle = ":("; break;
+		default: case 9: errorTitle = "Oh god no!";
+	}
+	std::string errorDetails = "...a " + std::string(detailMessage) + " interrupted the fun!";
+	std::string errorHelp = "This shouldn't happen. Please contact the developers on the following website.\n"
 		"http://" SERVER;
 	int currentY = 0, width, height;
 	int errorWidth = 0;

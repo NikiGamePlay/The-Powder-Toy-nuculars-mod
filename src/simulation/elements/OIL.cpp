@@ -28,15 +28,15 @@ Element_OIL::Element_OIL()
 	
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 42;
-	Description = "Flammable, turns into GAS at low pressure or high temperature. Can be formed with NEUT and NITR.";
+	Description = "Flammable, turns into GAS at low pressure. Polymerizes to PLST at high pressure.";
 	
 	State = ST_LIQUID;
 	Properties = TYPE_LIQUID | PROP_NEUTPASS;
 	
 	LowPressure = IPL;
 	LowPressureTransition = NT;
-	HighPressure = IPH;
-	HighPressureTransition = NT;
+	HighPressure = 150.0f;
+	HighPressureTransition = PT_PLST;
 	LowTemperature = ITL;
 	LowTemperatureTransition = NT;
 	HighTemperature = 333.0f;

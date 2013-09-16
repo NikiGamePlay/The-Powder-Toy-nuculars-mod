@@ -355,11 +355,11 @@ int Element_SPRK::update(UPDATE_FUNC_ARGS)
 int Element_SPRK::graphics(GRAPHICS_FUNC_ARGS)
 
 {
-	*firea = 80;
-	*firer = 170;
+	*firea = 10;
+	*firer = 200;
 	*fireg = 200;
 	*fireb = 220;
-	*pixel_mode |= FIRE_ADD;
+	*pixel_mode |= FIRE_BLEND;
 	return 1;
 }
 

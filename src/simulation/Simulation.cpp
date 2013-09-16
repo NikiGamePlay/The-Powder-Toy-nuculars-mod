@@ -2835,11 +2835,17 @@ int Simulation::create_part(int p, int x, int y, int tv)
 
 	switch (t)
 		{
+			case PT_ANT:{
+				parts[i].tmp = 2;
+				break;}
 			case PT_SOAP:
 				parts[i].tmp = -1;
 				parts[i].tmp2 = -1;
 				break;
 			case PT_ACID: case PT_CAUS:
+				parts[i].life = 75;
+				break;
+			case PT_BASE:
 				parts[i].life = 75;
 				break;
 			/*Testing
@@ -2882,6 +2888,12 @@ int Simulation::create_part(int p, int x, int y, int tv)
 				break;
 			case PT_CLST:
 				parts[i].tmp = (rand()%7);
+				break;
+			case PT_SOIL:
+				parts[i].tmp = (rand()%7);
+				break;
+			case PT_SEED:
+				parts[i].life = 1000+(rand()%1000);
 				break;
 			case PT_FSEP:
 				parts[i].life = 50;

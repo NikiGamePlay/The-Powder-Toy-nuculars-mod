@@ -230,7 +230,7 @@ int Element_FIRE::graphics(GRAPHICS_FUNC_ARGS)
 	*fireg = *colg;
 	*fireb = *colb;
 	
-	*pixel_mode = PMODE_NONE; //Clear default, don't draw pixel
+	*pixel_mode = PMODE_NONE | DECO_FIRE; //Clear default, don't draw pixel
 	*pixel_mode |= FIRE_ADD;
 	//Returning 0 means dynamic, do not cache
 	return 0;

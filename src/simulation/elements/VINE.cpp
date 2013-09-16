@@ -50,11 +50,18 @@ Element_VINE::Element_VINE()
 int Element_VINE::update(UPDATE_FUNC_ARGS)
 {
 	int r, np, rx =(rand()%3)-1, ry=(rand()%3)-1;
+	int rnd;
 	if (BOUNDS_CHECK && (rx || ry))
 	{
 		r = pmap[y+ry][x+rx];
-		if (!(rand()%15))
+		if ((r&0xFF) == PT_SOIL)
+			rnd = rand()%60;
+		else
+			rnd = rand()%15;
+		if (!rnd)
 			sim->part_change_type(i,x,y,PT_PLNT);
+		else if ((r&0xFF) == PT_SEED)
+			sim->part_change_type((r>>8),x+rx,y+ry,PT_VINE);
 		else if (!r)
 		{
 			np = sim->create_part(-1,x+rx,y+ry,PT_VINE);
