@@ -28,7 +28,7 @@ Element_BASE::Element_BASE()
 	
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 34;
-	Description = "Base. Acts like ACID, but neutralises it to SLTW.";
+	Description = "Base. Acts like ACID, but neutralises it to SALT.";
 	
 	State = ST_LIQUID;
 	Properties = TYPE_LIQUID|PROP_DEADLY;

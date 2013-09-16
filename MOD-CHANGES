@@ -2,15 +2,19 @@ This list may be incomplete
 look at the forum post for more information
 
 - Changed window title & icons
-- Added BOLT
+- Added BOLT (Gas that creates lightnings and fusionates to HYGN on heat. Very unstable! Freezes to VIBR at around absolute zero.)
 - Modded FIRE to be decorable
-- Added FLSH
-- Added PLDM
-- Added OTWR
+- Added FLSH (Flash Powder. Explodes with a flame coloured like itself, and small pressure.)
+- Added PLDM (Palladium. Can absorb HYGN, converts it into CO2, NBLE and OXYG if sparked.)
+- Added OTWR (One time wire. Since every mod seems to have one.)
 - Changed the graphics of SPRK to be less glowy
-- Added PLST / LPLS
+- Added PLST / LPLS (Plastic. Made from OIL, deforms under high pressure, melts at moderate temperatures. Slightly flammable.)
 - Modded OIL to polymerize into PLST on pressure
-- Added BASE / modded ACID to neutralize it to SALT and ignore SALT / added it to the create_part thing.
-- Added SOIL/MUD/SEED/ changed PLNT and VINE a bit to integrate with it
-- Added ANT / ANT2
+- Added BASE (Base. Acts like ACID, but neutralises it to SALT.)
+- modded ACID to neutralize it to SALT and ignore SALT / added it to the create_part thing.
+- Added SOIL (Soil. SEED can gow to PLNT on this. Mix with WATR to produce MUD.)
+- and MUD (Mud. Can be heated into BRCK.)
+- and SEED (Drop it on SOIL and watch it grow!)
+- changed PLNT and VINE a bit to integrate with it
+- Added ANT / ANT2 (Langton's Ant. Turing machine. Basically LIFE, but better.)
 - Changed WIFI to break at higher pressure
