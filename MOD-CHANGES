@@ -1,0 +1,16 @@
+This list may be incomplete
+look at the forum post for more information
+
+- Changed window title & icons
+- Added BOLT
+- Modded FIRE to be decorable
+- Added FLSH
+- Added PLDM
+- Added OTWR
+- Changed the graphics of SPRK to be less glowy
+- Added PLST / LPLS
+- Modded OIL to polymerize into PLST on pressure
+- Added BASE / modded ACID to neutralize it to SALT and ignore SALT / added it to the create_part thing.
+- Added SOIL/MUD/SEED/ changed PLNT and VINE a bit to integrate with it
+- Added ANT / ANT2
+- Changed WIFI to break at higher pressure
