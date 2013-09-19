@@ -90,7 +90,8 @@ int Element_BASE::update(UPDATE_FUNC_ARGS)
 					}
 					else if ((r&0xFF)==PT_ACID || (r&0xFF)==PT_CAUS)
 					{
-						parts[r>>8].type = PT_SALT;
+						if (rand()%150==0)
+							parts[r>>8].type = PT_SALT;
 						return 1;
 					}
 					else if (parts[i].life<=50)

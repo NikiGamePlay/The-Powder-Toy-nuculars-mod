@@ -91,7 +91,15 @@ int Element_CO2::update(UPDATE_FUNC_ARGS)
 		if (!(rand()%5))
 		{
 			int j;
-			sim->create_part(i,x,y,PT_O2);
+			if (rand()%5 == 0)
+				sim->create_part(i,x,y,PT_BOLT);
+			else if (rand()%5 == 0)
+			{
+				sim->create_part(i,x,y,PT_LIGH);
+				parts[(pmap[y][x]>>8)].life = 3;
+			}
+			else
+				sim->create_part(i,x,y,PT_O2);
 			j = sim->create_part(-3,x+rand()%3-1,y+rand()%3-1,PT_NEUT);
 			if (j != -1)
 				parts[j].temp = MAX_TEMP;

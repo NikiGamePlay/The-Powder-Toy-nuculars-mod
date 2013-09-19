@@ -63,6 +63,20 @@ int Element_WTRV::update(UPDATE_FUNC_ARGS)
 					parts[i].life = 4;
 					parts[i].ctype = PT_WATR;
 				}
+				else if ((r&0xFF)==PT_MGMP)
+				{
+					int chance = rand()%15;
+					if (parts[i].temp < 1800)
+						if (chance==0)
+							sim->part_change_type(i,x,y,PT_H2);
+						else if (chance==1)
+							sim->part_change_type(i,x,y,PT_SOAP);
+					else
+						if (chance==0)
+							sim->part_change_type(i,x,y,PT_H2);
+						else if (chance==1)
+							sim->part_change_type(i,x,y,PT_O2);
+				}
 			}
 	if(parts[i].temp>1273&&parts[i].ctype==PT_FIRE)
 		parts[i].temp-=parts[i].temp/1000;

@@ -50,6 +50,7 @@ Element_SLTW::Element_SLTW()
 int Element_SLTW::update(UPDATE_FUNC_ARGS)
  {
 	int r, rx, ry;
+	int chance = rand()%15;
 	for (rx=-1; rx<2; rx++)
 		for (ry=-1; ry<2; ry++)
 			if (BOUNDS_CHECK && (rx || ry))
@@ -83,6 +84,12 @@ int Element_SLTW::update(UPDATE_FUNC_ARGS)
 							return 1;
 						}
 					}
+					break;
+				case PT_MGMP:
+					if (chance==0)
+						sim->part_change_type(i,x,y,PT_H2);
+					else if (chance==1)
+						sim->part_change_type(i,x,y,PT_SOAP);
 					break;
 				case PT_NONE:
 					break;

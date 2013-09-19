@@ -284,7 +284,7 @@ if(GetOption('rpi')):
 # check if we're compiling for windows, if we are include windows specific libraries and defines.
 
 if(GetOption('win')):
-	openGLLibs = ['opengl32', 'glew32']
+	openGLLibs = ['opengl32', 'glew32', 'libopengl32']
 	env.Prepend(LIBS=['mingw32', 'ws2_32', 'SDLmain', 'SDL'])
 	env.Append(CCFLAGS=['-std=gnu++98'])
 	env.Append(LIBS=['winmm', 'gdi32'])

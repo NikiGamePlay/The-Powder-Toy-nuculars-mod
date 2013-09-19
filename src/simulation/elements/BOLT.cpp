@@ -54,8 +54,10 @@ int Element_BOLT::update(UPDATE_FUNC_ARGS)
 	if (parts[i].life == 1) {
         int offx = (rand()%2) - 1;
         int offy = (rand()%2) - 1;
+        if (offx==0 && offy==0 && !(rand()%500))
+        	sim->kill_part(i);
         sim->create_part(-1, x+offx, y+offy, PT_LIGH);
-        parts[(pmap[y+offy][x+offx]>>8)].life = 5;
+        parts[(pmap[y+offy][x+offx]>>8)].life = 3;
         parts[i].life = 0;
         parts[i].temp = R_TEMP;
 	}

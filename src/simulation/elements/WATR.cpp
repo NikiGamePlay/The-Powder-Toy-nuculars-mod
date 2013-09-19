@@ -81,6 +81,14 @@ int Element_WATR::update(UPDATE_FUNC_ARGS)
 				{
 					sim->part_change_type(i,x,y,PT_SLTW);
 				}
+				else if ((r&0xFF)==PT_MGMP)
+				{
+					int chance = rand()%15;
+					if (chance==0)
+						sim->part_change_type(i,x,y,PT_H2);
+					else if (chance==1)
+						sim->part_change_type(i,x,y,PT_SOAP);
+				}
 				/*if ((r&0xFF)==PT_CNCT && !(rand()%100))	Concrete+Water to paste, not very popular
 				 {
 				 part_change_type(i,x,y,PT_PSTE);

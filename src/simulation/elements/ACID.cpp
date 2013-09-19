@@ -90,8 +90,15 @@ int Element_ACID::update(UPDATE_FUNC_ARGS)
 					}
 					else if ((r&0xFF)==PT_BASE)
 					{
-						parts[r>>8].type = PT_SALT;
+						if (rand()%150==0)
+							parts[r>>8].type = PT_SALT;
 						return 1;
+					}
+					else if ((r&0xFF)==PT_MGSM || (r&0xFF)==PT_MGMP)
+					{
+						if (rand()%150==0)
+							sim->part_change_type(i,x,y,PT_SALT);
+						sim->part_change_type(r,x,y,PT_H2);
 					}
 					else if (parts[i].life<=50)
 					{

@@ -50,6 +50,7 @@ Element_DSTW::Element_DSTW()
 int Element_DSTW::update(UPDATE_FUNC_ARGS)
  {
 	int r, rx, ry, rt;
+	int chance = rand()%15;
 	for (rx=-1; rx<2; rx++)
 		for (ry=-1; ry<2; ry++)
 			if (BOUNDS_CHECK && (rx || ry))
@@ -92,6 +93,12 @@ int Element_DSTW::update(UPDATE_FUNC_ARGS)
 						sim->kill_part(i);
 						return 1;
 					}
+					break;
+				case PT_MGMP:
+					if (chance==0)
+						sim->part_change_type(i,x,y,PT_H2);
+					else if (chance==1)
+						sim->part_change_type(i,x,y,PT_SOAP);
 					break;
 				default:
 					continue;
