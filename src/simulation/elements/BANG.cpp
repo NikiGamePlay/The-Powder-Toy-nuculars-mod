@@ -86,7 +86,7 @@ int Element_BANG::update(UPDATE_FUNC_ARGS)
 	{
 		float otemp = parts[i].temp-273.15f;
 		//Explode!!
-		sim->pv[y/CELL][x/CELL] += 0.5f;
+		sim->pv[y/CELL][x/CELL] += 1.5f;
 		parts[i].tmp = 0;
 		if(!(rand()%3))
 		{

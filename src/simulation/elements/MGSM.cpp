@@ -6,7 +6,7 @@ Element_MGSM::Element_MGSM()
 	Name = "MGSM";
 	Colour = PIXPACK(0xDDDDDD);
 	MenuVisible = 1;
-	MenuSection = SC_POWDERS;
+	MenuSection = SC_EXPLOSIVE;
 	Enabled = 1;
 	
 	Advection = 0.0f;

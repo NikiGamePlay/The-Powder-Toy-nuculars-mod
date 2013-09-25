@@ -35,8 +35,8 @@ Element_SAND::Element_SAND()
 	
 	LowPressure = IPL;
 	LowPressureTransition = NT;
-	HighPressure = IPH;
-	HighPressureTransition = NT;
+	HighPressure = 7.0f;
+	HighPressureTransition = PT_SSTN;
 	LowTemperature = ITL;
 	LowTemperatureTransition = NT;
 	HighTemperature = 1973.0f;

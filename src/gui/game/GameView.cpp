@@ -2071,6 +2071,8 @@ void GameView::OnDraw()
 			{
 				if (sample.particle.type == PT_LAVA && c->IsValidElement(ctype))
 					sampleInfo << "Molten " << c->ElementResolve(ctype, -1);
+				else if ((sample.particle.type == PT_VIRS || sample.particle.type == PT_VRSG || sample.particle.type == PT_VRSS) && c->IsValidElement(sample.particle.tmp2))
+					sampleInfo << "Infected " << c->ElementResolve(sample.particle.tmp2, -1);
 				else if ((sample.particle.type == PT_PIPE || sample.particle.type == PT_PPIP) && c->IsValidElement(ctype))
 					sampleInfo << c->ElementResolve(sample.particle.type, -1) << " with " << c->ElementResolve(ctype, (int)sample.particle.pavg[1]);
 				else if (sample.particle.type == PT_LIFE)
@@ -2095,6 +2097,7 @@ void GameView::OnDraw()
 				sampleInfo << ", Temp: " << std::fixed << sample.particle.temp -273.15f;
 				sampleInfo << ", Life: " << sample.particle.life;
 				sampleInfo << ", Tmp: " << sample.particle.tmp;
+				sampleInfo << ", Tmp2: " << sample.particle.tmp2;
 				sampleInfo << ", Pressure: " << std::fixed << sample.AirPressure;
 			}
 			else

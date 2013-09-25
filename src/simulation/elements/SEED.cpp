@@ -14,12 +14,12 @@ Element_SEED::Element_SEED()
 	AirLoss = 0.96f;
 	Loss = 0.80f;
 	Collision = 0.0f;
-	Gravity = 0.1f;
+	Gravity = 0.3f;
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 1;
 	
-	Flammable = 5;
+	Flammable = 10;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 10;
@@ -39,8 +39,8 @@ Element_SEED::Element_SEED()
 	HighPressureTransition = NT;
 	LowTemperature = ITL;
 	LowTemperatureTransition = NT;
-	HighTemperature = ITH;
-	HighTemperatureTransition = NT;
+	HighTemperature = 100.0f +273.15f;
+	HighTemperatureTransition = PT_FIRE;
 	
 	Update = NULL;
 	Graphics = NULL;

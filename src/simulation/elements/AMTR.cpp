@@ -49,7 +49,7 @@ Element_AMTR::Element_AMTR()
 //#TPT-Directive ElementHeader Element_AMTR static int update(UPDATE_FUNC_ARGS)
 int Element_AMTR::update(UPDATE_FUNC_ARGS)
  {
-	 int r, rx, ry, rt;
+	int r, rx, ry, rt, newId;
 	for (rx=-1; rx<2; rx++)
 		for (ry=-1; ry<2; ry++)
 			if (BOUNDS_CHECK && (rx || ry))
@@ -66,11 +66,17 @@ int Element_AMTR::update(UPDATE_FUNC_ARGS)
 						sim->kill_part(i);
 						return 1;
 					}
-					if (!(rand()%10))
-						sim->create_part(r>>8, x+rx, y+ry, PT_PHOT);
+					if (!(rand()%5))
+					{
+						newId = sim->create_part(r>>8, x+rx, y+ry, PT_PHOT);
+						parts[newId].temp = MAX_TEMP;
+					}
 					else
-						sim->kill_part(r>>8);
-					sim->pv[y/CELL][x/CELL] -= 2.0f;
+						if (!(rand()%3))
+							sim->part_change_type(r>>8,x+rx,y+ry, PT_AMTR);
+						else
+							sim->kill_part(r>>8);
+					sim->pv[y/CELL][x/CELL] -= 5.0f;
 				}
 			}
 	return 0;

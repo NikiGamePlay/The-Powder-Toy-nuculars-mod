@@ -28,7 +28,7 @@ Element_BOLT::Element_BOLT()
 
 	Temperature = R_TEMP+2.0f	+273.15f;
 	HeatConduct = 106;
-	Description = "Gas that creates lightnings and fusionates to HYGN on heat. Very unstable! Freezes to VIBR at around absolute zero.";
+	Description = "Gas that creates lightnings and fusionates on heat. Freezes to VIBR, heats up with NEUT.";
 
 	State = ST_GAS;
 	Properties = TYPE_GAS|PROP_LIFE_DEC;
@@ -48,19 +48,33 @@ Element_BOLT::Element_BOLT()
 //#TPT-Directive ElementHeader Element_BOLT static int update(UPDATE_FUNC_ARGS)
 int Element_BOLT::update(UPDATE_FUNC_ARGS)
 {
-	if (parts[i].temp > 2000.0 or sim->pv[y/CELL][x/CELL] > 100.0f) {
+	int r, rt, rx, ry, newId;
+
+	if (parts[i].temp > 2000.0 or sim->pv[y/CELL][x/CELL] > 100.0f)
         parts[i].life = rand() % 100;
-	}
+
 	if (parts[i].life == 1) {
         int offx = (rand()%2) - 1;
         int offy = (rand()%2) - 1;
         if (offx==0 && offy==0 && !(rand()%500))
         	sim->kill_part(i);
-        sim->create_part(-1, x+offx, y+offy, PT_LIGH);
-        parts[(pmap[y+offy][x+offx]>>8)].life = 3;
+        newId = sim->create_part(-1, x+offx, y+offy, PT_LIGH);
+        parts[newId].life = 3;
         parts[i].life = 0;
         parts[i].temp = R_TEMP;
 	}
+
+	for (rx=-1; rx<2; rx++)
+		for (ry=-1; ry<2; ry++)
+			if (BOUNDS_CHECK && (rx || ry))
+			{
+				r = sim->photons[y+ry][x+rx];
+				if (!r)
+					continue;
+				if ((r&0xFF) == PT_NEUT)
+					parts[i].temp += 50.00f;
+			}
+	return 0;
 }
 
 Element_BOLT::~Element_BOLT() {}

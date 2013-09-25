@@ -2835,9 +2835,21 @@ int Simulation::create_part(int p, int x, int y, int tv)
 
 	switch (t)
 		{
-			case PT_ANT:{
+			case PT_ANT:
 				parts[i].tmp = 2;
-				break;}
+				break;
+			case PT_ENZM:
+				parts[i].life = 1;
+				parts[i].tmp = (rand()%70) +30;
+				break;
+			case PT_LITH:
+				parts[i].tmp2 = (rand()%200) +100;
+				parts[i].tmp = 10;
+				break;
+			case PT_RADN:
+				parts[i].life = 135;
+				parts[i].tmp = 40;
+				break;
 			case PT_SOAP:
 				parts[i].tmp = -1;
 				parts[i].tmp2 = -1;
@@ -2889,8 +2901,8 @@ int Simulation::create_part(int p, int x, int y, int tv)
 			case PT_CLST:
 				parts[i].tmp = (rand()%7);
 				break;
-			case PT_SOIL:
-				parts[i].tmp = (rand()%7);
+			case PT_MUD:
+				parts[i].tmp = (rand()%7)+4;
 				break;
 			case PT_SEED:
 				parts[i].life = 1000+(rand()%1000);
@@ -4081,7 +4093,7 @@ void Simulation::update_particles_i(int start, int inc)
 				parts[i].temp = restrict_flt(elements[PT_FIRE].Temperature + (elements[t].Flammable/2), MIN_TEMP, MAX_TEMP);
 				t = PT_FIRE;
 				part_change_type(i,x,y,t);
-				pv[y/CELL][x/CELL] += 0.25f * CFDS;
+				pv[y/CELL][x/CELL] += CFDS * 800;
 			}
 
 

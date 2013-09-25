@@ -49,45 +49,42 @@ Element_MUD::Element_MUD()
 //#TPT-Directive ElementHeader Element_MUD static int update(UPDATE_FUNC_ARGS)
 int Element_MUD::update(UPDATE_FUNC_ARGS)
  {
-	int r, rx, ry, rt;
-	bool gel;
-	if (parts[i].tmp>100) parts[i].tmp = 100;
-	if (parts[i].tmp<0) parts[i].tmp = 0;
-	for (rx=-2; rx<3; rx++)
-		for (ry=-2; ry<3; ry++)
+	int r, rx, ry, rt, trade;
+	for (rx=-1; rx<2; rx++)
+		for (ry=-1; ry<2; ry++)
 			if (BOUNDS_CHECK && (rx || ry))
 			{
-				gel=false;
 				r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				rt = r&0xFF;
-				
-				/*
-				float dx, dy;
-				dx = parts[i].x - parts[r>>8].x;
-				dy = parts[i].y - parts[r>>8].y;
-
-				//Stickiness
-				//Fix this so MUD doesn't jump around!
-				if ((dx*dx + dy*dy)>1.5 && (gel || !sim->elements[rt].Falldown || (fabs((float)rx)<2 && fabs((float)ry)<2)))
+				if (((r&0xFF) == PT_WATR || (r&0xFF) == PT_SLTW || (r&0xFF) == PT_DSTW) && rand()%3 && parts[i].tmp < 10)
 				{
-					float per, nd;
-					nd = dx*dx + dy*dy - 0.5;
-					per = 10*(1 - parts[i].tmp/100)*(nd/(dx*dx + dy*dy + nd) - 0.5);
-					if (sim->elements[rt].State==ST_LIQUID)
-						per *= 0.1;
-					dx *= per; dy *= per;
-					parts[i].vx += dx;
-					parts[i].vy += dy;
-					if ((sim->elements[rt].Properties&TYPE_PART) || rt==PT_GOO)
-					{
-						parts[r>>8].vx -= dx;
-						parts[r>>8].vy -= dy;
-					}
+					sim->kill_part(r>>8);
+					parts[i].tmp++;
 				}
-				*/
 			}
+
+	// Shared tmp thingy ripped off SPNG
+    for ( trade = 0; trade<9; trade ++)
+	{
+		rx = rand()%3-1;
+		ry = rand()%3-1;
+		if (BOUNDS_CHECK && (rx || ry))
+		{
+			r = pmap[y+ry][x+rx];
+			if (!r)
+				continue;
+			if (((r&0xFF)==PT_MUD || (r&0xFF)==PT_SOIL) && (parts[i].tmp>parts[r>>8].tmp) && parts[i].tmp>0)//diffusion
+			{
+				parts[r>>8].tmp ++;
+				parts[i].tmp --;
+				trade = 9;
+			}
+		}
+	}
+
+	if (parts[i].tmp <= 4)
+		sim->part_change_type(i,x,y, PT_SOIL);
 	return 0;
 }
 
@@ -97,8 +94,12 @@ int Element_MUD::update(UPDATE_FUNC_ARGS)
 int Element_MUD::graphics(GRAPHICS_FUNC_ARGS)
 
 {
-	*pixel_mode |= PMODE_BLUR;
-	return 0;
+	int z = cpart->tmp / 10;
+    *colr -= z * 20;
+    *colg -= z * 20;
+    *colb -= z * 20;
+    *pixel_mode |= PMODE_BLUR;
+    return 0;
 }
 
 

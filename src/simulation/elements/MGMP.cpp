@@ -6,7 +6,7 @@ Element_MGMP::Element_MGMP()
 	Name = "MGMP";
 	Colour = PIXPACK(0xBBBBBB);
 	MenuVisible = 1;
-	MenuSection = SC_POWDERS;
+	MenuSection = SC_EXPLOSIVE;
 	Enabled = 1;
 	
 	Advection = 0.4f;
