@@ -65,7 +65,7 @@ int Element_RADN::update(UPDATE_FUNC_ARGS)
 	}
 	if (parts[i].tmp == 0)
 	{
-		parts[i].tmp = (int)((1.0f-(parts[i].temp/(MAX_TEMP+22.0f)))*300);
+		parts[i].tmp = (int)((1.0f-(parts[i].temp/(6500.0f +273.15f)))*300);
 		for (rx=-1; rx<2 && neut==false; rx++)
 			for (ry=-1; ry<2 && neut==false; ry++)
 				if (BOUNDS_CHECK && (rx || ry))

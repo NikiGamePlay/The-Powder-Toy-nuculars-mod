@@ -4,7 +4,7 @@ Element_ENZM::Element_ENZM()
 {
 	Identifier = "DEFAULT_PT_ENZM";
 	Name = "ENZM";
-	Colour = PIXPACK(0xFFD090);
+	Colour = PIXPACK(0xA3A37C);
 	MenuVisible = 1;
 	MenuSection = SC_POWDERS;
 	Enabled = 1;
