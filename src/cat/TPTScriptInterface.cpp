@@ -430,7 +430,8 @@ AnyType TPTScriptInterface::tptS_load(std::deque<std::string> * words)
 {
 	//Arguments from stack
 	NumberType saveID = eval(words);
-
+	if(saveID.Value()<0)
+		throw GeneralException("Invalid SaveID");
 	c->HideConsole();
 	c->OpenSavePreview(saveID.Value(), 0, false);
 

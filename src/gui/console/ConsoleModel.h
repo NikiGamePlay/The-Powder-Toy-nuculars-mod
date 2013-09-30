@@ -11,7 +11,6 @@ class ConsoleModel {
 	int currentCommandIndex;
 	std::vector<ConsoleView*> observers;
 	std::deque<std::string> previousCommands;
-	std::string prompt;
 	std::string command;
 	std::string promptHistory;
 	std::string history;
@@ -24,7 +23,7 @@ public:
 
 	ConsoleModel();
 	void AddObserver(ConsoleView * observer);
-	void ProcessResult(std::string command, CommandInterface::EvalResult * result);
+	void ProcessResult(std::string command, std::string highlighted, CommandInterface::EvalResult * result);
 	virtual ~ConsoleModel();
 };
 

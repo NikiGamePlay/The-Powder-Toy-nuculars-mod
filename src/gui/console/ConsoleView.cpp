@@ -1,4 +1,6 @@
 #include "ConsoleView.h"
+#include "Misc.h"
+#include <algorithm>
 #include "gui/interface/Keys.h"
 
 ConsoleView::ConsoleView():
@@ -11,8 +13,8 @@ ConsoleView::ConsoleView():
 		CommandCallback(ConsoleView * v_) { v = v_; }
 		virtual void TextChangedCallback(ui::Textbox * sender)
 		{
+			v->Highlight();
 			v->ResizePrompt();
-			//sender->SetDisplayText(v->c->FormatCommand(sender->DisplayText));
 		}
 	};
 	class TransparentScrollPanel: public ui::ScrollPanel
@@ -30,13 +32,14 @@ ConsoleView::ConsoleView():
 			GLint lastVid;
 			glGetIntegerv(GL_FRAMEBUFFER_BINDING, &lastVid);
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, myVid);
-			glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+			glClearColor(0.7f, 0.0f, 0.0f, 0.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
 #else
 			Graphics * g = ui::Engine::Ref().g;
 			pixel * lastVid = g->vid;
 			g->vid = myVid;
-			std::fill(myVid, myVid+((XRES+BARSIZE)*(YRES+MENUSIZE)), 0);
+			for (int row = 0; row < Size.Y; row++)
+				std::copy(lastVid+((screenPos.Y+row)*(XRES+BARSIZE)+screenPos.X), lastVid+((screenPos.Y+row)*(XRES+BARSIZE)+screenPos.X+Size.X), myVid+(row*(XRES+BARSIZE)));
 #endif
 			
 			// attempt to draw all children
@@ -84,16 +87,8 @@ ConsoleView::ConsoleView():
 			glDisable(GL_TEXTURE_2D);
 #else
 			g->vid = lastVid;
-
-			//dst=(pixel *)sdl_scrn->pixels+y*sdl_scrn->pitch/PIXELSIZE+x;
 			for (int row = 0; row < Size.Y; row++)
-				for (int col = 0; col < Size.X; col++)
-				{
-					pixel p = myVid[row*Size.X+col];
-					int rr = PIXR(p), gg = PIXG(p), bb = PIXB(p);
-					if(rr|gg|bb)
-						g->addpixel(col+screenPos.X, row+screenPos.Y, rr, gg, bb, 255);
-				}
+				std::copy(myVid+(row*(XRES+BARSIZE)), myVid+(row*(XRES+BARSIZE))+Size.X, lastVid+((screenPos.Y+row)*(XRES+BARSIZE))+screenPos.X);
 #endif
 		}		
 	};
@@ -154,10 +149,11 @@ void ConsoleView::DoKeyPress(int key, Uint16 character, bool shift, bool ctrl, b
 	}
 }
 
-void ConsoleView::NotifyHistoryChanged(ConsoleModel * sender, std::string prompt, std::string command, std::string prompthistory, std::string History)
+void ConsoleView::NotifyHistoryChanged(ConsoleModel * sender, std::string command, std::string prompthistory, std::string History)
 {
-	promptLabel->SetText(prompt);
+	commandField->SetDisplayText("");
 	commandField->SetText(command);
+	Highlight();
 	ResizePrompt();
 	promptHistory->SetText(prompthistory);
 	promptHistory->AutoHeight();
@@ -166,8 +162,19 @@ void ConsoleView::NotifyHistoryChanged(ConsoleModel * sender, std::string prompt
 	history->SetScrollPosition(history->InnerSize.Y = commandHistory->Size.Y);
 }
 
+void ConsoleView::Highlight()
+{
+	commandField->SetDisplayText(wordwrap(c->FormatCommand(commandField->GetText()),XRES-20));
+}
+
 void ConsoleView::ResizePrompt()
 {
+	std::string command = commandField->GetText();
+	std::string prompt = ">";
+	int newlines = std::count(command.begin(), command.end(), '\n');
+	for(int i=0;i<newlines;i++)
+		prompt += "\n>>";
+	promptLabel->SetText(prompt);
 	commandField->AutoHeight();
 	commandField->Size.Y = std::max(commandField->Size.Y+2, 16);
 	history->Size.Y = promptLabel->Position.Y = commandField->Position.Y = Size.Y-commandField->Size.Y;
@@ -176,7 +183,7 @@ void ConsoleView::ResizePrompt()
 void ConsoleView::OnDraw()
 {
 	Graphics * g = ui::Engine::Ref().g;
-	g->fillrect(Position.X, Position.Y, Size.X, Size.Y, 0, 0, 0, 120);
+	g->fillrect(Position.X, Position.Y, Size.X, Size.Y, 0, 61, 76, 180);
 	g->draw_line(Position.X, Position.Y+Size.Y, Position.X+Size.X, Position.Y+Size.Y, 255, 255, 255, 200);
 }
 
