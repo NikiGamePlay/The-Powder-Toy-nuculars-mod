@@ -56,6 +56,8 @@ int Element_NEUT::update(UPDATE_FUNC_ARGS)
 			if (BOUNDS_CHECK)
 			{
 				r = pmap[y+ry][x+rx];
+				if (!r)
+					r = sim->photons[y+ry][x+rx];
 				switch (r&0xFF)
 				{
 				case PT_WATR:
@@ -164,6 +166,13 @@ int Element_NEUT::update(UPDATE_FUNC_ARGS)
 				case PT_EXOT:
 					if (!(rand()%20))
 						parts[r>>8].life = 1500;
+					break;
+				case PT_PROT:
+					if (!(rand()%20))
+					{
+						sim->create_part(r>>8, x+rx, y+ry, PT_RADN);
+						return 1;
+					}
 					break;
 				default:
 					break;

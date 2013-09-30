@@ -2850,7 +2850,7 @@ int Simulation::create_part(int p, int x, int y, int tv)
 				break;
 			case PT_RADN:
 				parts[i].life = 135;
-				parts[i].tmp = 40;
+				parts[i].tmp = 40 + rand()%40;
 				break;
 			case PT_SOAP:
 				parts[i].tmp = -1;
