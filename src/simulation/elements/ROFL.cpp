@@ -43,6 +43,7 @@ Element_ROFL::Element_ROFL()
 	HighTemperatureTransition = NT;
 
 	Update = &Element_ROFL::update;
+	Graphics = &Element_ROFL::graphics;
 
 }
 
@@ -93,6 +94,17 @@ int Element_ROFL::update(UPDATE_FUNC_ARGS)
 			}
 		}
 	}
+}
+
+//#TPT-Directive ElementHeader Element_ROFL static int graphics(GRAPHICS_FUNC_ARGS)
+int Element_ROFL::graphics(GRAPHICS_FUNC_ARGS)
+
+{
+	*colr = (int)cpart->x % 255;
+	*colg = (int)cpart->y % 255;
+	*colb = (int)(cpart->x * cpart->y) % 255;
+	
+	return 0;
 }
 
 Element_ROFL::~Element_ROFL() {}
