@@ -14,7 +14,7 @@ Element_ENZM::Element_ENZM()
 	AirLoss = 0.00f;
 	Loss = 0.95f;
 	Collision = -0.1f;
-	Gravity = 0.3f;
+	Gravity = 0.1f;
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 1;
@@ -24,7 +24,7 @@ Element_ENZM::Element_ENZM()
 	Meltable = 5;
 	Hardness = 1;
 	
-	Weight = 90;
+	Weight = 80;
 	
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 150;
@@ -57,19 +57,31 @@ int Element_ENZM::update(UPDATE_FUNC_ARGS)
 				r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if (((r&0xFF) == PT_COAL || (r&0xFF) == PT_BCOL) && rand()%3)
+				if (((r&0xFF) == PT_COAL || (r&0xFF) == PT_BCOL) && !(rand()%10))
 				{
 					sim->part_change_type(r>>8,x+rx,y+ry, PT_OIL);
 				}
-				else if ((r&0xFF) == PT_BANG && rand()%3)
+				else if ((r&0xFF) == PT_BANG && !(rand()%10))
 				{
 					if (rand()%2)
 						sim->part_change_type(r>>8,x+rx,y+ry, PT_NITR);
 					else
 						sim->part_change_type(r>>8,x+rx,y+ry, PT_CLST);
 				}
+				else if (((r&0xFF) == PT_PLNT || (r&0xFF) == PT_SEED) && !(rand()%60))
+				{
+					sim->part_change_type(r>>8,x+rx,y+ry, PT_OIL);
+				}
+				else if ((r&0xFF) == PT_YEST && !(rand()%70))
+				{
+					sim->part_change_type(r>>8,x+rx,y+ry, PT_DYST);
+				}
+				else if ((r&0xFF) == PT_DYST && !(rand()%20))
+				{
+					sim->part_change_type(r>>8,x+rx,y+ry, PT_OIL);
+				}
 				// TODO: Add more things to break down.
-				else if ((r&0xFF) == PT_GOO && rand()%3)
+				else if ((r&0xFF) == PT_GOO && !(rand()%10))
 				{
 					parts[i].life++;
 					sim->kill_part(r>>8);
@@ -94,6 +106,12 @@ int Element_ENZM::update(UPDATE_FUNC_ARGS)
  			parts[i].life = 0;
  			parts[i].tmp = rand()%70 +10;
  		}
+ 	}
+
+ 	if (!(rand()%100))
+ 	{
+ 		parts[i].vx = rand()%3 -1;
+ 		parts[i].vy = rand()%3 -1;
  	}
 	return 0;
 }

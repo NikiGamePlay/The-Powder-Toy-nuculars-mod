@@ -12,6 +12,7 @@ static const char *introTextData =
 	"\n"
     "\boMod created by: \bgnucular (\blhttp://tpt.io/@nucular\bg)\n"
     "\n"
+    "\boLua console by: \bgmniip (\blhttp://tpt.io/@mniip\bg)\n"
 	"\boOriginal Contributors: \bgStanislaw K Skowronek (Designed the original Powder Toy),\n"
 	"\bgSimon Robertshaw, Skresanov Savely, cracker64, Catelite, Bryan Hoyle, Nathan Cousins, jacksonmj,\n"
 	"\bgFelix Wallin, Lieuwe Mosch, Anthony Boot, Matthew \"me4502\", MaksProg, jacob1, mniip\n"
