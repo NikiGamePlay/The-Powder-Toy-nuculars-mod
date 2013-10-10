@@ -28,7 +28,7 @@ Element_LITH::Element_LITH()
 	
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 50;
-	Description = "Lithium, rusts in empty space, explosive, produces ELEC when in contact to BIZR. Rechargable with ionized NBLE.";
+	Description = "Lithium, rusts in empty space, explosive, produces ELEC when in contact to BIZR. Recharges when sparked with GOLD.";
 	
 	State = ST_SOLID;
 	Properties = TYPE_SOLID|PROP_HOT_GLOW;

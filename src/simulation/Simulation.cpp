@@ -782,12 +782,17 @@ void Simulation::ApplyDecoration(int x, int y, int colR_, int colG_, int colB_, 
 		
 		int rx, ry;
 		float num = 0;	
+		Particle part;
 		for (rx=-2; rx<3; rx++)
 			for (ry=-2; ry<3; ry++)
 			{
-				if (abs(rx)+abs(ry) > 2 && (pmap[y+ry][x+rx]&0xFF) && parts[pmap[y+ry][x+rx]>>8].dcolour)
+				if (abs(rx)+abs(ry) > 2  && (((pmap[y+ry][x+rx]&0xFF) && parts[pmap[y+ry][x+rx]>>8].dcolour)) || (((photons[y+ry][x+rx]&0xFF) && parts[photons[y+ry][x+rx]>>8].dcolour)))
 				{
-					Particle part = parts[pmap[y+ry][x+rx]>>8];
+					if (pmap[y+ry][x+rx])
+						part = parts[pmap[y+ry][x+rx]>>8];
+					else
+						part = parts[photons[y+ry][x+rx]>>8];
+
 					num += 1.0f;
 					tas += ((float)((part.dcolour>>24)&0xFF));
 					trs += ((float)((part.dcolour>>16)&0xFF));
@@ -2841,8 +2846,7 @@ int Simulation::create_part(int p, int x, int y, int tv)
 				parts[i].tmp = 2;
 				break;
 			case PT_ENZM:
-				parts[i].life = 1;
-				parts[i].tmp = (rand()%70) +30;
+				parts[i].life = (rand()%50) +10;
 				break;
 			case PT_LITH:
 				parts[i].tmp2 = (rand()%200) +100;

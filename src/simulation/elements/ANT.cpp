@@ -32,7 +32,7 @@ Element_ANT::Element_ANT()
 
 	Temperature = 0.0f;
 	HeatConduct = 0;
-	Description = "Langton's Ant. Turing machine. Basically LIFE, but better.";
+	Description = "Langton's Ant. Turing machine. Basically LIFE, but better. If you color the ANT, it will leave a colored trail.";
 
 	State = ST_GAS;
 	Properties = TYPE_ENERGY;
@@ -53,13 +53,16 @@ Element_ANT::Element_ANT()
 //#TPT-Directive ElementHeader Element_ANT static int update(UPDATE_FUNC_ARGS)
 int Element_ANT::update(UPDATE_FUNC_ARGS)
 {
+	int newPart;
 	int r = sim->pmap[y][x];
 	if ((r&0xFF) == PT_ANT2) {
 		// On active cell
 		sim->kill_part(r>>8);
 		if (--parts[i].tmp < NORTH) parts[i].tmp = WEST;
 	} else {
-		sim->create_part(-1,x,y,PT_ANT2);
+		newPart = sim->create_part(-1,x,y,PT_ANT2);
+		if (parts[i].dcolour)
+			parts[newPart].dcolour = parts[i].dcolour;
 		if (++parts[i].tmp > WEST) parts[i].tmp = NORTH;
 	}
 

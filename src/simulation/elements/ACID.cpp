@@ -88,12 +88,14 @@ int Element_ACID::update(UPDATE_FUNC_ARGS)
 							sim->kill_part(r>>8);
 						}
 					}
+					/* Creates weird pressure (still not fixed, though)
 					else if ((r&0xFF)==PT_BASE)
 					{
 						if (rand()%150==0)
 							parts[r>>8].type = PT_SALT;
 						return 1;
 					}
+					*/
 					else if ((r&0xFF)==PT_MGSM || (r&0xFF)==PT_MGMP)
 					{
 						if (rand()%150==0)

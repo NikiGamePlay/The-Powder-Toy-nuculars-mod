@@ -275,6 +275,10 @@ int Element_SPRK::update(UPDATE_FUNC_ARGS)
 					if (receiver==PT_NSCN || receiver==PT_PSCN)
 						goto conduct;
 					continue;
+				case PT_PLDM:
+					if (receiver!=PT_NBLE)
+						goto conduct;
+					continue;
 				default:
 					break;
 				}

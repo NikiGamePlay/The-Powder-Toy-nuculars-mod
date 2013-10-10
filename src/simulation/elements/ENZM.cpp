@@ -22,13 +22,13 @@ Element_ENZM::Element_ENZM()
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 5;
-	Hardness = 1;
+	Hardness = 90;
 	
-	Weight = 80;
+	Weight = 65;
 	
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 150;
-	Description = "Enzyme, breaks down some things into their educts, multiplies with GOO, cures VIRS like SOAP does.";
+	Description = "Enzyme, breaks down things into OIL, grows with GOO, cures VIRS like SOAP does.";
 	
 	State = ST_SOLID;
 	Properties = TYPE_PART;
@@ -80,15 +80,23 @@ int Element_ENZM::update(UPDATE_FUNC_ARGS)
 				{
 					sim->part_change_type(r>>8,x+rx,y+ry, PT_OIL);
 				}
+				else if ((r&0xFF) == PT_WOOD && !(rand()%130))
+				{
+					sim->part_change_type(r>>8,x+rx,y+ry, PT_DYST);
+				}
+				else if (((r&0xFF) == PT_PLST || (r&0xFF) == PT_LPLS) && !(rand()%200))
+				{
+					sim->part_change_type(r>>8,x+rx,y+ry, PT_OIL);
+				}
 				// TODO: Add more things to break down.
 				else if ((r&0xFF) == PT_GOO && !(rand()%10))
 				{
-					parts[i].life++;
+					parts[i].life--;
 					sim->kill_part(r>>8);
 				}
 			}
 
-	if (parts[i].life >= parts[i].tmp)
+	if (parts[i].life <= 0)
  	{
  		for (rx=-1; rx<2 && !enzm; rx++)
 			for (ry=-1; ry<2 && !enzm; ry++)
@@ -103,8 +111,7 @@ int Element_ENZM::update(UPDATE_FUNC_ARGS)
  				}
  		if (enzm)
  		{
- 			parts[i].life = 0;
- 			parts[i].tmp = rand()%70 +10;
+ 			parts[i].life = rand()%70 +10;
  		}
  	}
 
