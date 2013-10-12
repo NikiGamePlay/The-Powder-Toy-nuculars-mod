@@ -88,7 +88,7 @@ int Element_BULB::graphics(GRAPHICS_FUNC_ARGS)
 	
 	if (cpart->life > 0)
 	{
-		*firea = (cpart->life / 8.0f) * 255.0f;
+		*firea = (cpart->life / 15.0f) * 255.0f;
 	} 	
 	else
 	{
