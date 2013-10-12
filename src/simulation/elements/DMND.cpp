@@ -24,7 +24,7 @@ Element_DMND::Element_DMND()
 	Meltable = 0;
 	Hardness = 0;
 	
-	Weight = 100;
+	Weight = 110;
 	
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 186;

@@ -3281,7 +3281,7 @@ void Simulation::update_particles_i(int start, int inc)
     		{
     			// Use a threshold, since some particle stacking can be normal (e.g. BIZR + FILT)
     			// Setting pmap_count[y][x] > NPART means BHOL will form in that spot
-    			if (pmap_count[y][x]>5)
+    			if (pmap_count[y][x]>50)
     			{
     				if (bmap[y/CELL][x/CELL]==WL_EHOLE)
     				{

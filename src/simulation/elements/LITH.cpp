@@ -6,7 +6,7 @@ Element_LITH::Element_LITH()
 	Name = "LITH";
 	Colour = PIXPACK(0xADBEC9);
 	MenuVisible = 1;
-	MenuSection = SC_ELEC;
+	MenuSection = SC_NUCLEAR;
 	Enabled = 1;
 	
 	Advection = 0.0f;

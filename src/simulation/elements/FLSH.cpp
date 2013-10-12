@@ -61,7 +61,7 @@ int Element_FLSH::update(UPDATE_FUNC_ARGS)
 				{
 					parts[i].type = PT_FIRE;
 					parts[i].life = 70 + (rand() % 20);
-					parts[i].tmp2 = 1;
+					parts[i].tmp2 = 1337;
 					parts[i].temp = R_TEMP + 1200.0f + 273.15f;
 				}
 			}
