@@ -23,6 +23,7 @@
 #include "Sample.h"
 #include "Snapshot.h"
 //#include "StorageClasses.h"
+#include "gui/dialogues/TextPrompt.h"
 
 #ifdef LUACONSOLE
 #include "cat/LuaScriptInterface.h"
@@ -2908,7 +2909,7 @@ int Simulation::create_part(int p, int x, int y, int tv)
 				parts[i].tmp = (rand()%7);
 				break;
 			case PT_MUD:
-				parts[i].tmp = (rand()%7)+4;
+				parts[i].tmp = (rand()%14)+8;
 				break;
 			case PT_SEED:
 				parts[i].life = 1000+(rand()%1000);

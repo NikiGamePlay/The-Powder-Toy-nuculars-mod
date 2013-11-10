@@ -61,7 +61,7 @@ int Element_SOIL::update(UPDATE_FUNC_ARGS)
                 if (((r&0xFF) == PT_WATR || (r&0xFF) == PT_SLTW || (r&0xFF) == PT_DSTW) && rand()%3)
                 {
                     sim->kill_part(r>>8);
-                    parts[i].tmp++;
+                    parts[i].tmp += 2;
                 }
                 else if ((r&0xFF)==PT_SEED)
                 {
@@ -75,11 +75,11 @@ int Element_SOIL::update(UPDATE_FUNC_ARGS)
                 }
                 else if ((r&0xFF)==PT_SOIL)
                 {
-                    if(parts[i].tmp <1)
+                    if(parts[i].tmp <2)
                         spd = 0.125;
-                    else if(parts[i].tmp <3)
+                    else if(parts[i].tmp <6)
                         spd = 0.25;
-                    else if(parts[i].tmp <4)
+                    else if(parts[i].tmp <8)
                         spd = 0.5;
                     else
                         spd = 1;
@@ -107,7 +107,7 @@ int Element_SOIL::update(UPDATE_FUNC_ARGS)
         }
     }
 
-    if (parts[i].tmp >= 5)
+    if (parts[i].tmp >= 10)
         sim->part_change_type(i,x,y, PT_MUD);
     return 0;
 }
@@ -117,7 +117,7 @@ int Element_SOIL::update(UPDATE_FUNC_ARGS)
 int Element_SOIL::graphics(GRAPHICS_FUNC_ARGS)
 
 {
-    int z = cpart->tmp;
+    int z = cpart->tmp / 2.0f;
     *colr += -17.2 * z;
     *colg += -12.4 * z;
     *colb += -3.6 * z;

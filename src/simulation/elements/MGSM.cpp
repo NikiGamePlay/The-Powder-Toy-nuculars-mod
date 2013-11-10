@@ -35,7 +35,7 @@ Element_MGSM::Element_MGSM()
 	
 	LowPressure = IPL;
 	LowPressureTransition = NT;
-	HighPressure = 1.0f;
+	HighPressure = 3.0f;
 	HighPressureTransition = PT_MGMP;
 	LowTemperature = ITL;
 	LowTemperatureTransition = NT;
@@ -55,11 +55,11 @@ int Element_MGSM::update(UPDATE_FUNC_ARGS)
 	r = pmap[y+ry][x+rx];
 	if (!r)
 		return 0;
-	if (((parts[r>>8].type == PT_PLSM || parts[r>>8].type == PT_FIRE || parts[r>>8].type == PT_LAVA) && parts[r>>8].temp >= 800) || parts[r>>8].temp >= 3000)
+	if (((parts[r>>8].type == PT_PLSM || parts[r>>8].type == PT_FIRE || parts[r>>8].type == PT_LAVA) && parts[r>>8].temp >= 800) || parts[r>>8].temp >= 2500)
 	{
 		parts[i].type = PT_PLSM;
 		parts[i].life = 150;
-		parts[i].temp = 3370;
+		parts[i].temp = 4000;
 	}
 	return 0;
 }

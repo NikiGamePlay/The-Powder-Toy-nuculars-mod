@@ -57,7 +57,7 @@ int Element_MUD::update(UPDATE_FUNC_ARGS)
 				r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if (((r&0xFF) == PT_WATR || (r&0xFF) == PT_SLTW || (r&0xFF) == PT_DSTW) && rand()%3 && parts[i].tmp < 10)
+				if (((r&0xFF) == PT_WATR || (r&0xFF) == PT_SLTW || (r&0xFF) == PT_DSTW) && rand()%3 && parts[i].tmp < 20)
 				{
 					sim->kill_part(r>>8);
 					parts[i].tmp++;
@@ -83,21 +83,20 @@ int Element_MUD::update(UPDATE_FUNC_ARGS)
 		}
 	}
 
-	if (parts[i].tmp <= 4)
+	if (parts[i].tmp <= 9)
 		sim->part_change_type(i,x,y, PT_SOIL);
 	return 0;
 }
-
 
 
 //#TPT-Directive ElementHeader Element_MUD static int graphics(GRAPHICS_FUNC_ARGS)
 int Element_MUD::graphics(GRAPHICS_FUNC_ARGS)
 
 {
-	int z = cpart->tmp / 10;
-    *colr -= z * 20;
-    *colg -= z * 20;
-    *colb -= z * 20;
+	int z = cpart->tmp / 20.0f;
+    *colr -= z * 20.0f;
+    *colg -= z * 20.0f;
+    *colb -= z * 20.0f;
     *pixel_mode |= PMODE_BLUR;
     return 0;
 }

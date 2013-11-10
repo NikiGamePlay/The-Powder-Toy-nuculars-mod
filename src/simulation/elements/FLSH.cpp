@@ -59,10 +59,18 @@ int Element_FLSH::update(UPDATE_FUNC_ARGS)
 					continue;
 				if ((r&0xFF)==PT_FIRE || (r&0xFF)==PT_PLSM || (r&0xFF)==PT_SPRK || parts[r>>8].temp>R_TEMP+400)
 				{
-					parts[i].type = PT_FIRE;
-					parts[i].life = 70 + (rand() % 20);
-					parts[i].tmp2 = 1337;
-					parts[i].temp = R_TEMP + 1200.0f + 273.15f;
+					if (!(rand()%2))
+					{
+						sim->part_change_type(i,x,y, PT_FIRE);
+						parts[i].life = 70 + (rand() % 20);
+						parts[i].tmp2 = 1337;
+						parts[i].temp = R_TEMP + 1200.0f + 273.15f;
+					}
+					else
+					{
+						sim->part_change_type(i,x,y, PT_EMBR);
+						parts[i].life = 50 + (rand() % 20);
+					}
 				}
 			}
 	return 0;
