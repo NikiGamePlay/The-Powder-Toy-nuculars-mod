@@ -1,5 +1,5 @@
 This list may be incomplete
-look at the forum post for more information
+look at the forum post and the git history for more informations.
 
 - Changed window title & icons
 - Added BOLT (Gas that creates lightnings and fusionates to HYGN on heat. Very unstable! Freezes to VIBR at around absolute zero.)
@@ -19,3 +19,15 @@ look at the forum post for more information
 - Added ANT / ANT2 (Langton's Ant. Turing machine. Basically LIFE, but better.)
 - Changed WIFI to break at higher pressure
 - Changed CO2 to have a chance to create BOLT or LIGH once it fusionates
+- Added Magnesium (MGSM and MGMP)
+- Added ENZM (Enzyme, breaks down things into OIL, grows with GOO, cures VIRS like SOAP does.)
+- Added LITH (Lithium, rusts in empty space, explosive, produces ELEC when in contact to BIZR. Recharges when sparked with GOLD.)
+- Added RADN (Radon, emits NEUT, decays into DEUT and HYGN. Fusionates to BOLT around 6500 C.)
+- Added SSTN (Sandstone. Erodes easily with ACID or BASE.)
+- Merged mniip's new (awesome) console from github.com/mniip/The-Powder-Toy/branches/console
+- Added reaction PROT+NEUT=RADN
+- Made DYST spread out slower
+- Changed energy particles to be smudge-able
+- Added BULB (Light bulb. Decorator, glows when constantly sparked.)
+- Added RVRS (Reversium, reverses changes to elements. Explodes extremely powerful on contact with TRON/BOLT! Also the heaviest liquid.)
+- Added GRVT (Graviton, emits a gravitional field equal to its tmp; after its life period bursts with a field equal to its tmp2.)

@@ -2030,7 +2030,10 @@ void Simulation::init_can_move()
 		 || destinationType == PT_H2)
 			can_move[PT_PHOT][destinationType] = 2;
 		if (destinationType != PT_DMND && destinationType != PT_INSL && destinationType != PT_VOID && destinationType != PT_PVOD && destinationType != PT_VIBR)
+		{
 			can_move[PT_PROT][destinationType] = 2;
+			can_move[PT_GRVT][destinationType] = 2;
+		}
 	}
 
 	//other special cases that weren't covered above
@@ -3057,6 +3060,15 @@ int Simulation::create_part(int p, int x, int y, int tv)
 			{
 				float a = (rand()%36)* 0.17453f;
 				parts[i].life = 680;
+				parts[i].vx = 2.0f*cosf(a);
+				parts[i].vy = 2.0f*sinf(a);
+				break;
+			}
+			case PT_GRVT:
+			{
+				parts[i].tmp = 1;
+				parts[i].life = 150 + rand()%200;
+				float a = (rand()%36)* 0.17453f;
 				parts[i].vx = 2.0f*cosf(a);
 				parts[i].vy = 2.0f*sinf(a);
 				break;

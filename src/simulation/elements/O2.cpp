@@ -95,6 +95,12 @@ int Element_O2::update(UPDATE_FUNC_ARGS)
 				parts[j].temp = MAX_TEMP;
 				parts[j].tmp |= 4;
 			}
+			j = sim->create_part(-3,x+rand()%3-1,y+rand()%3-1,PT_GRVT);
+			if (j != -1)
+			{
+				parts[j].temp = MAX_TEMP;
+				parts[j].tmp = rand()%50 - rand()%50;
+			}
 			parts[i].temp = MAX_TEMP;
 			sim->pv[y/CELL][x/CELL] = 256;
 		}
