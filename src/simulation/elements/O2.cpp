@@ -99,7 +99,7 @@ int Element_O2::update(UPDATE_FUNC_ARGS)
 			if (j != -1)
 			{
 				parts[j].temp = MAX_TEMP;
-				parts[j].tmp = rand()%50 - rand()%50;
+				parts[j].tmp = rand()%100 - rand()%100;
 			}
 			parts[i].temp = MAX_TEMP;
 			sim->pv[y/CELL][x/CELL] = 256;

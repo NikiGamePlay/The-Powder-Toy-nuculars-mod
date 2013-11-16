@@ -28,7 +28,7 @@ Element_GRVT::Element_GRVT()
 	
 	Temperature = R_TEMP+273.15f;
 	HeatConduct = 200;
-	Description = "Graviton, emits a gravitional field equal to its tmp; after its life period bursts with a field equal to its tmp2.";
+	Description = "Graviton, emits a gravitional field equal to its tmp; after its life period it reverses its field.";
 	
 	State = ST_GAS;
 	Properties = TYPE_ENERGY|PROP_LIFE_DEC|PROP_LIFE_KILL_DEC;
@@ -51,7 +51,7 @@ int Element_GRVT::update(UPDATE_FUNC_ARGS)
  {
 	if (parts[i].life < 20)
 	{
-		float val = restrict_flt(parts[i].tmp * 2.0f, -256.0, 256.0);
+		float val = restrict_flt(-parts[i].tmp, -256.0, 256.0);
 		sim->gravmap[(y/CELL)*(XRES/CELL)+(x/CELL)] = 0.2f*val;
 	}
 	else

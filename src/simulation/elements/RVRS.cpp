@@ -29,7 +29,7 @@ Element_RVRS::Element_RVRS()
 	
 	Temperature = 80.0f;
 	HeatConduct = 70;
-	Description = "Reversium, reverses changes to elements. Explodes extremely powerful on contact with TRON/BOLT! Also the heaviest liquid.";
+	Description = "Reversium, reverses changes to elements. Explodes extremely powerful on contact with GRVT! Also the heaviest liquid.";
 	
 	State = ST_LIQUID;
 	Properties = TYPE_LIQUID;
@@ -55,6 +55,8 @@ int Element_RVRS::update(UPDATE_FUNC_ARGS)
 	rx = rand()%5 -2;
 	ry = rand()%5 -2;
 	r = pmap[y+ry][x+rx];
+	if (!r)
+		r = sim->photons[y+ry][x+rx];
 	ct = 0;
 	if (r)
 	{
@@ -136,12 +138,8 @@ int Element_RVRS::update(UPDATE_FUNC_ARGS)
 			case PT_BVBR:
 				ct = PT_BOLT;
 				break;
-			case PT_TRON:
+			case PT_GRVT:
 				sim->flood_prop(x,y,offsetof(Particle,life),&life,StructProperty::Integer);
-				break;
-			case PT_BOLT:
-				// needed for proper explosion.
-				parts[i].life = 10;
 				break;
 		}
 		if (ct)
@@ -149,6 +147,9 @@ int Element_RVRS::update(UPDATE_FUNC_ARGS)
 		if (parts[i].life == 10)
 		{
 			// BOOM!
+			j = sim->create_part(-3,x+rand()%3-1,y+rand()%3-1,PT_PROT);
+			if (j>-1)
+				parts[j].temp = MAX_TEMP;
 			j = sim->create_part(-3,x+rand()%3-1,y+rand()%3-1,PT_NEUT);
 			if (j>-1)
 				parts[j].temp = MAX_TEMP;
@@ -161,6 +162,12 @@ int Element_RVRS::update(UPDATE_FUNC_ARGS)
 			j = sim->create_part(-3,x+rand()%3-1,y+rand()%3-1,PT_BOLT);
 			if (j>-1)
 				parts[j].temp = MAX_TEMP;
+			j = sim->create_part(-3,x+rand()%3-1,y+rand()%3-1,PT_GRVT);
+			if (j != -1)
+			{
+				parts[j].temp = MAX_TEMP;
+				parts[j].tmp = rand()%10 - rand()%10;
+			}
 			if (!(rand()%5))
 			{
 				sim->part_change_type(i,x,y, PT_PLSM);
