@@ -4,7 +4,7 @@ Element_ANT2::Element_ANT2()
 {
 	Identifier = "DEFAULT_PT_ANT2";
 	Name = "ANT2";
-	Colour = PIXPACK(0x20201A);
+	Colour = PIXPACK(0xEEEEBB);
 	MenuVisible = 0;
 	MenuSection = SC_SPECIAL;
 	Enabled = 1;
@@ -43,7 +43,33 @@ Element_ANT2::Element_ANT2()
 	HighTemperatureTransition = NT;
 
 	Update = NULL;
+	Graphics = &Element_ANT2::graphics;
 
+}
+
+//#TPT-Directive ElementHeader Element_ANT2 static int graphics(GRAPHICS_FUNC_ARGS)
+int Element_ANT2::graphics(GRAPHICS_FUNC_ARGS)
+
+{
+	if (cpart->tmp && cpart->tmp2)
+	{
+		float i = restrict_flt(cpart->tmp / (cpart->tmp2 + 1.0f), 0.2f, 1.0f);
+
+		if(ren->decorations_enable && cpart->dcolour && (cpart->dcolour&0xFF000000))
+		{
+			*colr = (cpart->dcolour>>16)&0xFF;
+			*colg = (cpart->dcolour>>8)&0xFF;
+			*colb = (cpart->dcolour)&0xFF;
+		}
+		
+		*colr *= i;
+		*colg *= i;
+		*colb *= i;
+	}
+
+	*pixel_mode |= NO_DECO;
+
+	return 0;
 }
 
 Element_ANT2::~Element_ANT2() {}

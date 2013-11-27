@@ -2848,6 +2848,7 @@ int Simulation::create_part(int p, int x, int y, int tv)
 		{
 			case PT_ANT:
 				parts[i].tmp = 2;
+				parts[i].tmp2 = 6; // Scheme 'LR' (110)
 				break;
 			case PT_ENZM:
 				parts[i].life = (rand()%50) +10;
