@@ -3150,6 +3150,15 @@ void Simulation::GetGravityField(int x, int y, float particleGrav, float newtonG
 				pGravX -= pGravMult * (float)(x - XCNTR);
 				pGravY -= pGravMult * (float)(y - YCNTR);
 			}
+		case 3: //inverted gravity
+			pGravY -= particleGrav;
+			break;
+		case 4: //gravity to the right
+			pGravX += particleGrav;
+			break;
+		case 5: //gravity to the left
+			pGravX -= particleGrav;
+			break;
 	}
 }
 
@@ -3677,6 +3686,18 @@ void Simulation::update_particles_i(int start, int inc)
 					pGravD = 0.01f - hypotf((x - XCNTR), (y - YCNTR));
 					pGravX = elements[t].Gravity * ((float)(x - XCNTR) / pGravD);
 					pGravY = elements[t].Gravity * ((float)(y - YCNTR) / pGravD);
+					break;
+				case 3:
+					pGravX = 0.0f;
+					pGravY = -elements[t].Gravity;
+					break;
+				case 4:
+					pGravX = elements[t].Gravity;
+					pGravY = 0.0f;
+					break;
+				case 5:
+					pGravX = -elements[t].Gravity;
+					pGravY = 0.0f;
 					break;
 				}
 				//Get some gravity from the gravity map
@@ -4480,7 +4501,7 @@ killed:
 								goto movedone;
 							}
 						}
-						if (elements[t].Falldown>1 && !grav->ngrav_enable && gravityMode==0 && parts[i].vy>fabsf(parts[i].vx))
+						if (elements[t].Falldown>1 && !grav->ngrav_enable && gravityMode!=1 && gravityMode!=2 && parts[i].vy>fabsf(parts[i].vx))
 						{
 							s = 0;
 							// stagnant is true if FLAG_STAGNANT was set for this particle in previous frame
@@ -4557,6 +4578,18 @@ killed:
 										pGravX = ptGrav * ((float)(nx - XCNTR) / pGravD);
 										pGravY = ptGrav * ((float)(ny - YCNTR) / pGravD);
 										break;
+									case 3:
+										pGravX = 0.0f;
+										pGravY = -ptGrav;
+										break;
+									case 4:
+										pGravX = ptGrav;
+										pGravY = 0.0f;
+										break;
+									case 5:
+										pGravX = -ptGrav;
+										pGravY = 0.0f;
+										break;
 								}
 								pGravX += gravx[(ny/CELL)*(XRES/CELL)+(nx/CELL)];
 								pGravY += gravy[(ny/CELL)*(XRES/CELL)+(nx/CELL)];
@@ -4616,6 +4649,18 @@ killed:
 											pGravD = 0.01f - hypotf((nx - XCNTR), (ny - YCNTR));
 											pGravX = ptGrav * ((float)(nx - XCNTR) / pGravD);
 											pGravY = ptGrav * ((float)(ny - YCNTR) / pGravD);
+											break;
+										case 3:
+											pGravX = 0.0f;
+											pGravY = -ptGrav;
+											break;
+										case 4:
+											pGravX = ptGrav;
+											pGravY = 0.0f;
+											break;
+										case 5:
+											pGravX = -ptGrav;
+											pGravY = 0.0f;
 											break;
 									}
 									pGravX += gravx[(ny/CELL)*(XRES/CELL)+(nx/CELL)];

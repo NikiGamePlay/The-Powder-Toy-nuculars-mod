@@ -781,7 +781,7 @@ void GameController::ResetSpark()
 
 void GameController::SwitchGravity()
 {
-	gameModel->GetSimulation()->gravityMode = (gameModel->GetSimulation()->gravityMode+1)%3;
+	gameModel->GetSimulation()->gravityMode = (gameModel->GetSimulation()->gravityMode+1)%6;
 
 	switch (gameModel->GetSimulation()->gravityMode)
 	{
@@ -793,6 +793,15 @@ void GameController::SwitchGravity()
 		break;
 	case 2:
 		gameModel->SetInfoTip("Gravity: Radial");
+		break;
+	case 3:
+		gameModel->SetInfoTip("Gravity: Inverted");
+		break;
+	case 4:
+		gameModel->SetInfoTip("Gravity: Right");
+		break;
+	case 5:
+		gameModel->SetInfoTip("Gravity: Left");
 		break;
 	}
 }

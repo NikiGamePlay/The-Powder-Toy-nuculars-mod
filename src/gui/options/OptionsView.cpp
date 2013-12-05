@@ -105,6 +105,9 @@ OptionsView::OptionsView():
 	gravityMode->AddOption(std::pair<std::string, int>("Vertical", 0));
 	gravityMode->AddOption(std::pair<std::string, int>("Off", 1));
 	gravityMode->AddOption(std::pair<std::string, int>("Radial", 2));
+	gravityMode->AddOption(std::pair<std::string, int>("Inverted", 3));
+	gravityMode->AddOption(std::pair<std::string, int>("Right", 4));
+	gravityMode->AddOption(std::pair<std::string, int>("Left", 5));
 	gravityMode->SetActionCallback(new GravityModeChanged(this));
 
 	tempLabel = new ui::Label(ui::Point(8, 166), ui::Point(Size.X-96, 16), "Gravity Simulation Mode");

@@ -115,10 +115,28 @@ void Air::update_airh(void)
 				dh += AIR_VADV*(1.0f-tx)*ty*(bmap_blockairh[j+1][i] ? odh : hv[j+1][i]);
 				dh += AIR_VADV*tx*ty*(bmap_blockairh[j+1][i+1] ? odh : hv[j+1][i+1]);
 			}
-			if(!sim.gravityMode)
+			if (sim.gravityMode == 0)
 			{ //Vertical gravity only for the time being
 				float airdiff = hv[y-1][x]-hv[y][x];
 				if(airdiff>0 && !bmap_blockairh[y-1][x])
+					vy[y][x] -= airdiff/5000.0f;
+			}
+			else if (sim.gravityMode == 3)
+			{
+				float airdiff = hv[y+1][x]-hv[y][x];
+				if(airdiff>0 && !bmap_blockairh[y+1][x])
+					vy[y][x] -= airdiff/5000.0f;
+			}
+			else if (sim.gravityMode == 4)
+			{
+				float airdiff = hv[y][x+1]-hv[y][x];
+				if(airdiff>0 && !bmap_blockairh[y][x+1])
+					vy[y][x] -= airdiff/5000.0f;
+			}
+			else if (sim.gravityMode == 5)
+			{
+				float airdiff = hv[y][x-1]-hv[y][x];
+				if(airdiff>0 && !bmap_blockairh[y][x-1])
 					vy[y][x] -= airdiff/5000.0f;
 			}
 			ohv[y][x] = dh;
