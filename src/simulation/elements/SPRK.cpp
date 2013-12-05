@@ -162,6 +162,10 @@ int Element_SPRK::update(UPDATE_FUNC_ARGS)
 		if(parts[i].temp < 3595.0){
 			parts[i].temp += (rand()%20)-4;
 		}
+	case PT_PLDM:
+		if(parts[i].temp < 1941.0){
+			parts[i].temp += (rand()%50)*parts[i].tmp;
+		}
 	default:
 		break;
 	}

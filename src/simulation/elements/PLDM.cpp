@@ -56,7 +56,7 @@ int Element_PLDM::update(UPDATE_FUNC_ARGS)
             for (int ry=-1; ry<2; ry++)
                 if (BOUNDS_CHECK && (rx || ry) && (pmap[y+ry][x+rx]&0xFF) == PT_NONE)
                 {
-                    int eltype = rand() % 4;
+                    int eltype = rand() % 20;
                     if (eltype < 2)
                         sim->create_part(-1, x+rx, y+ry, PT_CO2);
                     if (eltype == 2)

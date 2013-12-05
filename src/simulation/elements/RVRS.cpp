@@ -147,9 +147,12 @@ int Element_RVRS::update(UPDATE_FUNC_ARGS)
 		if (parts[i].life == 10)
 		{
 			// BOOM!
-			j = sim->create_part(-3,x+rand()%3-1,y+rand()%3-1,PT_PROT);
-			if (j>-1)
-				parts[j].temp = MAX_TEMP;
+			for (int k = 0; k < 5; k++)
+			{
+				j = sim->create_part(-3,x+rand()%6-2,y+rand()%6-2,PT_PROT);
+				if (j>-1)
+					parts[j].temp = MAX_TEMP;
+			}
 			j = sim->create_part(-3,x+rand()%3-1,y+rand()%3-1,PT_NEUT);
 			if (j>-1)
 				parts[j].temp = MAX_TEMP;
@@ -166,7 +169,7 @@ int Element_RVRS::update(UPDATE_FUNC_ARGS)
 			if (j != -1)
 			{
 				parts[j].temp = MAX_TEMP;
-				parts[j].tmp = rand()%10 - rand()%10;
+				parts[j].tmp = rand()%255 - rand()%255;
 			}
 			if (!(rand()%5))
 			{

@@ -2854,7 +2854,7 @@ int Simulation::create_part(int p, int x, int y, int tv)
 				parts[i].life = (rand()%50) +10;
 				break;
 			case PT_LITH:
-				parts[i].tmp2 = (rand()%200) +100;
+				parts[i].tmp2 = (rand()%700) +200;
 				parts[i].tmp = 10;
 				break;
 			case PT_RADN:
@@ -3068,8 +3068,8 @@ int Simulation::create_part(int p, int x, int y, int tv)
 			case PT_GRVT:
 			{
 				parts[i].tmp = 1;
-				parts[i].life = 150 + rand()%200;
-				float a = (rand()%36)* 0.17453f;
+				parts[i].life = 200 + rand()%50;
+				float a = (rand()%50)* 0.17453f;
 				parts[i].vx = 2.0f*cosf(a);
 				parts[i].vy = 2.0f*sinf(a);
 				break;

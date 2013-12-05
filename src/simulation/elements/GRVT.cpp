@@ -51,7 +51,7 @@ int Element_GRVT::update(UPDATE_FUNC_ARGS)
  {
 	if (parts[i].life < 20)
 	{
-		float val = restrict_flt(-parts[i].tmp, -256.0, 256.0);
+		float val = restrict_flt(-parts[i].tmp * 1.8f, -256.0, 256.0);
 		sim->gravmap[(y/CELL)*(XRES/CELL)+(x/CELL)] = 0.2f*val;
 	}
 	else
