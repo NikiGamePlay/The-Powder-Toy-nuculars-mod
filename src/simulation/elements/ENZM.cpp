@@ -117,6 +117,20 @@ int Element_ENZM::update(UPDATE_FUNC_ARGS)
 
  	if (!(rand()%100))
  	{
+ 		if (!(rand()%5))
+ 			for (rx=-10; rx<10; rx++)
+ 				for (ry=-10; ry<10; ry++)
+ 					if (BOUNDS_CHECK && (rx || ry))
+					{
+						r = pmap[y+ry][x+rx];
+						if (!r)
+							continue;
+						if ((r&0xFF) == PT_ENZM)
+						{
+							parts[i].vx += rx / 10.0;
+							parts[i].vy += ry / 10.0;
+						}
+					}
  		parts[i].vx = rand()%3 -1;
  		parts[i].vy = rand()%3 -1;
  	}
