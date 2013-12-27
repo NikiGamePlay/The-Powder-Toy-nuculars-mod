@@ -112,6 +112,8 @@ int Element_ELEC::update(UPDATE_FUNC_ARGS)
 					break;
 				case PT_NONE: //seems to speed up ELEC even if it isn't used
 					break;
+				case PT_LITH:
+					break;
 				default:
 					if ((sim->elements[rt].Properties & PROP_CONDUCTS) && (rt!=PT_NBLE||parts[i].temp<2273.15))
 					{

@@ -234,6 +234,8 @@ int Element_FIRE::graphics(GRAPHICS_FUNC_ARGS)
 	*pixel_mode = PMODE_NONE; //Clear default, don't draw pixel
 	if (cpart->tmp2 == 1337) // :^)
 		*pixel_mode |= DECO_FIRE;
+	else
+		*pixel_mode |= NO_DECO;
 	*pixel_mode |= FIRE_ADD;
 	//Returning 0 means dynamic, do not cache
 	return 0;

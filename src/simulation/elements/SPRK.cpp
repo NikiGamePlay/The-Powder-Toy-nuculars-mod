@@ -245,6 +245,12 @@ int Element_SPRK::update(UPDATE_FUNC_ARGS)
 							continue;
 					}
 					break;
+				case PT_LITH:
+					if (sender!=PT_GOLD && sender!=PT_LITH)
+						continue;
+				case PT_GOLD:
+					if (sender==PT_LITH)
+						continue;
 				}
 
 				if (pavg == PT_INSL) continue; //Insulation blocks everything past here
@@ -282,6 +288,8 @@ int Element_SPRK::update(UPDATE_FUNC_ARGS)
 				case PT_PLDM:
 					if (receiver!=PT_NBLE)
 						goto conduct;
+					continue;
+				case PT_LITH:
 					continue;
 				default:
 					break;
