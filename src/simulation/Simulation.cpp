@@ -692,6 +692,7 @@ void Simulation::SetEdgeMode(int newEdgeMode)
 	switch(edgeMode)
 	{
 	case 0:
+	case 2:
 		for(int i = 0; i<(XRES/CELL); i++)
 		{
 			bmap[0][i] = 0;
@@ -2371,8 +2372,9 @@ int Simulation::do_move(int i, int x, int y, float nxf, float nyf)
 		{
 			if ((pmap[y][x]>>8)==i) pmap[y][x] = 0;
 			else if ((photons[y][x]>>8)==i) photons[y][x] = 0;
-			if (nx<CELL || nx>=XRES-CELL || ny<CELL || ny>=YRES-CELL)//kill_part if particle is out of bounds
+			if (edgeMode!=2 && (nx<CELL || nx>=XRES-CELL || ny<CELL || ny>=YRES-CELL))//kill_part if particle is out of bounds
 			{
+			
 				kill_part(i);
 				return -1;
 			}
@@ -2854,7 +2856,7 @@ int Simulation::create_part(int p, int x, int y, int tv)
 				parts[i].life = (rand()%50) +10;
 				break;
 			case PT_LITH:
-				parts[i].tmp2 = (rand()%700) +200;
+				parts[i].tmp2 = (rand()%500) +100;
 				parts[i].tmp = 10;
 				break;
 			case PT_RADN:
@@ -3630,8 +3632,27 @@ void Simulation::update_particles_i(int start, int inc)
 					  (bmap[y/CELL][x/CELL]==WL_DETECT && (t==PT_METL || t==PT_SPRK)) ||
 			          (bmap[y/CELL][x/CELL]==WL_EWALL && !emap[y/CELL][x/CELL])) && (t!=PT_STKM) && (t!=PT_STKM2) && (t!=PT_FIGH)))
 			{
-				kill_part(i);
-				continue;
+				if (edgeMode==2) // loop mode
+				{
+					// TODO: Use getters/setters to implement a wraparound into
+					// the pmap array?
+					// How to handle pressure and neighbours?
+					if (x<CELL)
+						parts[i].x = (int)((parts[i].x - CELL) + XRES-CELL);
+					if (y<CELL)
+						parts[i].y = (int)((parts[i].y - CELL) + YRES-CELL);
+					if (x>=XRES-CELL)
+						parts[i].x = (int)((parts[i].x - (XRES-CELL)) + CELL);
+					if (y>=YRES-CELL)
+						parts[i].y = (int)((parts[i].y - (YRES-CELL)) + CELL);
+					x = (int)(parts[i].x+0.5f);
+					y = (int)(parts[i].y+0.5f);
+				}
+				else
+				{
+					kill_part(i);
+					continue;
+				}
 			}
 			if (bmap[y/CELL][x/CELL]==WL_DETECT && emap[y/CELL][x/CELL]<8)
 				set_emap(x/CELL, y/CELL);
