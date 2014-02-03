@@ -17,7 +17,6 @@ import os
 import sys
 import subprocess
 import time
-import atexit
 
 # 3rd party
 # =========
