@@ -17,6 +17,7 @@ import os
 import sys
 import subprocess
 import time
+import atexit
 
 # 3rd party
 # =========
@@ -514,6 +515,12 @@ if(GetOption('win')):
    envCopy.Append(CCFLAGS=['-mstackrealign'])
    #envCopy.Append(CCFLAGS=['-mincoming-stack-boundary=2'])
    sources+=envCopy.Object('src/simulation/Gravity.cpp')
+
+
+# add stripping to the linker flags
+# =================================
+
+env.Append(LINKFLAGS=["-s"])
 
 # run generator commands
 # ======================
