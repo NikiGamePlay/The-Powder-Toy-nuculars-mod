@@ -407,6 +407,7 @@ int LuaScriptInterface::interface_removeComponent(lua_State * l)
 int LuaScriptInterface::interface_showWindow(lua_State * l)
 {
 	LuaWindow * window = Luna<LuaWindow>::check(l, 1);
+
 	if(window && ui::Engine::Ref().GetWindow()!=window->GetWindow())
 		ui::Engine::Ref().ShowWindow(window->GetWindow());
 	return 0;
@@ -2337,7 +2338,7 @@ int LuaScriptInterface::graphics_textSize(lua_State * l)
 {
 	char * text;
 	int width, height;
-	text = (char*)lua_tostring(l, 1);
+	text = (char*)luaL_optstring(l, 1, "");
 	Graphics::textsize(text, width, height);
 
 	lua_pushinteger(l, width);
@@ -2349,7 +2350,7 @@ int LuaScriptInterface::graphics_drawText(lua_State * l)
 {
 	int x = lua_tointeger(l, 1);
 	int y = lua_tointeger(l, 2);
-	char * text = (char*)lua_tostring(l, 3);
+	char * text = (char*)luaL_optstring(l, 3, "");
 	int r = luaL_optint(l, 4, 255);
 	int g = luaL_optint(l, 5, 255);
 	int b = luaL_optint(l, 6, 255);
