@@ -15,7 +15,7 @@
 #include "simulation/SimulationData.h"
 #include "gui/dialogues/ConfirmPrompt.h"
 #include "Format.h"
-#include "QuickOption.h"
+#include "QuickOptions.h"
 #include "IntroText.h"
 #include "DecorationTool.h"
 
@@ -101,6 +101,11 @@ public:
 		ui::Button::TextPosition();
 		textPosition.X += 3;
 	}
+	void SetToolTips(std::string newToolTip1, std::string newToolTip2)
+	{
+		toolTip = newToolTip1;
+		toolTip2 = newToolTip2;
+	}
 	virtual void OnMouseClick(int x, int y, unsigned int button)
 	{
 		ui::Button::OnMouseClick(x, y, button);
@@ -143,7 +148,7 @@ public:
 
 
 GameView::GameView():
-	ui::Window(ui::Point(0, 0), ui::Point(XRES+BARSIZE, YRES+MENUSIZE)),
+	ui::Window(ui::Point(0, 0), ui::Point(WINDOWW, WINDOWH)),
 	pointQueue(queue<ui::Point>()),
 	isMouseDown(false),
 	ren(NULL),
@@ -261,7 +266,7 @@ GameView::GameView():
 				v->c->SaveAsCurrent();
 		}
 	};
-	saveSimulationButton = new SplitButton(ui::Point(currentX, Size.Y-16), ui::Point(150, 15), "[untitled simulation]", "Save game as current name", "Save game as new name", 19);
+	saveSimulationButton = new SplitButton(ui::Point(currentX, Size.Y-16), ui::Point(150, 15), "[untitled simulation]", "Upload the simulation under the current name", "Upload the simulation under a new name", 19);
 	saveSimulationButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	saveSimulationButton->SetIcon(IconSave);
 	currentX+=151;
@@ -415,7 +420,7 @@ GameView::GameView():
 			v->c->OpenElementSearch();
 		}
 	};
-	ui::Button * tempButton = new ui::Button(ui::Point(XRES+BARSIZE-16, YRES+MENUSIZE-32), ui::Point(15, 15), "\xE5", "Search for elements");
+	ui::Button * tempButton = new ui::Button(ui::Point(WINDOWW-16, WINDOWH-32), ui::Point(15, 15), "\xE5", "Search for elements");
 	tempButton->Appearance.Margin = ui::Border(0, 2, 3, 2);
 	tempButton->SetActionCallback(new ElementSearchAction(this));
 	AddComponent(tempButton);
@@ -539,7 +544,7 @@ void GameView::NotifyQuickOptionsChanged(GameModel * sender)
 	for(vector<QuickOption*>::iterator iter = optionList.begin(), end = optionList.end(); iter != end; ++iter)
 	{
 		QuickOption * option = *iter;
-		ui::Button * tempButton = new ui::Button(ui::Point(XRES+BARSIZE-16, currentY), ui::Point(15, 15), option->GetIcon(), option->GetDescription());
+		ui::Button * tempButton = new ui::Button(ui::Point(WINDOWW-16, currentY), ui::Point(15, 15), option->GetIcon(), option->GetDescription());
 		//tempButton->Appearance.Margin = ui::Border(0, 2, 3, 2);
 		tempButton->SetTogglable(true);
 		tempButton->SetActionCallback(new OptionAction(option));
@@ -553,7 +558,7 @@ void GameView::NotifyQuickOptionsChanged(GameModel * sender)
 
 void GameView::NotifyMenuListChanged(GameModel * sender)
 {
-	int currentY = YRES+MENUSIZE-48;//-(sender->GetMenuList().size()*16);
+	int currentY = WINDOWH-48;//-(sender->GetMenuList().size()*16);
 	for(int i = 0; i < menuButtons.size(); i++)
 	{
 		RemoveComponent(menuButtons[i]);
@@ -571,7 +576,7 @@ void GameView::NotifyMenuListChanged(GameModel * sender)
 	{
 		std::string tempString = "";
 		tempString += menuList[i]->GetIcon();
-		ui::Button * tempButton = new ui::Button(ui::Point(XRES+BARSIZE-16, currentY), ui::Point(15, 15), tempString, menuList[i]->GetDescription());
+		ui::Button * tempButton = new ui::Button(ui::Point(WINDOWW-16, currentY), ui::Point(15, 15), tempString, menuList[i]->GetDescription());
 		tempButton->Appearance.Margin = ui::Border(0, 2, 3, 2);
 		tempButton->SetTogglable(true);
 		tempButton->SetActionCallback(new MenuAction(this, i));
@@ -666,7 +671,7 @@ void GameView::NotifyLastToolChanged(GameModel * sender)
 void GameView::NotifyToolListChanged(GameModel * sender)
 {
 	lastOffset = 0;
-	int currentX = XRES+BARSIZE-56;
+	int currentX = WINDOWW-56;
 	for(int i = 0; i < menuButtons.size(); i++)
 	{
 		if(((MenuAction*)menuButtons[i]->GetActionCallback())->menuID==sender->GetActiveMenu())
@@ -909,14 +914,14 @@ void GameView::NotifySaveChanged(GameModel * sender)
 		if(sender->GetSave()->GetID())
 		{
 			std::stringstream tagsStream;
-			std::vector<string> tags = sender->GetSave()->GetTags();
+			std::list<string> tags = sender->GetSave()->GetTags();
 			if(tags.size())
 			{
-				for(int i = 0; i < tags.size(); i++)
+				for(std::list<std::string>::const_iterator iter = tags.begin(), begin = tags.begin(), end = tags.end(); iter != end; iter++)
 				{
-					tagsStream << sender->GetSave()->GetTags()[i];
-					if(i < tags.size()-1)
+					if(iter != begin)
 						tagsStream << " ";
+					tagsStream << *iter;
 				}
 				tagSimulationButton->SetText(tagsStream.str());
 			}
@@ -1086,7 +1091,7 @@ void GameView::OnMouseUp(int x, int y, unsigned button)
 			{
 				if(selectMode==PlaceSave)
 				{
-					if(placeSaveThumb && y <= YRES+MENUSIZE-BARSIZE)
+					if(placeSaveThumb && y <= WINDOWH-BARSIZE)
 					{
 						int thumbX = selectPoint2.X - (placeSaveThumb->Width/2);
 						int thumbY = selectPoint2.Y - (placeSaveThumb->Height/2);
@@ -1261,9 +1266,14 @@ void GameView::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool
 				c->TranslateSave(ui::Point(0, 1));
 				break;
 			case 'r':
-				if(shift)
+				if (ctrl && shift)
 				{
-					//Flip
+					//Vertical flip
+					c->TransformSave(m2d_new(1,0,0,-1));
+				}
+				else if (!ctrl && shift)
+				{
+					//Horizontal flip
 					c->TransformSave(m2d_new(-1,0,0,1));
 				}
 				else
@@ -1853,8 +1863,10 @@ void GameView::enableCtrlBehaviour()
 		saveSimulationButton->Appearance.BackgroundInactive = saveSimulationButton->Appearance.BackgroundHover = ui::Colour(255, 255, 255);
 		saveSimulationButton->Appearance.TextInactive = saveSimulationButton->Appearance.TextHover = ui::Colour(0, 0, 0);
 		saveSimulationButton->Enabled = true;
+		((SplitButton*)saveSimulationButton)->SetToolTips("Save the simulation to your hard drive", "Save the simulation to your hard drive");
 		searchButton->Appearance.BackgroundInactive = searchButton->Appearance.BackgroundHover = ui::Colour(255, 255, 255);
 		searchButton->Appearance.TextInactive = searchButton->Appearance.TextHover = ui::Colour(0, 0, 0);
+		searchButton->SetToolTip("Open a simulation from your hard drive");
 		if (currentSaveType == 2)
 			((SplitButton*)saveSimulationButton)->SetShowSplit(true);
 		if(isMouseDown || (toolBrush && drawMode == DrawPoints))
@@ -1878,9 +1890,11 @@ void GameView::disableCtrlBehaviour()
 		saveSimulationButton->Appearance.BackgroundHover = ui::Colour(20, 20, 20);
 		saveSimulationButton->Appearance.TextInactive = saveSimulationButton->Appearance.TextHover = ui::Colour(255, 255, 255);
 		saveSimulationButton->Enabled = saveSimulationButtonEnabled;
+		((SplitButton*)saveSimulationButton)->SetToolTips("Upload the simulation under current name", "Upload the simulation under new name");
 		searchButton->Appearance.BackgroundInactive = ui::Colour(0, 0, 0);
 		searchButton->Appearance.BackgroundHover = ui::Colour(20, 20, 20);
 		searchButton->Appearance.TextInactive = searchButton->Appearance.TextHover = ui::Colour(255, 255, 255);
+		searchButton->SetToolTip("Find & open a simulation");
 		if (currentSaveType == 2)
 			((SplitButton*)saveSimulationButton)->SetShowSplit(false);
 		if(!shiftBehaviour)
@@ -2074,6 +2088,10 @@ void GameView::OnDraw()
 			int ctype = sample.particle.ctype;
 			if (sample.particle.type == PT_PIPE || sample.particle.type == PT_PPIP)
 				ctype = sample.particle.tmp&0xFF;
+
+			if (sample.particle.type == PT_PHOT || sample.particle.type == PT_BIZR || sample.particle.type == PT_BIZRG || sample.particle.type == PT_BIZRS || sample.particle.type == PT_FILT || sample.particle.type == PT_BRAY)
+				wavelengthGfx = ctype;
+
 			if(showDebug)
 			{
 				if (sample.particle.type == PT_LAVA && c->IsValidElement(ctype))
@@ -2096,7 +2114,9 @@ void GameView::OnDraw()
 				else
 				{
 					sampleInfo << c->ElementResolve(sample.particle.type, sample.particle.ctype);
-					if (c->IsValidElement(ctype))
+					if (wavelengthGfx)
+						sampleInfo << " (" << ctype << ")";
+					else if (c->IsValidElement(ctype))
 						sampleInfo << " (" << c->ElementResolve(ctype, -1) << ")";
 					else
 						sampleInfo << " ()";
@@ -2120,10 +2140,6 @@ void GameView::OnDraw()
 				sampleInfo << ", Temp: " << std::fixed << sample.particle.temp - 273.15f << " C";
 				sampleInfo << ", Pressure: " << std::fixed << sample.AirPressure;
 			}
-			if (sample.particle.type == PT_PHOT || sample.particle.type == PT_BIZR || sample.particle.type == PT_BIZRG || sample.particle.type == PT_BIZRS)
-				wavelengthGfx = sample.particle.ctype;
-			if (sample.particle.type == PT_FILT && sample.particle.ctype)
-				wavelengthGfx = sample.particle.ctype;
 		}
 		else if (sample.WallType)
 		{
@@ -2148,7 +2164,7 @@ void GameView::OnDraw()
 		{
 			int i, cr, cg, cb, j, h = 3, x = XRES-19-textWidth, y = 10;
 			int tmp;
-			g->fillrect(x, y, 30, h, 64, 64, 64, 255); // coords -1 size +1 to work around bug in fillrect - TODO: fix fillrect
+			g->fillrect(x, y, 30, h, 64, 64, 64, alpha); // coords -1 size +1 to work around bug in fillrect - TODO: fix fillrect
 			for (i = 0; i < 30; i++)
 			{
 				if ((wavelengthGfx >> i)&1)
@@ -2174,7 +2190,7 @@ void GameView::OnDraw()
 					cg *= tmp;
 					cb *= tmp;
 					for (j=0; j<h; j++)
-						g->blendpixel(x+29-i,y+j,cr>255?255:cr,cg>255?255:cg,cb>255?255:cb,255);
+						g->blendpixel(x+29-i, y+j, cr>255?255:cr, cg>255?255:cg, cb>255?255:cb, alpha);
 				}
 			}
 		}
@@ -2193,7 +2209,7 @@ void GameView::OnDraw()
 				sampleInfo << " GX: " << sample.GravityVelocityX << " GY: " << sample.GravityVelocityY;
 
 			textWidth = Graphics::textwidth((char*)sampleInfo.str().c_str());
-			g->fillrect(XRES-20-textWidth, 26, textWidth+8, 15, 0, 0, 0, alpha*0.5f);
+			g->fillrect(XRES-20-textWidth, 27, textWidth+8, 14, 0, 0, 0, alpha*0.5f);
 			g->drawtext(XRES-16-textWidth, 30, (const char*)sampleInfo.str().c_str(), 255, 255, 255, alpha*0.75f);
 		}
 	}
@@ -2201,7 +2217,6 @@ void GameView::OnDraw()
 	if(showHud && introText < 51)
 	{
 		//FPS and some version info
-#ifndef DEBUG //In debug mode, the Engine will draw FPS and other info instead
 		std::stringstream fpsInfo;
 		fpsInfo.precision(2);
 #ifdef SNAPSHOT
@@ -2210,6 +2225,9 @@ void GameView::OnDraw()
 		fpsInfo << "Beta " << SAVE_VERSION << "." << MINOR_VERSION << "." << BUILD_NUM << ", ";
 #endif
 		fpsInfo << "FPS: " << std::fixed << ui::Engine::Ref().GetFps();
+#ifdef DEBUG
+		fpsInfo << " Delta: " << std::fixed << ui::Engine::Ref().GetDelta();
+#endif
 
 		if (showDebug)
 			fpsInfo << " Parts: " << sample.NumParts;
@@ -2224,7 +2242,6 @@ void GameView::OnDraw()
 		int alpha = 255-introText*5;
 		g->fillrect(12, 12, textWidth+8, 15, 0, 0, 0, alpha*0.5);
 		g->drawtext(16, 16, (const char*)fpsInfo.str().c_str(), 32, 216, 255, alpha*0.75);
-#endif
 	}
 
 	//Tooltips
@@ -2247,27 +2264,29 @@ void GameView::OnDraw()
 	//Introduction text
 	if(introText)
 	{
-		g->fillrect(0, 0, XRES+BARSIZE, YRES+MENUSIZE, 0, 0, 0, introText>51?102:introText*2);
+		g->fillrect(0, 0, WINDOWW, WINDOWH, 0, 0, 0, introText>51?102:introText*2);
 		g->drawtext(16, 20, (char*)introTextMessage.c_str(), 255, 255, 255, introText>51?255:introText*5);
 	}
 }
 
 ui::Point GameView::lineSnapCoords(ui::Point point1, ui::Point point2)
 {
-	ui::Point newPoint(0, 0);
-	float snapAngle = floor(atan2((float)point2.Y-point1.Y, point2.X-point1.X)/(M_PI*0.25)+0.5)*M_PI*0.25;
-	float lineMag = sqrtf(pow((float)(point2.X-point1.X),2)+pow((float)(point2.Y-point1.Y),2));
-	newPoint.X = (int)(lineMag*cos(snapAngle)+point1.X+0.5f);
-	newPoint.Y = (int)(lineMag*sin(snapAngle)+point1.Y+0.5f);
-	return newPoint;
+	ui::Point diff = point2 - point1;
+	if(abs(diff.X / 2) > abs(diff.Y)) // vertical
+		return point1 + ui::Point(diff.X, 0);
+	if(abs(diff.X) < abs(diff.Y / 2)) // horizontal
+		return point1 + ui::Point(0, diff.Y);
+	if(diff.X * diff.Y > 0) // NW-SE
+		return point1 + ui::Point((diff.X + diff.Y)/2, (diff.X + diff.Y)/2);
+	// SW-NE
+	return point1 + ui::Point((diff.X - diff.Y)/2, (diff.Y - diff.X)/2);
 }
 
 ui::Point GameView::rectSnapCoords(ui::Point point1, ui::Point point2)
 {
-	ui::Point newPoint(0, 0);
-	float snapAngle = floor((atan2((float)point2.Y-point1.Y, point2.X-point1.X)+M_PI*0.25)/(M_PI*0.5)+0.5)*M_PI*0.5 - M_PI*0.25;
-	float lineMag = sqrtf(pow((float)(point2.X-point1.X),2)+pow((float)(point2.Y-point1.Y),2));
-	newPoint.X = (int)(lineMag*cos(snapAngle)+point1.X+0.5f);
-	newPoint.Y = (int)(lineMag*sin(snapAngle)+point1.Y+0.5f);
-	return newPoint;
+	ui::Point diff = point2 - point1;
+	if(diff.X * diff.Y > 0) // NW-SE
+		return point1 + ui::Point((diff.X + diff.Y)/2, (diff.X + diff.Y)/2);
+	// SW-NE
+	return point1 + ui::Point((diff.X - diff.Y)/2, (diff.Y - diff.X)/2);
 }

@@ -4,7 +4,7 @@
 #include <vector>
 #include <deque>
 #include "ConsoleView.h"
-#include "cat/CommandInterface.h"
+#include "lua/CommandInterface.h"
 
 class ConsoleView;
 class ConsoleModel {

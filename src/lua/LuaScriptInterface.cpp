@@ -21,6 +21,7 @@
 #include "gui/game/Tool.h"
 #include "LuaScriptHelper.h"
 #include "client/HTTP.h"
+#include "Misc.h"
 #include "PowderToy.h"
 
 #include "LuaBit.h"
@@ -44,7 +45,6 @@ extern "C"
 #endif
 #include <sys/stat.h>
 #include <dirent.h>
-#include <time.h>
 #include "socket/luasocket.h"
 }
 #include "socket/socket.lua.h"
@@ -57,6 +57,8 @@ Graphics * luacon_g;
 Renderer * luacon_ren;
 
 bool *luacon_currentCommand;
+std::string *luacon_lastError;
+std::string lastCode;
 
 int *lua_el_func, *lua_el_mode, *lua_gr_func;
 
@@ -65,6 +67,11 @@ int tptProperties; //Table for some TPT properties
 int tptPropertiesVersion;
 int tptElements; //Table for TPT element names
 int tptParts, tptPartsMeta, tptElementTransitions, tptPartsCData, tptPartMeta, tptPart, cIndex;
+
+int atPanic(lua_State *l)
+{
+	throw std::runtime_error("Unprotected lua panic: " + std::string(lua_tostring(l, -1)));
+}
 
 LuaScriptInterface::LuaScriptInterface(GameController * c, GameModel * m):
 	CommandInterface(c, m),
@@ -90,7 +97,8 @@ LuaScriptInterface::LuaScriptInterface(GameController * c, GameModel * m):
 	luacon_ci = this;
 
 	//New TPT API
-	l = lua_open();
+	l = luaL_newstate();
+	lua_atpanic(l, atPanic);
 	luaL_openlibs(l);
 	luaopen_bit(l);
 	luaopen_socket_core(l);
@@ -181,6 +189,8 @@ LuaScriptInterface::LuaScriptInterface(GameController * c, GameModel * m):
 		{"element",&luatpt_getelement},
 		{"element_func",&luatpt_element_func},
 		{"graphics_func",&luatpt_graphics_func},
+		{"get_clipboard", &luatpt_getclip}, 
+		{"set_clipboard", &luatpt_setclip},
 		{NULL,NULL}
 	};
 
@@ -202,12 +212,14 @@ LuaScriptInterface::LuaScriptInterface(GameController * c, GameModel * m):
 	lua_setfield(l, tptProperties, "mousex");
 	lua_pushinteger(l, 0);
 	lua_setfield(l, tptProperties, "mousey");
-	lua_pushstring(l, "");
+	lua_pushstring(l, "DEFAULT_PT_DUST");
 	lua_setfield(l, tptProperties, "selectedl");
-	lua_pushstring(l, "");
+	lua_pushstring(l, "DEFAULT_PT_NONE");
 	lua_setfield(l, tptProperties, "selectedr");
-	lua_pushstring(l, "");
+	lua_pushstring(l, "DEFAULT_PT_NONE");
 	lua_setfield(l, tptProperties, "selecteda");
+	lua_pushstring(l, "DEFAULT_PT_NONE");
+	lua_setfield(l, tptProperties, "selectedreplace");
 
 	lua_newtable(l);
 	tptPropertiesVersion = lua_gettop(l);
@@ -322,9 +334,14 @@ tpt.partsdata = nil");
 
 void LuaScriptInterface::Init()
 {
-	if(Client::Ref().FileExists("autorun.lua"))		
-		if(luacon_eval("dofile(\"autorun.lua\")"))
+	if(Client::Ref().FileExists("autorun.lua"))
+	{
+		lua_State *l = luacon_ci->l;
+		if(luaL_loadfile(l, "autorun.lua") || lua_pcall(l, 0, 0, 0))
 			luacon_ci->Log(CommandInterface::LogError, luacon_geterror());
+		else
+			luacon_ci->Log(CommandInterface::LogNotice, "Loaded autorun.lua");
+	}
 }
 
 void LuaScriptInterface::SetWindow(ui::Window * window)
@@ -464,7 +481,9 @@ void LuaScriptInterface::initSimulationAPI()
 		{"resetPressure", simulation_resetPressure},
 		{"saveStamp", simulation_saveStamp},
 		{"loadStamp", simulation_loadStamp},
+		{"deleteStamp", simulation_deleteStamp},
 		{"loadSave", simulation_loadSave},
+		{"reloadSave", simulation_reloadSave},
 		{"getSaveID", simulation_getSaveID},
 		{"adjustCoords", simulation_adjustCoords},
 		{"prettyPowders", simulation_prettyPowders},
@@ -558,9 +577,10 @@ int LuaScriptInterface::simulation_partNeighbours(lua_State * l)
 {
 	lua_newtable(l);
 	int id = 0;
-	if(lua_gettop(l) == 4)
+	int x = lua_tointeger(l, 1), y = lua_tointeger(l, 2), r = lua_tointeger(l, 3), rx, ry, n;
+	if(lua_gettop(l) == 5) // this is one more than the number of arguments because a table has just been pushed onto the stack with lua_newtable(l);
 	{
-		int x = lua_tointeger(l, 1), y = lua_tointeger(l, 2), r = lua_tointeger(l, 3), t = lua_tointeger(l, 4), rx, ry, n;
+		int t = lua_tointeger(l, 4);
 		for (rx = -r; rx <= r; rx++)
 			for (ry = -r; ry <= r; ry++)
 				if (x+rx >= 0 && y+ry >= 0 && x+rx < XRES && y+ry < YRES && (rx || ry))
@@ -576,7 +596,6 @@ int LuaScriptInterface::simulation_partNeighbours(lua_State * l)
 	}
 	else
 	{
-		int x = lua_tointeger(l, 1), y = lua_tointeger(l, 2), r = lua_tointeger(l, 3), rx, ry, n;
 		for (rx = -r; rx <= r; rx++)
 			for (ry = -r; ry <= r; ry++)
 				if (x+rx >= 0 && y+ry >= 0 && x+rx < XRES && y+ry < YRES && (rx || ry))
@@ -627,7 +646,10 @@ int LuaScriptInterface::simulation_partID(lua_State * l)
 	int amalgam = luacon_sim->pmap[y][x];
 	if(!amalgam)
 		amalgam = luacon_sim->photons[y][x];
-	lua_pushinteger(l, amalgam >> 8);
+	if (!amalgam)
+		lua_pushnil(l);
+	else
+		lua_pushinteger(l, amalgam >> 8);
 	return 1;
 }
 
@@ -664,7 +686,7 @@ int LuaScriptInterface::simulation_partPosition(lua_State * l)
 int LuaScriptInterface::simulation_partProperty(lua_State * l)
 {
 	int argCount = lua_gettop(l);
-	int particleID = lua_tointeger(l, 1);
+	int particleID = luaL_checkinteger(l, 1);
 	StructProperty * property = NULL;
 
 	if(particleID < 0 || particleID >= NPART || !luacon_sim->parts[particleID].type)
@@ -778,7 +800,11 @@ int LuaScriptInterface::simulation_partKill(lua_State * l)
 	if(lua_gettop(l)==2)
 		luacon_sim->delete_part(lua_tointeger(l, 1), lua_tointeger(l, 2));
 	else
-		luacon_sim->kill_part(lua_tointeger(l, 1));
+	{
+		int i = lua_tointeger(l, 1);
+		if (i>=0 && i<NPART)
+			luacon_sim->kill_part(i);
+	}
 	return 0;
 }
 
@@ -1333,11 +1359,16 @@ int LuaScriptInterface::simulation_saveStamp(lua_State * l)
 
 int LuaScriptInterface::simulation_loadStamp(lua_State * l)
 {
-	int stamp_size, i = -1, j, x, y, ret;
+	int i = -1, j, x, y;
 	SaveFile * tempfile;
 	x = luaL_optint(l,2,0);
 	y = luaL_optint(l,3,0);
-	if (lua_isnumber(l, 1)) //Load from stamp ID
+	if (lua_isstring(l, 1)) //Load from 10 char name, or full filename
+	{
+		const char * filename = luaL_optstring(l, 1, "");
+		tempfile = Client::Ref().GetStamp(filename);
+	}
+	if (!tempfile && lua_isnumber(l, 1)) //Load from stamp ID
 	{
 		i = luaL_optint(l, 1, 0);
 		int stampCount = Client::Ref().GetStampsCount();
@@ -1345,11 +1376,7 @@ int LuaScriptInterface::simulation_loadStamp(lua_State * l)
 			return luaL_error(l, "Invalid stamp ID: %d", i);
 		tempfile = Client::Ref().GetStamp(Client::Ref().GetStamps(0, stampCount)[i]);
 	}
-	else //Load from 10 char name, or full filename
-	{
-		char * filename = (char*)luaL_optstring(l, 1, "");
-		tempfile = Client::Ref().GetStamp(filename);
-	}
+
 	if (tempfile)
 	{
 		if (!luacon_sim->Load(x, y, tempfile->GetGameSave()))
@@ -1366,12 +1393,47 @@ int LuaScriptInterface::simulation_loadStamp(lua_State * l)
 	return 1;
 }
 
+int LuaScriptInterface::simulation_deleteStamp(lua_State * l)
+{
+	int stampCount = Client::Ref().GetStampsCount();
+	std::vector<std::string> stamps = Client::Ref().GetStamps(0, stampCount);
+
+	if (lua_isstring(l, 1)) //note: lua_isstring returns true on numbers too
+	{
+		const char * filename = luaL_optstring(l, 1, "");
+		for (std::vector<std::string>::const_iterator iterator = stamps.begin(), end = stamps.end(); iterator != end; ++iterator)
+		{
+			if (*iterator == filename)
+			{
+				Client::Ref().DeleteStamp(*iterator);
+				return 0;
+			}
+		}
+	}
+	if (lua_isnumber(l, 1)) //Load from stamp ID
+	{
+		int i = luaL_optint(l, 1, 0);
+		if (i < 0 || i >= stampCount)
+			return luaL_error(l, "Invalid stamp ID: %d", i);
+		Client::Ref().DeleteStamp(stamps[i]);
+		return 0;
+	}
+	lua_pushnumber(l, -1);
+	return 1;
+}
+
 int LuaScriptInterface::simulation_loadSave(lua_State * l)
 {
 	int saveID = luaL_optint(l,1,0);
 	int instant = luaL_optint(l,2,0);
 	int history = luaL_optint(l,3,0); //Exact second a previous save was saved
 	luacon_controller->OpenSavePreview(saveID, history, instant?true:false);
+	return 0;
+}
+
+int LuaScriptInterface::simulation_reloadSave(lua_State * l)
+{
+	luacon_controller->ReloadSim();
 	return 0;
 }
 
@@ -1551,7 +1613,7 @@ int LuaScriptInterface::simulation_pmap(lua_State * l)
 	if(x < 0 || x >= XRES || y < 0 || y >= YRES)
 		return luaL_error(l, "coordinates out of range (%d,%d)", x, y);
 	r=luacon_sim->pmap[y][x];
-	if(!r&0xFF)
+	if(!(r&0xFF))
 		return 0;
 	lua_pushnumber(l, r>>8);
 	return 1;
@@ -1577,12 +1639,12 @@ int NeighboursClosure(lua_State * l)
 			if(y>ry)
 				return 0;
 		}
-		if(!(x && y) || sx+x<0 || sy+y<0 || sx+x>=XRES*CELL || sy+y>=YRES*CELL)
+		if(!(x || y) || sx+x<0 || sy+y<0 || sx+x>=XRES*CELL || sy+y>=YRES*CELL)
 		{
 			continue;
 		}
-		i=luacon_sim->pmap[y+sx][x+sx];
-	} while(!i&0xFF);
+		i=luacon_sim->pmap[y+sy][x+sx];
+	} while(!(i&0xFF));
 	lua_pushnumber(l, x);
 	lua_replace(l, lua_upvalueindex(5));
 	lua_pushnumber(l, y);
@@ -2114,6 +2176,8 @@ int LuaScriptInterface::elements_element(lua_State * l)
 			}
 			lua_setfield(l, -2, (*iter).Name.c_str());
 		}
+		lua_pushstring(l, luacon_sim->elements[id].Identifier);
+		lua_setfield(l, -2, "Identifier");
 		return 1;
 	}
 }
@@ -2283,6 +2347,11 @@ int LuaScriptInterface::elements_property(lua_State * l)
 			}
 			return 1;
 		}
+		else if(propertyName == "Identifier")
+		{
+			lua_pushstring(l, luacon_sim->elements[id].Identifier);
+			return 1;
+		}
 		else
 			return luaL_error(l, "Invalid element property");
 	}
@@ -2330,15 +2399,14 @@ void LuaScriptInterface::initGraphicsAPI()
 	lua_getglobal(l, "graphics");
 	lua_setglobal(l, "gfx");
 
-	lua_pushinteger(l, XRES+BARSIZE);	lua_setfield(l, -2, "WIDTH");
-	lua_pushinteger(l, YRES+MENUSIZE);	lua_setfield(l, -2, "HEIGHT");
+	lua_pushinteger(l, WINDOWW);	lua_setfield(l, -2, "WIDTH");
+	lua_pushinteger(l, WINDOWH);	lua_setfield(l, -2, "HEIGHT");
 }
 
 int LuaScriptInterface::graphics_textSize(lua_State * l)
 {
-	char * text;
 	int width, height;
-	text = (char*)luaL_optstring(l, 1, "");
+	const char* text = luaL_optstring(l, 1, "");
 	Graphics::textsize(text, width, height);
 
 	lua_pushinteger(l, width);
@@ -2350,7 +2418,7 @@ int LuaScriptInterface::graphics_drawText(lua_State * l)
 {
 	int x = lua_tointeger(l, 1);
 	int y = lua_tointeger(l, 2);
-	char * text = (char*)luaL_optstring(l, 3, "");
+	const char * text = luaL_optstring(l, 3, "");
 	int r = luaL_optint(l, 4, 255);
 	int g = luaL_optint(l, 5, 255);
 	int b = luaL_optint(l, 6, 255);
@@ -2763,6 +2831,7 @@ bool LuaScriptInterface::OnMouseUp(int x, int y, unsigned button)
 	if (button == 3)
 		button = 4;
 	luacon_mousedown = false;
+	luacon_mousebutton = 0;
 	return luacon_mouseevent(x, y, button, LUACON_MUP, 0);
 }
 
@@ -2793,10 +2862,10 @@ void LuaScriptInterface::OnTick()
 	lua_getglobal(l, "simulation");
 	lua_pushinteger(l, luacon_sim->NUM_PARTS); lua_setfield(l, -2, "NUM_PARTS");
 	lua_pop(l, 1);
-	ui::Engine::Ref().LastTick(clock());
+	ui::Engine::Ref().LastTick(gettime());
 	if(luacon_mousedown)
 		luacon_mouseevent(luacon_mousex, luacon_mousey, luacon_mousebutton, LUACON_MPRESS, 0);
-	luacon_step(luacon_mousex, luacon_mousey, luacon_selectedl, luacon_selectedr, luacon_selectedalt, luacon_brushx, luacon_brushy);
+	luacon_step(luacon_mousex, luacon_mousey, luacon_selectedl, luacon_selectedr, luacon_selectedalt, luacon_selectedreplace, luacon_brushx, luacon_brushy);
 }
 
 CommandInterface::EvalResult * LuaScriptInterface::Command(std::string command)
@@ -2810,9 +2879,11 @@ CommandInterface::EvalResult * LuaScriptInterface::Command(std::string command)
 		int level = lua_gettop(l), ret = -1;
 		std::string text = "";
 		currentCommand = true;
-		std::string tmp = "return " + command;
-		buffer = "";
-		ui::Engine::Ref().LastTick(clock());
+		if(lastCode.length())
+			lastCode += "\n";
+		lastCode += command;
+		std::string tmp = "return " + lastCode;
+		ui::Engine::Ref().LastTick(gettime());
 		luaL_loadbuffer(l, tmp.c_str(), tmp.length(), "@console");
 		if(lua_type(l, -1) != LUA_TFUNCTION)
 		{

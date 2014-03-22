@@ -9,6 +9,8 @@
 #include "Format.h"
 #include "LuaScriptInterface.h"
 #include "LuaScriptHelper.h"
+#include "Misc.h"
+#include "PowderToy.h"
 
 #include "gui/dialogues/ErrorMessage.h"
 #include "gui/dialogues/InformationMessage.h"
@@ -17,33 +19,31 @@
 #include "gui/game/GameModel.h"
 #include "simulation/Simulation.h"
 
-#include <time.h>
 
 #ifndef FFI
-int luacon_partread(lua_State* l){
+int luacon_partread(lua_State* l)
+{
 	int format, offset, tempinteger;
 	float tempfloat;
 	int i;
-	char * key = mystrdup((char*)luaL_optstring(l, 2, ""));
+	const char * key = luaL_optstring(l, 2, "");
 	offset = luacon_particle_getproperty(key, &format);
 
 	i = cIndex;
 
-	if(i < 0 || i >= NPART || offset==-1)
+	if (i < 0 || i >= NPART || offset==-1)
 	{
-		if(i < 0 || i >= NPART) {
-			free(key);
+		if (i < 0 || i >= NPART)
 			return luaL_error(l, "Out of range");
-		} else if(strcmp(key, "id")==0) {
-			free(key);
+		else if (!strcmp(key, "id"))
+		{
 			lua_pushnumber(l, i);
 			return 1;
-		} else {
-			free(key);
-			return luaL_error(l, "Invalid property");
 		}
+		else
+			return luaL_error(l, "Invalid property");
 	}
-	free(key);
+
 	switch(format)
 	{
 	case 0:
@@ -57,25 +57,24 @@ int luacon_partread(lua_State* l){
 	}
 	return 1;
 }
-int luacon_partwrite(lua_State* l){
+
+int luacon_partwrite(lua_State* l)
+{
 	int format, offset;
 	int i;
-	char * key = mystrdup((char*)luaL_optstring(l, 2, ""));
+	const char * key = luaL_optstring(l, 2, "");
 	offset = luacon_particle_getproperty(key, &format);
 
 	i = cIndex;
 
-	if(i < 0 || i >= NPART || offset==-1)
+	if (i < 0 || i >= NPART || offset==-1)
 	{
-		if(i < 0 || i >= NPART) {
-			free(key);
+		if (i < 0 || i >= NPART)
 			return luaL_error(l, "array index out of bounds");
-		} else {
-			free(key);
+		else
 			return luaL_error(l, "Invalid property");
-		}
 	}
-	free(key);
+
 	switch(format)
 	{
 	case 0:
@@ -85,18 +84,14 @@ int luacon_partwrite(lua_State* l){
 		*((float*)(((unsigned char*)&luacon_sim->parts[i])+offset)) = luaL_optnumber(l, 3, 0);
 		break;
 	}
-	return 1;
+	return 0;
 }
-int luacon_partsread(lua_State* l){
-	int format, offset;
-	char * tempstring;
-	int tempinteger;
-	float tempfloat;
-	int i, currentPart, currentPartMeta;
 
-	i = luaL_optinteger(l, 2, 0);
+int luacon_partsread(lua_State* l)
+{
+	int i = luaL_optinteger(l, 2, 0);
 
-	if(i<0 || i>=NPART)
+	if (i<0 || i>=NPART)
 	{
 		return luaL_error(l, "array index out of bounds");
 	}
@@ -105,47 +100,50 @@ int luacon_partsread(lua_State* l){
 	cIndex = i;
 	return 1;
 }
-int luacon_partswrite(lua_State* l){
+
+int luacon_partswrite(lua_State* l)
+{
 	return luaL_error(l, "table readonly");
 }
 #endif
-int luacon_particle_getproperty(char * key, int * format)
+
+int luacon_particle_getproperty(const char * key, int * format)
 {
 	int offset;
-	if (strcmp(key, "type")==0){
+	if (!strcmp(key, "type")) {
 		offset = offsetof(Particle, type);
 		*format = 0;
-	} else if (strcmp(key, "life")==0){
+	} else if (!strcmp(key, "life")) {
 		offset = offsetof(Particle, life);
 		*format = 0;
-	} else if (strcmp(key, "ctype")==0){
+	} else if (!strcmp(key, "ctype")) {
 		offset = offsetof(Particle, ctype);
 		*format = 0;
-	} else if (strcmp(key, "temp")==0){
+	} else if (!strcmp(key, "temp")) {
 		offset = offsetof(Particle, temp);
 		*format = 1;
-	} else if (strcmp(key, "tmp")==0){
+	} else if (!strcmp(key, "tmp")) {
 		offset = offsetof(Particle, tmp);
 		*format = 0;
-	} else if (strcmp(key, "tmp2")==0){
+	} else if (!strcmp(key, "tmp2")) {
 		offset = offsetof(Particle, tmp2);
 		*format = 0;
-	} else if (strcmp(key, "vy")==0){
+	} else if (!strcmp(key, "vy")) {
 		offset = offsetof(Particle, vy);
 		*format = 1;
-	} else if (strcmp(key, "vx")==0){
+	} else if (!strcmp(key, "vx")) {
 		offset = offsetof(Particle, vx);
 		*format = 1;
-	} else if (strcmp(key, "x")==0){
+	} else if (!strcmp(key, "x")){
 		offset = offsetof(Particle, x);
 		*format = 1;
-	} else if (strcmp(key, "y")==0){
+	} else if (!strcmp(key, "y")) {
 		offset = offsetof(Particle, y);
 		*format = 1;
-	} else if (strcmp(key, "dcolour")==0){
+	} else if (!strcmp(key, "dcolour")) {
 		offset = offsetof(Particle, dcolour);
 		*format = 0;
-	} else if (strcmp(key, "dcolor")==0){
+	} else if (!strcmp(key, "dcolor")) {
 		offset = offsetof(Particle, dcolour);
 		*format = 0;
 	} else {
@@ -153,31 +151,32 @@ int luacon_particle_getproperty(char * key, int * format)
 	}
 	return offset;
 }
-int luacon_transition_getproperty(char * key, int * format)
+
+int luacon_transition_getproperty(const char * key, int * format)
 {
 	int offset;
-	if (strcmp(key, "presHighValue")==0){
+	if (!strcmp(key, "presHighValue")) {
 		offset = offsetof(Element, HighPressure);
 		*format = 1;
-	} else if (strcmp(key, "presHighType")==0){
+	} else if (!strcmp(key, "presHighType")) {
 		offset = offsetof(Element, HighPressureTransition);
 		*format = 0;
-	} else if (strcmp(key, "presLowValue")==0){
+	} else if (!strcmp(key, "presLowValue")) {
 		offset = offsetof(Element, LowPressure);
 		*format = 1;
-	} else if (strcmp(key, "presLowType")==0){
+	} else if (!strcmp(key, "presLowType")) {
 		offset = offsetof(Element, LowPressureTransition);
 		*format = 0;
-	} else if (strcmp(key, "tempHighValue")==0){
+	} else if (!strcmp(key, "tempHighValue")) {
 		offset = offsetof(Element, HighTemperature);
 		*format = 1;
-	} else if (strcmp(key, "tempHighType")==0){
+	} else if (!strcmp(key, "tempHighType")) {
 		offset = offsetof(Element, HighTemperatureTransition);
 		*format = 0;
-	} else if (strcmp(key, "tempLowValue")==0){
+	} else if (!strcmp(key, "tempLowValue")) {
 		offset = offsetof(Element, LowTemperature);
 		*format = 1;
-	} else if (strcmp(key, "tempLowType")==0){
+	} else if (!strcmp(key, "tempLowType")) {
 		offset = offsetof(Element, LowTemperatureTransition);
 		*format = 0;
 	} else {
@@ -185,14 +184,15 @@ int luacon_transition_getproperty(char * key, int * format)
 	}
 	return offset;
 }
-int luacon_transitionread(lua_State* l){
+
+int luacon_transitionread(lua_State* l)
+{
 	int format, offset;
 	int tempinteger;
 	float tempfloat;
 	int i;
-	char * key = mystrdup((char*)luaL_optstring(l, 2, ""));
+	const char * key = luaL_optstring(l, 2, "");
 	offset = luacon_transition_getproperty(key, &format);
-	free(key);
 
 	//Get Raw Index value for element
 	lua_pushstring(l, "value");
@@ -202,7 +202,7 @@ int luacon_transitionread(lua_State* l){
 
 	lua_pop(l, 1);
 
-	if(i < 0 || i >= PT_NUM || offset==-1)
+	if (i < 0 || i >= PT_NUM || offset==-1)
 	{
 		return luaL_error(l, "Invalid property");
 	}
@@ -219,24 +219,23 @@ int luacon_transitionread(lua_State* l){
 	}
 	return 1;
 }
-int luacon_transitionwrite(lua_State* l){
+
+int luacon_transitionwrite(lua_State* l)
+{
 	int format, offset;
-	int tempinteger;
-	float tempfloat;
 	int i;
-	char * key = mystrdup((char*)luaL_optstring(l, 2, ""));
+	const char * key = luaL_optstring(l, 2, "");
 	offset = luacon_transition_getproperty(key, &format);
-	free(key);
 
 	//Get Raw Index value for element
 	lua_pushstring(l, "value");
 	lua_rawget(l, 1);
 
-	i = lua_tointeger (l, lua_gettop(l));
+	i = lua_tointeger(l, lua_gettop(l));
 
 	lua_pop(l, 1);
 
-	if(i < 0 || i >= PT_NUM || offset==-1)
+	if (i < 0 || i >= PT_NUM || offset==-1)
 	{
 		return luaL_error(l, "Invalid property");
 	}
@@ -251,120 +250,121 @@ int luacon_transitionwrite(lua_State* l){
 	}
 	return 0;
 }
-int luacon_element_getproperty(char * key, int * format, unsigned int * modified_stuff)
+
+int luacon_element_getproperty(const char * key, int * format, unsigned int * modified_stuff)
 {
 	int offset;
-	if (strcmp(key, "name")==0){
+	if (!strcmp(key, "name")) {
 		offset = offsetof(Element, Name);
 		*format = 2;
 		if(modified_stuff)
 			*modified_stuff |= LUACON_EL_MODIFIED_MENUS;
 	}
-	else if (strcmp(key, "color")==0){
+	else if (!strcmp(key, "color")) {
+		offset = offsetof(Element, Colour);
+		*format = 0;
+		if (modified_stuff)
+			*modified_stuff |= LUACON_EL_MODIFIED_GRAPHICS | LUACON_EL_MODIFIED_MENUS;
+	}
+	else if (!strcmp(key, "colour")) {
 		offset = offsetof(Element, Colour);
 		*format = 0;
 		if (modified_stuff)
 			*modified_stuff |= LUACON_EL_MODIFIED_GRAPHICS;
 	}
-	else if (strcmp(key, "colour")==0){
-		offset = offsetof(Element, Colour);
-		*format = 0;
-		if (modified_stuff)
-			*modified_stuff |= LUACON_EL_MODIFIED_GRAPHICS;
-	}
-	else if (strcmp(key, "advection")==0){
+	else if (!strcmp(key, "advection")) {
 		offset = offsetof(Element, Advection);
 		*format = 1;
 	}
-	else if (strcmp(key, "airdrag")==0){
+	else if (!strcmp(key, "airdrag")) {
 		offset = offsetof(Element, AirDrag);
 		*format = 1;
 	}
-	else if (strcmp(key, "airloss")==0){
+	else if (!strcmp(key, "airloss")) {
 		offset = offsetof(Element, AirLoss);
 		*format = 1;
 	}
-	else if (strcmp(key, "loss")==0){
+	else if (!strcmp(key, "loss")) {
 		offset = offsetof(Element, Loss);
 		*format = 1;
 	}
-	else if (strcmp(key, "collision")==0){
+	else if (!strcmp(key, "collision")) {
 		offset = offsetof(Element, Collision);
 		*format = 1;
 	}
-	else if (strcmp(key, "gravity")==0){
+	else if (!strcmp(key, "gravity")) {
 		offset = offsetof(Element, Gravity);
 		*format = 1;
 	}
-	else if (strcmp(key, "diffusion")==0){
+	else if (!strcmp(key, "diffusion")) {
 		offset = offsetof(Element, Diffusion);
 		*format = 1;
 	}
-	else if (strcmp(key, "hotair")==0){
+	else if (!strcmp(key, "hotair")) {
 		offset = offsetof(Element, HotAir);
 		*format = 1;
 	}
-	else if (strcmp(key, "falldown")==0){
+	else if (!strcmp(key, "falldown")) {
 		offset = offsetof(Element, Falldown);
 		*format = 0;
 	}
-	else if (strcmp(key, "flammable")==0){
+	else if (!strcmp(key, "flammable")) {
 		offset = offsetof(Element, Flammable);
 		*format = 0;
 	}
-	else if (strcmp(key, "explosive")==0){
+	else if (!strcmp(key, "explosive")) {
 		offset = offsetof(Element, Explosive);
 		*format = 0;
 	}
-	else if (strcmp(key, "meltable")==0){
+	else if (!strcmp(key, "meltable")) {
 		offset = offsetof(Element, Meltable);
 		*format = 0;
 	}
-	else if (strcmp(key, "hardness")==0){
+	else if (!strcmp(key, "hardness")) {
 		offset = offsetof(Element, Hardness);
 		*format = 0;
 	}
-	else if (strcmp(key, "menu")==0){
+	else if (!strcmp(key, "menu")) {
 		offset = offsetof(Element, MenuVisible);
 		*format = 0;
 		if (modified_stuff)
 			*modified_stuff |= LUACON_EL_MODIFIED_MENUS;
 	}
-	else if (strcmp(key, "enabled")==0){
+	else if (!strcmp(key, "enabled")) {
 		offset = offsetof(Element, Enabled);
 		*format = 0;
 	}
-	else if (strcmp(key, "weight")==0){
+	else if (!strcmp(key, "weight")) {
 		offset = offsetof(Element, Weight);
 		*format = 0;
 		if (modified_stuff)
 			*modified_stuff |= LUACON_EL_MODIFIED_CANMOVE;
 	}
-	else if (strcmp(key, "menusection")==0){
+	else if (!strcmp(key, "menusection")) {
 		offset = offsetof(Element, MenuSection);
 		*format = 0;
 		if (modified_stuff)
 			*modified_stuff |= LUACON_EL_MODIFIED_MENUS;
 	}
-	else if (strcmp(key, "heat")==0){
+	else if (!strcmp(key, "heat")) {
 		offset = offsetof(Element, Temperature);
 		*format = 1;
 	}
-	else if (strcmp(key, "hconduct")==0){
+	else if (!strcmp(key, "hconduct")) {
 		offset = offsetof(Element, HeatConduct);
 		*format = 3;
 	}
-	else if (strcmp(key, "state")==0){
+	else if (!strcmp(key, "state")) {
 		offset = offsetof(Element, State);
 		*format = 3;
 	}
-	else if (strcmp(key, "properties")==0){
+	else if (!strcmp(key, "properties")) {
 		offset = offsetof(Element, Properties);
 		*format = 0;
 		if (modified_stuff)
 			*modified_stuff |= LUACON_EL_MODIFIED_GRAPHICS | LUACON_EL_MODIFIED_CANMOVE;
 	}
-	else if (strcmp(key, "description")==0){
+	else if (!strcmp(key, "description")) {
 		offset = offsetof(Element, Description);
 		*format = 2;
 		if(modified_stuff)
@@ -375,15 +375,16 @@ int luacon_element_getproperty(char * key, int * format, unsigned int * modified
 	}
 	return offset;
 }
-int luacon_elementread(lua_State* l){
+
+int luacon_elementread(lua_State* l)
+{
 	int format, offset;
 	char * tempstring;
 	int tempinteger;
 	float tempfloat;
 	int i;
-	char * key = mystrdup((char*)luaL_optstring(l, 2, ""));
+	const char * key = luaL_optstring(l, 2, "");
 	offset = luacon_element_getproperty(key, &format, NULL);
-	free(key);
 
 	//Get Raw Index value for element
 	lua_pushstring(l, "id");
@@ -393,7 +394,7 @@ int luacon_elementread(lua_State* l){
 
 	lua_pop(l, 1);
 
-	if(i < 0 || i >= PT_NUM || offset==-1)
+	if (i < 0 || i >= PT_NUM || offset==-1)
 	{
 		return luaL_error(l, "Invalid property");
 	}
@@ -418,14 +419,14 @@ int luacon_elementread(lua_State* l){
 	}
 	return 1;
 }
-int luacon_elementwrite(lua_State* l){
+
+int luacon_elementwrite(lua_State* l)
+{
 	int format, offset;
 	char * tempstring;
-	int tempinteger;
-	float tempfloat;
 	int i;
 	unsigned int modified_stuff = 0;
-	char * key = mystrdup((char*)luaL_optstring(l, 2, ""));
+	const char * key = luaL_optstring(l, 2, "");
 	offset = luacon_element_getproperty(key, &format, &modified_stuff);
 
 	//Get Raw Index value for element
@@ -436,9 +437,8 @@ int luacon_elementwrite(lua_State* l){
 
 	lua_pop(l, 1);
 
-	if(i < 0 || i >= PT_NUM || offset==-1)
+	if (i < 0 || i >= PT_NUM || offset==-1)
 	{
-		free(key);
 		return luaL_error(l, "Invalid property");
 	}
 	switch(format)
@@ -451,22 +451,15 @@ int luacon_elementwrite(lua_State* l){
 		break;
 	case 2:
 		tempstring = mystrdup((char*)luaL_optstring(l, 3, ""));
-		if(strcmp(key, "name")==0)
+		if (!strcmp(key, "name"))
 		{
 			int j = 0;
 			//Convert to upper case
 			for(j = 0; j < strlen(tempstring); j++)
 				tempstring[j] = toupper(tempstring[j]);
-			if(strlen(tempstring)>4)
-			{
-				free(tempstring);
-				free(key);
-				return luaL_error(l, "Name too long");
-			}
 			if(luacon_ci->GetParticleType(tempstring) != -1)
 			{
 				free(tempstring);
-				free(key);
 				return luaL_error(l, "Name in use");
 			}
 		}
@@ -486,9 +479,9 @@ int luacon_elementwrite(lua_State* l){
 		if (modified_stuff & LUACON_EL_MODIFIED_GRAPHICS)
 			memset(luacon_ren->graphicscache, 0, sizeof(gcache_item)*PT_NUM);
 	}
-	free(key);
 	return 0;
 }
+
 bool shortcuts = true;
 int luacon_keyevent(int key, int modifier, int event)
 {
@@ -517,7 +510,7 @@ int luacon_keyevent(int key, int modifier, int event)
 		{
 			if (!strcmp(luacon_geterror(), "Error: Script not responding"))
 			{
-				ui::Engine::Ref().LastTick(clock());
+				ui::Engine::Ref().LastTick(gettime());
 				for(j=i;j<=c-1;j++)
 				{
 					lua_rawgeti(l, -2, j+1);
@@ -528,8 +521,8 @@ int luacon_keyevent(int key, int modifier, int event)
 				c--;
 				i--;
 			}
-			lua_pop(l, 1);
 			luacon_ci->Log(CommandInterface::LogError, luacon_geterror());
+			lua_pop(l, 1);
 		}
 		else
 		{
@@ -541,6 +534,7 @@ int luacon_keyevent(int key, int modifier, int event)
 	lua_pop(l, 1);
 	return kycontinue && shortcuts;
 }
+
 int luacon_mouseevent(int mx, int my, int mb, int event, int mouse_wheel)
 {
 	int mpcontinue = 1, i, j, callret;
@@ -569,7 +563,7 @@ int luacon_mouseevent(int mx, int my, int mb, int event, int mouse_wheel)
 		{
 			if (!strcmp(luacon_geterror(), "Error: Script not responding"))
 			{
-				ui::Engine::Ref().LastTick(clock());
+				ui::Engine::Ref().LastTick(gettime());
 				for(j=i;j<=c-1;j++)
 				{
 					lua_rawgeti(l, -2, j+1);
@@ -593,12 +587,14 @@ int luacon_mouseevent(int mx, int my, int mb, int event, int mouse_wheel)
 	lua_pop(l, 1);
 	return mpcontinue;
 }
-int luacon_step(int mx, int my, std::string selectl, std::string selectr, std::string selectalt, int bsx, int bsy)
+
+int luacon_step(int mx, int my, std::string selectl, std::string selectr, std::string selectalt, std::string selectreplace, int bsx, int bsy)
 {
 	int i, j, callret;
 	lua_State* l=luacon_ci->l;
 	lua_pushinteger(l, bsy);
 	lua_pushinteger(l, bsx);
+	lua_pushstring(l, selectreplace.c_str());
 	lua_pushstring(l, selectalt.c_str());
 	lua_pushstring(l, selectr.c_str());
 	lua_pushstring(l, selectl.c_str());
@@ -609,6 +605,7 @@ int luacon_step(int mx, int my, std::string selectl, std::string selectr, std::s
 	lua_setfield(l, tptProperties, "selectedl");
 	lua_setfield(l, tptProperties, "selectedr");
 	lua_setfield(l, tptProperties, "selecteda");
+	lua_setfield(l, tptProperties, "selectedreplace");
 	lua_setfield(l, tptProperties, "brushx");
 	lua_setfield(l, tptProperties, "brushy");
 	lua_pushstring(l, "stepfunctions");
@@ -630,7 +627,7 @@ int luacon_step(int mx, int my, std::string selectl, std::string selectr, std::s
 		{
 			if (!strcmp(luacon_geterror(), "Error: Script not responding"))
 			{
-				ui::Engine::Ref().LastTick(clock());
+				ui::Engine::Ref().LastTick(gettime());
 				for(j=i;j<=c-1;j++)
 				{
 					lua_rawgeti(l, -2, j+1);
@@ -650,24 +647,27 @@ int luacon_step(int mx, int my, std::string selectl, std::string selectr, std::s
 }
 
 
-int luacon_eval(char *command){
-	ui::Engine::Ref().LastTick(clock());
+int luacon_eval(const char *command)
+{
+	ui::Engine::Ref().LastTick(gettime());
 	return luaL_dostring (luacon_ci->l, command);
 }
 
 void luacon_hook(lua_State * l, lua_Debug * ar)
 {
-	if(ar->event == LUA_HOOKCOUNT && clock()-ui::Engine::Ref().LastTick() > CLOCKS_PER_SEC*3)
+	if(ar->event == LUA_HOOKCOUNT && gettime()-ui::Engine::Ref().LastTick() > 3000)
 	{
 		if(ConfirmPrompt::Blocking("Script not responding", "The Lua script may have stopped responding. There might be an infinite loop. Press \"Stop\" to stop it", "Stop"))
 			luaL_error(l, "Error: Script not responding");
-		ui::Engine::Ref().LastTick(clock());
+		ui::Engine::Ref().LastTick(gettime());
 	}
 }
 
-int luaL_tostring (lua_State *L, int n) {
+int luaL_tostring (lua_State *L, int n)
+{
 	luaL_checkany(L, n);
-	switch (lua_type(L, n)) {
+	switch (lua_type(L, n))
+	{
 		case LUA_TNUMBER:
 			lua_pushstring(L, lua_tostring(L, n));
 			break;
@@ -686,9 +686,11 @@ int luaL_tostring (lua_State *L, int n) {
 	}
 	return 1;
 }
-char *luacon_geterror(){
+
+const char *luacon_geterror()
+{
 	luaL_tostring(luacon_ci->l, -1);
-	char* err = (char*)luaL_optstring(luacon_ci->l, -1, "failed to execute");
+	const char* err = luaL_optstring(luacon_ci->l, -1, "failed to execute");
 	lua_pop(luacon_ci->l, 1);
 	return err;
 }
@@ -701,10 +703,11 @@ int luatpt_test(lua_State* l)
 	printf("Test successful, got %d\n", testint);
 	return 0;
 }
+
 int luatpt_getelement(lua_State *l)
 {
 	int t;
-	if(lua_isnumber(l, 1))
+	if (lua_isnumber(l, 1))
 	{
 		t = luaL_optint(l, 1, 1);
 		if (t<0 || t>=PT_NUM)
@@ -714,7 +717,7 @@ int luatpt_getelement(lua_State *l)
 	else
 	{
 		luaL_checktype(l, 1, LUA_TSTRING);
-		char* name = (char*)luaL_optstring(l, 1, "");
+		const char* name = luaL_optstring(l, 1, "");
 		if ((t = luacon_ci->GetParticleType(name))==-1)
 			return luaL_error(l, "Unrecognised element '%s'", name);
 		lua_pushinteger(l, t);
@@ -725,7 +728,8 @@ int luatpt_getelement(lua_State *l)
 int luacon_elementReplacement(UPDATE_FUNC_ARGS)
 {
 	int retval = 0, callret;
-	if(lua_el_func[parts[i].type]){
+	if (lua_el_func[parts[i].type])
+	{
 		lua_rawgeti(luacon_ci->l, LUA_REGISTRYINDEX, lua_el_func[parts[i].type]);
 		lua_pushinteger(luacon_ci->l, i);
 		lua_pushinteger(luacon_ci->l, x);
@@ -823,7 +827,7 @@ int luatpt_graphics_func(lua_State *l)
 		int function;
 		lua_pushvalue(l, 1);
 		function = luaL_ref(l, LUA_REGISTRYINDEX);
-		if(element > 0 && element < PT_NUM)
+		if (element > 0 && element < PT_NUM)
 		{
 			lua_gr_func[element] = function;
 			luacon_ren->graphicscache[element].isready = 0;
@@ -837,7 +841,7 @@ int luatpt_graphics_func(lua_State *l)
 	else if (lua_isnil(l, 1))
 	{
 		int element = luaL_optint(l, 2, 0);
-		if(element > 0 && element < PT_NUM)
+		if (element > 0 && element < PT_NUM)
 		{
 			lua_gr_func[element] = 0;
 			luacon_ren->graphicscache[element].isready = 0;
@@ -859,18 +863,19 @@ int luatpt_error(lua_State* l)
 	ErrorMessage::Blocking("Error", errorMessage);
 	return 0;
 }
+
 int luatpt_drawtext(lua_State* l)
 {
-	char *string;
+	const char *string;
 	int textx, texty, textred, textgreen, textblue, textalpha;
 	textx = luaL_optint(l, 1, 0);
 	texty = luaL_optint(l, 2, 0);
-	string = (char*)luaL_optstring(l, 3, "");
+	string = luaL_optstring(l, 3, "");
 	textred = luaL_optint(l, 4, 255);
 	textgreen = luaL_optint(l, 5, 255);
 	textblue = luaL_optint(l, 6, 255);
 	textalpha = luaL_optint(l, 7, 255);
-	if (textx<0 || texty<0 || textx>=XRES+BARSIZE || texty>=YRES+MENUSIZE)
+	if (textx<0 || texty<0 || textx>=WINDOWW || texty>=WINDOWH)
 		return luaL_error(l, "Screen coordinates out of range (%d,%d)", textx, texty);
 	if (textred<0) textred = 0;
 	if (textred>255) textred = 255;
@@ -880,26 +885,25 @@ int luatpt_drawtext(lua_State* l)
 	if (textblue>255) textblue = 255;
 	if (textalpha<0) textalpha = 0;
 	if (textalpha>255) textalpha = 255;
-	if(luacon_g!=NULL){
-		luacon_g->drawtext(textx, texty, string, textred, textgreen, textblue, textalpha);
-		return 0;
-	}
-	return luaL_error(l, "Screen buffer does not exist");
+
+	luacon_g->drawtext(textx, texty, string, textred, textgreen, textblue, textalpha);
+	return 0;
 }
 
 int luatpt_create(lua_State* l)
 {
 	int x, y, retid, t = -1;
-	char * name;
 	x = abs(luaL_optint(l, 1, 0));
 	y = abs(luaL_optint(l, 2, 0));
-	if(x < XRES && y < YRES){
-		if(lua_isnumber(l, 3)){
+	if(x < XRES && y < YRES)
+	{
+		if(lua_isnumber(l, 3))
+		{
 			t = luaL_optint(l, 3, 0);
 			if (t<0 || t >= PT_NUM || !luacon_sim->elements[t].Enabled)
 				return luaL_error(l, "Unrecognised element number '%d'", t);
 		} else {
-			name = (char*)luaL_optstring(l, 3, "dust");
+			const char* name = luaL_optstring(l, 3, "dust");
 			if ((t = luacon_ci->GetParticleType(std::string(name))) == -1)
 				return luaL_error(l,"Unrecognised element '%s'", name);
 		}
@@ -913,13 +917,13 @@ int luatpt_create(lua_State* l)
 
 int luatpt_setpause(lua_State* l)
 {
-	int pausestate;
-	pausestate = luaL_optint(l, 1, -1);
-	if (pausestate == -1)
+	int acount = lua_gettop(l);
+	if (acount == 0)
 	{
 		lua_pushnumber(l, luacon_model->GetPaused());
 		return 1;
 	}
+	int pausestate = luaL_checkinteger(l, 1);
 	luacon_model->SetPaused(pausestate==0?0:1);
 	return 0;
 }
@@ -940,14 +944,13 @@ int luatpt_togglewater(lua_State* l)
 
 int luatpt_setconsole(lua_State* l)
 {
-	int consolestate;
-	consolestate = luaL_optint(l, 1, -1);
-	if (consolestate == -1)
+	int acount = lua_gettop(l);
+	if (acount == 0)
 	{
 		lua_pushnumber(l, luacon_ci->Window != ui::Engine::Ref().GetWindow());
 		return 1;
 	}
-	else if (consolestate)
+	if (luaL_checkinteger(l, 1))
 		luacon_controller->ShowConsole();
 	else
 		luacon_controller->HideConsole();
@@ -1096,9 +1099,9 @@ int luatpt_reset_spark(lua_State* l)
 	int i;
 	for (i=0; i<NPART; i++)
 	{
-		if (luacon_sim->parts[i].type==PT_SPRK)
+		if (luacon_sim->parts[i].type == PT_SPRK)
 		{
-			if (luacon_sim->parts[i].ctype >= 0 && luacon_sim->parts[i].ctype < PT_NUM)
+			if (luacon_sim->parts[i].ctype > 0 && luacon_sim->parts[i].ctype < PT_NUM && luacon_sim->elements[luacon_sim->parts[i].ctype].Enabled)
 			{
 				luacon_sim->parts[i].type = luacon_sim->parts[i].ctype;
 				luacon_sim->parts[i].life = luacon_sim->parts[i].ctype = 0;
@@ -1112,60 +1115,59 @@ int luatpt_reset_spark(lua_State* l)
 
 int luatpt_set_property(lua_State* l)
 {
-	char *prop, *name;
+	const char *prop, *name;
 	int r, i, x, y, w, h, t, nx, ny, partsel = 0, acount;
 	float f;
 	size_t offset;
 	acount = lua_gettop(l);
-	prop = (char*)luaL_optstring(l, 1, "");
-	if(lua_isnumber(l, 3))
-		i = abs(luaL_optint(l, 3, -1));
-	else
-		i = -1;
-	if(lua_isnumber(l, 4))
-		y = abs(luaL_optint(l, 4, -1));
-	else
-		y = -1;
-	if(lua_isnumber(l, 5))
-		w = abs(luaL_optint(l, 5, -1));
-	else
-		w = -1;
-	if(lua_isnumber(l, 6))
-		h = abs(luaL_optint(l, 6, -1));
-	else
-		h = -1;
+	prop = luaL_optstring(l, 1, "");
 
 	CommandInterface::FormatType format;
 	offset = luacon_ci->GetPropertyOffset(prop, format);
-	if(offset == -1)
+	if (offset == -1)
 		return luaL_error(l, "Invalid property '%s'", prop);
-	if(acount>2){
-		if(!lua_isnumber(l, acount) && lua_isstring(l, acount)){
-			name = (char*)luaL_optstring(l, acount, "none");
-			if((partsel = luacon_ci->GetParticleType(std::string(name)))==-1)
+
+	if (acount > 2)
+	{
+		if(!lua_isnumber(l, acount) && lua_isstring(l, acount))
+		{
+			name = luaL_optstring(l, acount, "none");
+			if ((partsel = luacon_ci->GetParticleType(std::string(name)))==-1)
 				return luaL_error(l, "Unrecognised element '%s'", name);
 		}
 	}
-	if(lua_isnumber(l, 2)){
-		if(format == CommandInterface::FormatFloat){
+	if (lua_isnumber(l, 2))
+	{
+		if (format == CommandInterface::FormatFloat)
 			f = luaL_optnumber(l, 2, 0);
-		} else {
+		else
 			t = luaL_optint(l, 2, 0);
-		}
+
 		if (!strcmp(prop,"type") && (t<0 || t>=PT_NUM || !luacon_sim->elements[t].Enabled))
 			return luaL_error(l, "Unrecognised element number '%d'", t);
-	} else {
-		name = (char*)luaL_optstring(l, 2, "dust");
-		if((t = luacon_ci->GetParticleType(std::string(name)))==-1)
+	}
+	else
+	{
+		name = luaL_checklstring(l, 2, NULL);
+		if ((t = luacon_ci->GetParticleType(std::string(name)))==-1)
 			return luaL_error(l, "Unrecognised element '%s'", name);
 	}
-	if(i == -1 || (w != -1 && h != -1)){
+	if (!lua_isnumber(l, 3) || acount >= 6)
+	{
 		// Got a region
-		if(i == -1){
+		if (acount < 6)
+		{
 			i = 0;
 			y = 0;
 			w = XRES;
 			h = YRES;
+		}
+		else
+		{
+			i = abs(luaL_checkint(l, 3));
+			y = abs(luaL_checkint(l, 4));
+			w = abs(luaL_checkint(l, 5));
+			h = abs(luaL_checkint(l, 6));
 		}
 		if (i>=XRES || y>=YRES)
 			return luaL_error(l, "Coordinates out of range (%d,%d)", i, y);
@@ -1183,24 +1185,27 @@ int luatpt_set_property(lua_State* l)
 				ny = (int)(parts[i].y + .5f);
 				if (nx >= x && nx < x+w && ny >= y && ny < y+h && (!partsel || partsel == parts[i].type))
 				{
-					if(format == CommandInterface::FormatFloat){
+					if(format == CommandInterface::FormatFloat)
 						*((float*)(((unsigned char*)&luacon_sim->parts[i])+offset)) = f;
-					} else {
+					else
 						*((int*)(((unsigned char*)&luacon_sim->parts[i])+offset)) = t;
-					}
 				}
 			}
 		}
-
-	} else {
+	}
+	else
+	{
+		i = abs(luaL_checkint(l, 3));
 		// Got coords or particle index
-		if(i != -1 && y != -1){
+		if (lua_isnumber(l, 4))
+		{
+			y = abs(luaL_checkint(l, 4));
 			if (i>=XRES || y>=YRES)
 				return luaL_error(l, "Coordinates out of range (%d,%d)", i, y);
 			r = luacon_sim->pmap[y][i];
-			if (!r || (partsel && partsel != luacon_sim->parts[r>>8].type))
+			if (!r || (partsel && partsel != (r&0xFF)))
 				r = luacon_sim->photons[y][i];
-			if (!r || (partsel && partsel != luacon_sim->parts[r>>8].type))
+			if (!r || (partsel && partsel != (r&0xFF)))
 				return 0;
 			i = r>>8;
 		}
@@ -1210,11 +1215,11 @@ int luatpt_set_property(lua_State* l)
 			return 0;
 		if (partsel && partsel != luacon_sim->parts[i].type)
 			return 0;
-		if(format == CommandInterface::FormatFloat){
+
+		if(format == CommandInterface::FormatFloat)
 			*((float*)(((unsigned char*)&luacon_sim->parts[i])+offset)) = f;
-		} else {
+		else
 			*((int*)(((unsigned char*)&luacon_sim->parts[i])+offset)) = t;
-		}
 	}
 	return 0;
 }
@@ -1232,7 +1237,7 @@ int luatpt_set_wallmap(lua_State* l)
 	height = abs(luaL_optint(l, 4, YRES/CELL));
 	value = (float)luaL_optint(l, acount, 0);
 
-	if(acount==5)	//Draw rect
+	if (acount == 5)	//Draw rect
 	{
 		if(x1 > (XRES/CELL))
 			x1 = (XRES/CELL);
@@ -1336,17 +1341,19 @@ int luatpt_get_elecmap(lua_State* l)
 int luatpt_get_property(lua_State* l)
 {
 	int i, r, y;
-	char *prop;
-	prop = (char*)luaL_optstring(l, 1, "");
+	const char *prop;
+	prop = luaL_optstring(l, 1, ""); //x coord or particle index, depending on arguments
 	i = luaL_optint(l, 2, 0);
 	y = luaL_optint(l, 3, -1);
-	if(y!=-1 && y < YRES && y >= 0 && i < XRES && i >= 0){
+	if (y!=-1 && y < YRES && y >= 0 && i < XRES && i >= 0)
+	{
 		r = luacon_sim->pmap[y][i];
 		if (!r)
 			r = luacon_sim->photons[y][i];
 		if (!r)
 		{
-			if (strcmp(prop,"type")==0){
+			if (!strcmp(prop,"type"))
+			{
 				lua_pushinteger(l, 0);
 				return 1;
 			}
@@ -1360,61 +1367,34 @@ int luatpt_get_property(lua_State* l)
 		return luaL_error(l, "Invalid particle ID '%d'", i);
 	if (luacon_sim->parts[i].type)
 	{
-		//TODO: Use particle_getproperty
-		if (strcmp(prop,"type")==0){
-			lua_pushinteger(l, luacon_sim->parts[i].type);
-			return 1;
+		int format, tempinteger;
+		float tempfloat;
+		int offset = luacon_particle_getproperty(prop, &format);
+
+		if (offset == -1)
+		{
+			if (!strcmp(prop,"id"))
+			{
+				lua_pushnumber(l, i);
+				return 1;
+			}
+			else
+				return luaL_error(l, "Invalid property");
 		}
-		if (strcmp(prop,"life")==0){
-			lua_pushinteger(l, luacon_sim->parts[i].life);
-			return 1;
+		switch(format)
+		{
+			case 0:
+				tempinteger = *((int*)(((unsigned char*)&luacon_sim->parts[i])+offset));
+				lua_pushnumber(l, tempinteger);
+				break;
+			case 1:
+				tempfloat = *((float*)(((unsigned char*)&luacon_sim->parts[i])+offset));
+				lua_pushnumber(l, tempfloat);
 		}
-		if (strcmp(prop,"ctype")==0){
-			lua_pushinteger(l, luacon_sim->parts[i].ctype);
-			return 1;
-		}
-		if (strcmp(prop,"temp")==0){
-			lua_pushnumber(l, luacon_sim->parts[i].temp);
-			return 1;
-		}
-		if (strcmp(prop,"tmp")==0){
-			lua_pushinteger(l, luacon_sim->parts[i].tmp);
-			return 1;
-		}
-		if (strcmp(prop,"tmp2")==0){
-			lua_pushinteger(l, luacon_sim->parts[i].tmp2);
-			return 1;
-		}
-		if (strcmp(prop,"vy")==0){
-			lua_pushnumber(l, (double)luacon_sim->parts[i].vy);
-			return 1;
-		}
-		if (strcmp(prop,"vx")==0){
-			lua_pushnumber(l, (double)luacon_sim->parts[i].vx);
-			return 1;
-		}
-		if (strcmp(prop,"x")==0){
-			lua_pushnumber(l, luacon_sim->parts[i].x);
-			return 1;
-		}
-		if (strcmp(prop,"y")==0){
-			lua_pushnumber(l, luacon_sim->parts[i].y);
-			return 1;
-		}
-		if (strcmp(prop,"dcolour")==0){
-			lua_pushinteger(l, luacon_sim->parts[i].dcolour);
-			return 1;
-		}
-		if (strcmp(prop,"dcolor")==0){
-			lua_pushinteger(l, luacon_sim->parts[i].dcolour);
-			return 1;
-		}
-		if (strcmp(prop,"id")==0){
-			lua_pushnumber(l, i);
-			return 1;
-		}
+		return 1;
 	}
-	else if (strcmp(prop,"type")==0){
+	else if (!strcmp(prop,"type"))
+	{
 		lua_pushinteger(l, 0);
 		return 1;
 	}
@@ -1431,16 +1411,16 @@ int luatpt_drawpixel(lua_State* l)
 	b = luaL_optint(l, 5, 255);
 	a = luaL_optint(l, 6, 255);
 
-	if (x<0 || y<0 || x>=XRES+BARSIZE || y>=YRES+MENUSIZE)
+	if (x<0 || y<0 || x>=WINDOWW || y>=WINDOWH)
 		return luaL_error(l, "Screen coordinates out of range (%d,%d)", x, y);
 	if (r<0) r = 0;
-	if (r>255) r = 255;
+	else if (r>255) r = 255;
 	if (g<0) g = 0;
-	if (g>255) g = 255;
+	else if (g>255) g = 255;
 	if (b<0) b = 0;
-	if (b>255) b = 255;
+	else if (b>255) b = 255;
 	if (a<0) a = 0;
-	if (a>255) a = 255;
+	else if (a>255) a = 255;
 	luacon_g->blendpixel(x, y, r, g, b, a);
 	return 0;
 }
@@ -1457,20 +1437,20 @@ int luatpt_drawrect(lua_State* l)
 	b = luaL_optint(l, 7, 255);
 	a = luaL_optint(l, 8, 255);
 
-	if (x<0 || y<0 || x>=XRES+BARSIZE || y>=YRES+MENUSIZE)
+	if (x<0 || y<0 || x>=WINDOWW || y>=WINDOWH)
 		return luaL_error(l, "Screen coordinates out of range (%d,%d)", x, y);
-	if(x+w > XRES+BARSIZE)
-		w = XRES+BARSIZE-x;
-	if(y+h > YRES+MENUSIZE)
-		h = YRES+MENUSIZE-y;
+	if(x+w > WINDOWW)
+		w = WINDOWW-x;
+	if(y+h > WINDOWH)
+		h = WINDOWH-y;
 	if (r<0) r = 0;
-	if (r>255) r = 255;
+	else if (r>255) r = 255;
 	if (g<0) g = 0;
-	if (g>255) g = 255;
+	else if (g>255) g = 255;
 	if (b<0) b = 0;
-	if (b>255) b = 255;
+	else if (b>255) b = 255;
 	if (a<0) a = 0;
-	if (a>255) a = 255;
+	else if (a>255) a = 255;
 	luacon_g->drawrect(x, y, w, h, r, g, b, a);
 	return 0;
 }
@@ -1487,20 +1467,20 @@ int luatpt_fillrect(lua_State* l)
 	b = luaL_optint(l, 7, 255);
 	a = luaL_optint(l, 8, 255);
 
-	if (x<0 || y<0 || x>=XRES+BARSIZE || y>=YRES+MENUSIZE)
+	if (x<0 || y<0 || x>=WINDOWW || y>=WINDOWH)
 		return luaL_error(l, "Screen coordinates out of range (%d,%d)", x, y);
-	if(x+w > XRES+BARSIZE)
-		w = XRES+BARSIZE-x;
-	if(y+h > YRES+MENUSIZE)
-		h = YRES+MENUSIZE-y;
+	if(x+w > WINDOWW)
+		w = WINDOWW-x;
+	if(y+h > WINDOWH)
+		h = WINDOWH-y;
 	if (r<0) r = 0;
-	if (r>255) r = 255;
+	else if (r>255) r = 255;
 	if (g<0) g = 0;
-	if (g>255) g = 255;
+	else if (g>255) g = 255;
 	if (b<0) b = 0;
-	if (b>255) b = 255;
+	else if (b>255) b = 255;
 	if (a<0) a = 0;
-	if (a>255) a = 255;
+	else if (a>255) a = 255;
 	luacon_g->fillrect(x, y, w, h, r, g, b, a);
 	return 0;
 }
@@ -1519,22 +1499,21 @@ int luatpt_drawline(lua_State* l)
 
 	//Don't need to check coordinates, as they are checked in blendpixel
 	if (r<0) r = 0;
-	if (r>255) r = 255;
+	else if (r>255) r = 255;
 	if (g<0) g = 0;
-	if (g>255) g = 255;
+	else if (g>255) g = 255;
 	if (b<0) b = 0;
-	if (b>255) b = 255;
+	else if (b>255) b = 255;
 	if (a<0) a = 0;
-	if (a>255) a = 255;
+	else if (a>255) a = 255;
 	luacon_g->draw_line(x1, y1, x2, y2, r, g, b, a);
 	return 0;
 }
 
 int luatpt_textwidth(lua_State* l)
 {
-	char * string;
 	int strwidth = 0;
-	string = (char*)luaL_optstring(l, 1, "");
+	const char* string = luaL_optstring(l, 1, "");
 	strwidth = Graphics::textwidth(string);
 	lua_pushinteger(l, strwidth);
 	return 1;
@@ -1542,7 +1521,8 @@ int luatpt_textwidth(lua_State* l)
 
 int luatpt_get_name(lua_State* l)
 {
-	if (luacon_model->GetUser().ID){
+	if (luacon_model->GetUser().ID)
+	{
 		lua_pushstring(l, luacon_model->GetUser().Username.c_str());
 		return 1;
 	}
@@ -1552,12 +1532,13 @@ int luatpt_get_name(lua_State* l)
 
 int luatpt_set_shortcuts(lua_State* l)
 {
-	int shortcut = luaL_optint(l, 1, -1);
-	if (shortcut == -1)
+	int acount = lua_gettop(l);
+	if (acount == 0)
 	{
 		lua_pushnumber(l, shortcuts);
 		return 1;
 	}
+	int shortcut = luaL_checkinteger(l, 1);
 	shortcuts = shortcut?true:false;
 	return 0;
 }
@@ -1567,12 +1548,14 @@ int luatpt_delete(lua_State* l)
 	int arg1, arg2;
 	arg1 = abs(luaL_optint(l, 1, 0));
 	arg2 = luaL_optint(l, 2, -1);
-	if(arg2 == -1 && arg1 < NPART){
+	if (arg2 == -1 && arg1 < NPART)
+	{
 		luacon_sim->kill_part(arg1);
 		return 0;
 	}
 	arg2 = abs(arg2);
-	if(arg2 < YRES && arg1 < XRES){
+	if(arg2 < YRES && arg1 < XRES)
+	{
 		luacon_sim->delete_part(arg1, arg2);
 		return 0;
 	}
@@ -1581,11 +1564,11 @@ int luatpt_delete(lua_State* l)
 
 int luatpt_register_step(lua_State* l)
 {
-	if(lua_isfunction(l, 1))
+	if (lua_isfunction(l, 1))
 	{
 		lua_pushstring(l, "stepfunctions");
 		lua_rawget(l, LUA_REGISTRYINDEX);
-		if(!lua_istable(l, -1))
+		if (!lua_istable(l, -1))
 		{
 			lua_pop(l, 1);
 			lua_newtable(l);
@@ -1599,13 +1582,14 @@ int luatpt_register_step(lua_State* l)
 	}
 	return 0;
 }
+
 int luatpt_unregister_step(lua_State* l)
 {
-	if(lua_isfunction(l, 1))
+	if (lua_isfunction(l, 1))
 	{
 		lua_pushstring(l, "stepfunctions");
 		lua_rawget(l, LUA_REGISTRYINDEX);
-		if(!lua_istable(l, -1))
+		if (!lua_istable(l, -1))
 		{
 			lua_pop(l, -1);
 			lua_newtable(l);
@@ -1616,10 +1600,10 @@ int luatpt_unregister_step(lua_State* l)
 		int c = lua_objlen(l, -1);
 		int d = 0;
 		int i = 0;
-		for(i=1;i<=c;i++)
+		for (i=1;i<=c;i++)
 		{
 			lua_rawgeti(l, -1, i+d);
-			if(lua_equal(l, 1, -1))
+			if (lua_equal(l, 1, -1))
 			{
 				lua_pop(l, 1);
 				d++;
@@ -1631,13 +1615,14 @@ int luatpt_unregister_step(lua_State* l)
 	}
 	return 0;
 }
+
 int luatpt_register_keypress(lua_State* l)
 {
-	if(lua_isfunction(l, 1))
+	if (lua_isfunction(l, 1))
 	{
 		lua_pushstring(l, "keyfunctions");
 		lua_rawget(l, LUA_REGISTRYINDEX);
-		if(!lua_istable(l, -1))
+		if (!lua_istable(l, -1))
 		{
 			lua_pop(l, 1);
 			lua_newtable(l);
@@ -1651,13 +1636,14 @@ int luatpt_register_keypress(lua_State* l)
 	}
 	return 0;
 }
+
 int luatpt_unregister_keypress(lua_State* l)
 {
-	if(lua_isfunction(l, 1))
+	if (lua_isfunction(l, 1))
 	{
 		lua_pushstring(l, "keyfunctions");
 		lua_rawget(l, LUA_REGISTRYINDEX);
-		if(!lua_istable(l, -1))
+		if (!lua_istable(l, -1))
 		{
 			lua_pop(l, 1);
 			lua_newtable(l);
@@ -1668,10 +1654,10 @@ int luatpt_unregister_keypress(lua_State* l)
 		int c = lua_objlen(l, -1);
 		int d = 0;
 		int i = 0;
-		for(i=1;i<=c;i++)
+		for (i=1;i<=c;i++)
 		{
 			lua_rawgeti(l, -1, i+d);
-			if(lua_equal(l, 1, -1))
+			if (lua_equal(l, 1, -1))
 			{
 				lua_pop(l, 1);
 				d++;
@@ -1683,13 +1669,14 @@ int luatpt_unregister_keypress(lua_State* l)
 	}
 	return 0;
 }
+
 int luatpt_register_mouseclick(lua_State* l)
 {
-	if(lua_isfunction(l, 1))
+	if (lua_isfunction(l, 1))
 	{
 		lua_pushstring(l, "mousefunctions");
 		lua_rawget(l, LUA_REGISTRYINDEX);
-		if(!lua_istable(l, -1))
+		if (!lua_istable(l, -1))
 		{
 			lua_pop(l, 1);
 			lua_newtable(l);
@@ -1703,13 +1690,14 @@ int luatpt_register_mouseclick(lua_State* l)
 	}
 	return 0;
 }
+
 int luatpt_unregister_mouseclick(lua_State* l)
 {
-	if(lua_isfunction(l, 1))
+	if (lua_isfunction(l, 1))
 	{
 		lua_pushstring(l, "mousefunctions");
 		lua_rawget(l, LUA_REGISTRYINDEX);
-		if(!lua_istable(l, -1))
+		if (!lua_istable(l, -1))
 		{
 			lua_pop(l, 1);
 			lua_newtable(l);
@@ -1720,10 +1708,10 @@ int luatpt_unregister_mouseclick(lua_State* l)
 		int c = lua_objlen(l, -1);
 		int d = 0;
 		int i = 0;
-		for(i=1;i<=c;i++)
+		for (i=1;i<=c;i++)
 		{
 			lua_rawgeti(l, -1, i+d);
-			if(lua_equal(l, 1, -1))
+			if (lua_equal(l, 1, -1))
 			{
 				lua_pop(l, 1);
 				d++;
@@ -1735,6 +1723,7 @@ int luatpt_unregister_mouseclick(lua_State* l)
 	}
 	return 0;
 }
+
 int luatpt_input(lua_State* l)
 {
 	std::string prompt, title, result, shadow, text;
@@ -1748,6 +1737,7 @@ int luatpt_input(lua_State* l)
 	lua_pushstring(l, result.c_str());
 	return 1;
 }
+
 int luatpt_message_box(lua_State* l)
 {
 	std::string title = std::string(luaL_optstring(l, 1, "Title"));
@@ -1756,28 +1746,31 @@ int luatpt_message_box(lua_State* l)
 	new InformationMessage(title, message, large);
 	return 0;
 }
+
 int luatpt_get_numOfParts(lua_State* l)
 {
 	lua_pushinteger(l, luacon_sim->NUM_PARTS);
 	return 1;
 }
+
 int luatpt_start_getPartIndex(lua_State* l)
 {
 	getPartIndex_curIdx = -1;
 	return 1;
 }
+
 int luatpt_next_getPartIndex(lua_State* l)
 {
 	while(1)
 	{
 		getPartIndex_curIdx++;
-		if(getPartIndex_curIdx >= NPART)
+		if (getPartIndex_curIdx >= NPART)
 		{
 			getPartIndex_curIdx = 0;
 			lua_pushboolean(l, 0);
 			return 1;
 		}
-		if(luacon_sim->parts[getPartIndex_curIdx].type)
+		if (luacon_sim->parts[getPartIndex_curIdx].type)
 			break;
 
 	}
@@ -1785,6 +1778,7 @@ int luatpt_next_getPartIndex(lua_State* l)
 	lua_pushboolean(l, 1);
 	return 1;
 }
+
 int luatpt_getPartIndex(lua_State* l)
 {
 	if(getPartIndex_curIdx < 0)
@@ -1795,73 +1789,79 @@ int luatpt_getPartIndex(lua_State* l)
 	lua_pushinteger(l, getPartIndex_curIdx);
 	return 1;
 }
+
 int luatpt_hud(lua_State* l)
 {
-	int hudstate = luaL_optint(l, 1, -1);
-	if (hudstate == -1)
+	int acount = lua_gettop(l);
+	if (acount == 0)
 	{
 		lua_pushinteger(l, luacon_controller->GetHudEnable());
 		return 1;
 	}
-	else if (hudstate)
+	int hudstate = luaL_checkint(l, 1);
+	if (hudstate)
 		luacon_controller->SetHudEnable(1);
 	else
 		luacon_controller->SetHudEnable(0);
 	return 0;
 }
+
 int luatpt_gravity(lua_State* l)
 {
-	int gravstate;
-	gravstate = luaL_optint(l, 1, -1);
-	if (gravstate == -1)
+	int acount = lua_gettop(l);
+	if (acount == 0)
 	{
 		lua_pushinteger(l, luacon_sim->grav->ngrav_enable);
 		return 1;
 	}
-	else if(gravstate)
+	int gravstate = luaL_checkint(l, 1);
+	if(gravstate)
 		luacon_sim->grav->start_grav_async();
 	else
 		luacon_sim->grav->stop_grav_async();
 	luacon_model->UpdateQuickOptions();
 	return 0;
 }
+
 int luatpt_airheat(lua_State* l)
 {
-	int aheatstate;
-	aheatstate = luaL_optint(l, 1, -1);
-	if (aheatstate == -1)
+	int acount = lua_gettop(l);
+	if (acount == 0)
 	{
 		lua_pushinteger(l, luacon_sim->aheat_enable);
 		return 1;
 	}
+	int aheatstate = luaL_checkint(l, 1);
 	luacon_sim->aheat_enable = (aheatstate==0?0:1);
 	luacon_model->UpdateQuickOptions();
 	return 0;
 }
+
 int luatpt_active_menu(lua_State* l)
 {
-	int menuid;
-	menuid = luaL_optint(l, 1, -1);
-	if (menuid == -1)
+	int acount = lua_gettop(l);
+	if (acount == 0)
 	{
 		lua_pushinteger(l, luacon_model->GetActiveMenu());
 		return 1;
 	}
+	int menuid = luaL_checkint(l, 1);
 	if (menuid >= 0 && menuid < SC_TOTAL)
 		luacon_controller->SetActiveMenu(menuid);
 	else
 		return luaL_error(l, "Invalid menu");
 	return 0;
 }
+
 int luatpt_decorations_enable(lua_State* l)
 {
-	int decostate;
-	decostate = luaL_optint(l, 1, -1);
-	if (decostate == -1)
+	int acount = lua_gettop(l);
+	if (acount == 0)
 	{
 		lua_pushinteger(l, luacon_model->GetDecoration());
 		return 1;
 	}
+	int decostate = luaL_checkint(l, 1);
 	luacon_model->SetDecoration(decostate==0?false:true);
 	luacon_model->UpdateQuickOptions();
 	return 0;
@@ -1869,13 +1869,13 @@ int luatpt_decorations_enable(lua_State* l)
 
 int luatpt_heat(lua_State* l)
 {
-	int heatstate;
-	heatstate = luaL_optint(l, 1, -1);
-	if (heatstate == -1)
+	int acount = lua_gettop(l);
+	if (acount == 0)
 	{
 		lua_pushinteger(l, !luacon_sim->legacy_enable);
 		return 1;
 	}
+	int heatstate = luaL_checkint(l, 1);
 	luacon_sim->legacy_enable = (heatstate==1?0:1);
 	return 0;
 }
@@ -1899,26 +1899,31 @@ int luatpt_setfire(lua_State* l)
 	luacon_model->GetRenderer()->prepare_alpha(firesize, fireintensity);
 	return 0;
 }
+
 int luatpt_setdebug(lua_State* l)
 {
 	return luaL_error(l, "setdebug: Deprecated"); //TODO: maybe use the debugInfo thing in GameController to implement this
 }
+
 int luatpt_setfpscap(lua_State* l)
 {
-	int fpscap = luaL_optint(l, 1, -1);
-	if (fpscap == -1)
+	int acount = lua_gettop(l);
+	if (acount == 0)
 	{
 		lua_pushinteger(l, ui::Engine::Ref().FpsLimit);
 		return 1;
 	}
-	else if (fpscap < 2)
+	int fpscap = luaL_checkint(l, 1);
+	if (fpscap < 2)
 		return luaL_error(l, "fps cap too small");
 	ui::Engine::Ref().FpsLimit = fpscap;
 	return 0;
 }
+
 int luatpt_getscript(lua_State* l)
 {
-	char *filedata = NULL, *fileuri = NULL, *filename = NULL, *lastError = NULL, *luacommand = NULL;
+	char *filedata = NULL, *fileuri = NULL, *filename = NULL, *luacommand = NULL;
+	const char *lastError = NULL;
 	std::string fileauthor = "", fileid = "";
 	int len, ret,run_script;
 	FILE * outputfile;
@@ -1999,13 +2004,17 @@ fin:
 	if(luacommand) delete[] luacommand;
 	luacommand = NULL;
 
-	if(lastError) return luaL_error(l, lastError);
+	if(lastError)
+	{
+		return luaL_error(l, lastError);
+	}
 	return 0;
 }
 
 int luatpt_setwindowsize(lua_State* l)
 {
-	int scale = luaL_optint(l,1,1), kiosk = luaL_optint(l,2,0);
+	int scale = luaL_optint(l,1,1);
+	int kiosk = luaL_optint(l,2,0);
 	if (scale!=2) scale = 1;
 	if (kiosk!=1) kiosk = 0;
 	ui::Engine::Ref().SetScale(scale);
@@ -2018,22 +2027,56 @@ int screenshotIndex = 0;
 int luatpt_screenshot(lua_State* l)
 {
 	int captureUI = luaL_optint(l, 1, 0);
+	int fileType = luaL_optint(l, 2, 0);
 	std::vector<char> data;
 	if(captureUI)
 	{
 		VideoBuffer screenshot(ui::Engine::Ref().g->DumpFrame());
-		data = format::VideoBufferToPNG(screenshot);
+		if(fileType == 1) {
+			data = format::VideoBufferToBMP(screenshot);
+		} else if(fileType == 2) {
+			data = format::VideoBufferToPPM(screenshot);
+		} else {
+			data = format::VideoBufferToPNG(screenshot);
+		}
 	}
 	else
 	{
 		VideoBuffer screenshot(luacon_ren->DumpFrame());
-		data = format::VideoBufferToPNG(screenshot);
+		if(fileType == 1) {
+			data = format::VideoBufferToBMP(screenshot);
+		} else if(fileType == 2) {
+			data = format::VideoBufferToPPM(screenshot);
+		} else {
+			data = format::VideoBufferToPNG(screenshot);
+		}
 	}
 	std::stringstream filename;
 	filename << "screenshot_";
 	filename << std::setfill('0') << std::setw(6) << (screenshotIndex++);
-	filename << ".png";
+	if(fileType == 1) {
+		filename << ".bmp";
+	} else if(fileType == 2) {
+		filename << ".ppm";
+	} else {
+		filename << ".png";
+	}
 	Client::Ref().WriteFile(data, filename.str());
+	lua_pushstring(l, filename.str().c_str());
+	return 1;
+}
+
+int luatpt_getclip (lua_State* l)
+{
+	lua_pushstring(l, ClipboardPull().c_str());
+	return 1; 
+}
+
+int luatpt_setclip (lua_State* l)
+{
+	luaL_checktype(l, 1, LUA_TSTRING);
+	ClipboardPush(luaL_optstring(l, 1, ""));
 	return 0;
 }
+
 #endif

@@ -139,7 +139,9 @@ int Element_RVRS::update(UPDATE_FUNC_ARGS)
 				ct = PT_BOLT;
 				break;
 			case PT_GRVT:
-				sim->flood_prop(x,y,offsetof(Particle,life),&life,StructProperty::Integer);
+				PropertyValue value;
+				value.Integer = life;
+				sim->flood_prop(x,y,offsetof(Particle,life),value,StructProperty::Integer);
 				break;
 		}
 		if (ct)

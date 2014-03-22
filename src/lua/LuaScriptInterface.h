@@ -86,7 +86,9 @@ class LuaScriptInterface: public CommandInterface
 	static int simulation_resetPressure(lua_State * l);
 	static int simulation_saveStamp(lua_State * l);
 	static int simulation_loadStamp(lua_State * l);
+	static int simulation_deleteStamp(lua_State * l);
 	static int simulation_loadSave(lua_State * l);
+	static int simulation_reloadSave(lua_State * l);
 	static int simulation_getSaveID(lua_State * l);
 	static int simulation_adjustCoords(lua_State * l);
 	static int simulation_prettyPowders(lua_State * l);

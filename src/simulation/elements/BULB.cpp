@@ -72,7 +72,11 @@ int Element_BULB::update(UPDATE_FUNC_ARGS)
 				if (!r)
 					continue;
 				if (parts[r>>8].type == PT_SPRK && parts[r>>8].life == 3)
-					sim->flood_prop(x,y,offsetof(Particle,life),&newlife,StructProperty::Integer);
+				{
+					PropertyValue value;
+					value.Integer = newlife;
+					sim->flood_prop(x,y,offsetof(Particle,life),value,StructProperty::Integer);
+				}
 			}
 	return 0;
 }
