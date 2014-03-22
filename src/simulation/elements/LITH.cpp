@@ -130,7 +130,7 @@ int Element_LITH::graphics(GRAPHICS_FUNC_ARGS)
         *firea = restrict_flt(cpart->tmp * 2.0f, 0.0f, 255.0f);
         *pixel_mode |= FIRE_ADD;
     }
-    return 1;
+    return 0;
 }
 
 Element_LITH::~Element_LITH() {}
