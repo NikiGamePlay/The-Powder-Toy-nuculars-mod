@@ -182,6 +182,7 @@ AnyType TPTScriptInterface::eval(std::deque<std::string> * words)
 	case TypeString:
 		return StringType(word);
 	}
+	return StringType(word);
 }
 
 std::string TPTScriptInterface::FormatCommand(std::string command)

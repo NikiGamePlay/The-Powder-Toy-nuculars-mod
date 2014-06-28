@@ -1997,7 +1997,7 @@ int LuaScriptInterface::elements_loadDefault(lua_State * l)
 	luacon_model->BuildMenus();
 	luacon_sim->init_can_move();
 	std::fill(luacon_ren->graphicscache, luacon_ren->graphicscache+PT_NUM, gcache_item());
-
+	return 0;
 }
 
 int LuaScriptInterface::elements_allocate(lua_State * l)
@@ -2294,6 +2294,7 @@ int LuaScriptInterface::elements_property(lua_State * l)
 		}
 		else
 			return luaL_error(l, "Invalid element property");
+		return 0;
 	}
 	else
 	{
@@ -2391,6 +2392,8 @@ void LuaScriptInterface::initGraphicsAPI()
 		{"fillRect", graphics_fillRect},
 		{"drawCircle", graphics_drawCircle},
 		{"fillCircle", graphics_fillCircle},
+		{"getColors", graphics_getColors},
+		{"getHexColor", graphics_getHexColor},
 		{NULL, NULL}
 	};
 	luaL_register(l, "graphics", graphicsAPIMethods);
@@ -2555,6 +2558,36 @@ int LuaScriptInterface::graphics_fillCircle(lua_State * l)
 
 	luacon_g->fillcircle(x, y, abs(rx), abs(ry), r, g, b, a);
 	return 0;
+}
+
+int LuaScriptInterface::graphics_getColors(lua_State * l)
+{
+	unsigned int color = lua_tointeger(l, 1);
+
+	int a = color >> 24;
+	int r = (color >> 16)&0xFF;
+	int g = (color >> 8)&0xFF;
+	int b = color&0xFF;
+
+	lua_pushinteger(l, r);
+	lua_pushinteger(l, g);
+	lua_pushinteger(l, b);
+	lua_pushinteger(l, a);
+	return 4;
+}
+
+int LuaScriptInterface::graphics_getHexColor(lua_State * l)
+{
+	int r = lua_tointeger(l, 1);
+	int g = lua_tointeger(l, 2);
+	int b = lua_tointeger(l, 3);
+	int a = 0;
+	if (lua_gettop(l) >= 4)
+		a = lua_tointeger(l, 4);
+	unsigned int color = (a<<24) + (r<<16) + (g<<8) + b;
+
+	lua_pushinteger(l, color);
+	return 1;
 }
 
 void LuaScriptInterface::initFileSystemAPI()
@@ -2799,14 +2832,19 @@ bool LuaScriptInterface::OnBrushChanged(int brushType, int rx, int ry)
 
 bool LuaScriptInterface::OnActiveToolChanged(int toolSelection, Tool * tool)
 {
+	std::string identifier;
+	if (tool)
+		identifier = tool->GetIdentifier();
+	else
+		identifier = "";
 	if (toolSelection == 0)
-		luacon_selectedl = tool->GetIdentifier();
+		luacon_selectedl = identifier;
 	else if (toolSelection == 1)
-		luacon_selectedr = tool->GetIdentifier();
+		luacon_selectedr = identifier;
 	else if (toolSelection == 2)
-		luacon_selectedalt = tool->GetIdentifier();
+		luacon_selectedalt = identifier;
 	else if (toolSelection == 3)
-		luacon_selectedreplace = tool->GetIdentifier();
+		luacon_selectedreplace = identifier;
 	return true;
 }
 
@@ -2963,202 +3001,200 @@ int strlcmp(const char* a, const char* b, int len)
 
 std::string highlight(std::string command)
 {
-	std::string result = "";
+#define CMP(X) (!strlcmp(wstart, X, len))
+	std::stringstream result;
 	int pos = 0;
 	int len = command.length();
-	char* raw = new char[len+1];
+	const char *raw = command.c_str();
 	char c;
-	std::copy(command.begin(), command.end(), raw);
-	raw[len] = 0;
 	while(c = raw[pos])
 	{
-		if((c>='A' && c<='Z') || (c>='a' && c<='z') || c=='_')
+		if((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_')
 		{
 			int len = 0;
 			char w;
 			const char* wstart = raw+pos;
-			while((w = wstart[len]) && ((w>='A' && w<='Z') || (w>='a' && w<='z') || (w>='0' && w<='9') || w=='_'))
+			while((w = wstart[len]) && ((w >= 'A' && w <= 'Z') || (w >= 'a' && w <= 'z') || (w >= '0' && w <= '9') || w == '_'))
 				len++;
-			if(!strlcmp(wstart,"and",len) || !strlcmp(wstart,"break",len) || !strlcmp(wstart,"do",len) ||
-			   !strlcmp(wstart,"else",len) || !strlcmp(wstart,"elseif",len) || !strlcmp(wstart,"end",len) ||
-			   !strlcmp(wstart,"for",len) || !strlcmp(wstart,"function",len) || !strlcmp(wstart,"in",len) ||
-			   !strlcmp(wstart,"if",len) || !strlcmp(wstart,"local",len) || !strlcmp(wstart,"not",len) ||
-			   !strlcmp(wstart,"or",len) || !strlcmp(wstart,"repeat",len) || !strlcmp(wstart,"return",len) ||
-			   !strlcmp(wstart,"then",len) || !strlcmp(wstart,"until",len) || !strlcmp(wstart,"while",len))
+			if(CMP("and") || CMP("break") || CMP("do") || CMP("else") || CMP("elseif") || CMP("end") || CMP("for") || CMP("function") || CMP("if") || CMP("in") || CMP("local") || CMP("not") || CMP("or") || CMP("repeat") || CMP("return") || CMP("then") || CMP("until") || CMP("while"))
 			{
-				result += "\x0F\xFF\xC2\x02";
-				result.append(wstart, len);
-				result += "\bw";
+				result << "\x0F\xB5\x89\x01";
+				result.write(wstart, len);
+				result << "\bw";
 			}
-			else if(!strlcmp(wstart,"false",len) || !strlcmp(wstart,"nil",len) || !strlcmp(wstart,"true",len))
+			else if(CMP("false") || CMP("nil") || CMP("true"))
 			{
-				result += "\x0F\xEB\x74\x43";
-				result.append(wstart, len);
+				result << "\x0F\xCB\x4B\x16";
+				result.write(wstart, len);
+				result << "\bw";
 			}
 			else
 			{
-				result += "\x0F\x48\xCF\xC5";
-				result.append(wstart, len);
+				result << "\x0F\x2A\xA1\x98";
+				result.write(wstart, len);
+				result << "\bw";
 			}
 			pos += len;
 		}
-		else if((c>='0' && c<='9') || (c=='.' && raw[pos+1]>='0' && raw[pos+1]<='9'))
+		else if((c >= '0' && c <= '9') || (c == '.' && raw[pos + 1] >= '0' && raw[pos + 1] <= '9'))
 		{
-			if(c=='0' && raw[pos+1]=='x')
+			if(c == '0' && raw[pos + 1] == 'x')
 			{
 				int len = 2;
 				char w;
-				const char* wstart = raw+pos;
-				while((w = wstart[len]) && ((w>='0' && w<='9') || (w>='A' && w<='F') || (w>='a' && w<='f')))
+				const char *wstart = raw + pos;
+				while((w = wstart[len]) && ((w >= '0' && w <= '9') || (w >= 'A' && w <= 'F') || (w >= 'a' && w <= 'f')))
 					len++;
-
-				result += "\x0F\xE1\x75\xA9";
-				result.append(wstart, len);
+				result << "\x0F\xD3\x36\x82";
+				result.write(wstart, len);
+				result << "\bw";
 				pos += len;
 			}
 			else
 			{
 				int len = 0;
 				char w;
-				const char* wstart = raw+pos;
-				int seendot = 0;
-				while((w = wstart[len]) && ((w>='0' && w<='9') || w=='.'))
+				const char *wstart = raw+pos;
+				bool seendot = false;
+				while((w = wstart[len]) && ((w >= '0' && w <= '9') || w == '.'))
 				{
-					if(w=='.')
+					if(w == '.')
 						if(seendot)
 							break;
 						else
-							seendot=1;
+							seendot = true;
 					len++;
 				}
-				if(w=='e')
+				if(w == 'e')
 				{
 					len++;
 					w = wstart[len];
-					if(w=='+' || w=='-')
+					if(w == '+' || w == '-')
 						len++;
-					while((w = wstart[len]) && (w>='0' && w<='9'))
+					while((w = wstart[len]) && (w >= '0' && w <= '9'))
 						len++;
 				}
-				result += "\x0F\xE1\x75\xA9";
-				result.append(wstart, len);
+				result << "\x0F\xD3\x36\x82";
+				result.write(wstart, len);
+				result << "\bw";
 				pos += len;
 			}
 		}
-		else if(c=='\'' || c=='"' || (c=='[' && (raw[pos+1]=='[' || raw[pos+1]=='=')))
+		else if(c == '\'' || c == '"' || (c == '[' && (raw[pos + 1] == '[' || raw[pos + 1] == '=')))
 		{
-			if(c=='[')
+			if(c == '[')
 			{
-				int len = 1,eqs=0;
+				int len = 1, eqs=0;
 				char w;
-				const char* wstart = raw+pos;
-				while((w = wstart[len]) && (w=='='))
+				const char *wstart = raw + pos;
+				while((w = wstart[len]) && (w == '='))
 				{
 					eqs++;
 					len++;
 				}
 				while((w = wstart[len]))
 				{
-					if(w==']')
+					if(w == ']')
 					{
 						int nlen = 1;
-						const char* cstart = wstart + len;
-						while((w = cstart[nlen]) && (w=='='))
+						const char *cstart = wstart + len;
+						while((w = cstart[nlen]) && (w == '='))
 							nlen++;
-						if(w==']' && nlen==eqs+1)
+						if(w == ']' && nlen == eqs+1)
 						{
-							len+=nlen+1;
+							len += nlen+1;
 							break;
 						}
 					}
 					len++;
 				}
-				result += "\x0F\xE7\x73\x70";
-				result.append(wstart, len);
+				result << "\x0F\xDC\x32\x2F";
+				result.write(wstart, len);
+				result << "\bw";
 				pos += len;
 			}
 			else
 			{
 				int len = 1;
 				char w;
-				const char* wstart = raw+pos;
-				while((w = wstart[len]) && (w!=c))
+				const char *wstart = raw+pos;
+				while((w = wstart[len]) && (w != c))
 				{
-					if(w=='\\' && wstart[len+1])
+					if(w == '\\' && wstart[len + 1])
 						len++;
 					len++;
 				}
-				if(w==c)
+				if(w == c)
 					len++;
-				result += "\x0F\xE7\x73\x70";
-				result.append(wstart, len);
+				result << "\x0F\xDC\x32\x2F";
+				result.write(wstart, len);
+				result << "\bw";
 				pos += len;
 			}
 		}
-		else if(c=='-' && raw[pos+1]=='-')
+		else if(c == '-' && raw[pos + 1] == '-')
 		{
-			if(raw[pos+2]=='[')
+			if(raw[pos + 2] == '[')
 			{
-				int len = 3,eqs=0;
+				int len = 3, eqs = 0;
 				char w;
-				const char* wstart = raw+pos;
-				while((w = wstart[len]) && (w=='='))
+				const char *wstart = raw + pos;
+				while((w = wstart[len]) && (w == '='))
 				{
 					eqs++;
 					len++;
 				}
 				while((w = wstart[len]))
 				{
-					if(w==']')
+					if(w == ']')
 					{
 						int nlen = 1;
-						const char* cstart = wstart + len;
-						while((w = cstart[nlen]) && (w=='='))
+						const char *cstart = wstart + len;
+						while((w = cstart[nlen]) && (w == '='))
 							nlen++;
-						if(w==']' && nlen==eqs+1)
+						if(w == ']' && nlen == eqs + 1)
 						{
-							len+=nlen+1;
+							len += nlen+1;
 							break;
 						}
 					}
 					len++;
 				}
-				result += "\x0F\xC7\xE5\x01";
-				result.append(wstart, len);
+				result << "\x0F\x85\x99\x01";
+				result.write(wstart, len);
+				result << "\bw";
 				pos += len;
 			}
 			else
 			{
 				int len = 2;
 				char w;
-				const char* wstart = raw+pos;
-				while((w = wstart[len]) && (w!='\n'))
+				const char *wstart = raw + pos;
+				while((w = wstart[len]) && (w != '\n'))
 					len++;
-				result += "\x0F\xC7\xE5\x01";
-				result.append(wstart, len);
+				result << "\x0F\x85\x99\x01";
+				result.write(wstart, len);
+				result << "\bw";
 				pos += len;
 			}
 		}
-		else if(c=='{' || c=='}')
+		else if(c == '{' || c == '}')
 		{
-			result += "\x0F\xEB\x74\x43";
-			result += c;
+			result << "\x0F\xCB\x4B\x16" << c;
 			pos++;
 		}
-		else if(c=='.' && raw[pos+1]=='.' && raw[pos+2]=='.')
+		else if(c == '.' && raw[pos + 1] == '.' && raw[pos + 2] == '.')
 		{
-			result += "\x0F\x48\xCF\xC5";
-			pos+=3;
+			result << "\x0F\x2A\xA1\x98...";
+			pos += 3;
 		}
 		else
 		{
-			result += "\x0F\xAC\xB8\xB9";
-			result += c;
+			result << c;
 			pos++;
 		}
 	}
-	delete[] raw;
-	return result;
+	return result.str();
 }
 
 std::string LuaScriptInterface::FormatCommand(std::string command)
