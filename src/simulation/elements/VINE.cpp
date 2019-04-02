@@ -1,4 +1,6 @@
+#include "common/tpt-minmax.h"
 #include "simulation/Elements.h"
+
 //#TPT-Directive ElementClass Element_VINE PT_VINE 114
 Element_VINE::Element_VINE()
 {
@@ -8,7 +10,7 @@ Element_VINE::Element_VINE()
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;
 	Enabled = 1;
-	
+
 	Advection = 0.0f;
 	AirDrag = 0.00f * CFDS;
 	AirLoss = 0.95f;
@@ -18,21 +20,20 @@ Element_VINE::Element_VINE()
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 0;
-	
+
 	Flammable = 20;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 10;
-	
+
 	Weight = 100;
-	
+
 	Temperature = R_TEMP+0.0f +273.15f;
 	HeatConduct = 65;
 	Description = "Vine, can grow along WOOD.";
-	
-	State = ST_SOLID;
+
 	Properties = TYPE_SOLID;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -41,33 +42,28 @@ Element_VINE::Element_VINE()
 	LowTemperatureTransition = NT;
 	HighTemperature = 573.0f;
 	HighTemperatureTransition = PT_FIRE;
-	
+
 	Update = &Element_VINE::update;
-	
 }
 
 //#TPT-Directive ElementHeader Element_VINE static int update(UPDATE_FUNC_ARGS)
 int Element_VINE::update(UPDATE_FUNC_ARGS)
 {
-	int r, np, rx =(rand()%3)-1, ry=(rand()%3)-1;
-	int rnd;
+	int r, np, rx, ry, rndstore = RNG::Ref().gen();
+	rx = (rndstore % 3) - 1;
+	rndstore >>= 2;
+	ry = (rndstore % 3) - 1;
+	rndstore >>= 2;
 	if (BOUNDS_CHECK && (rx || ry))
 	{
 		r = pmap[y+ry][x+rx];
-		if ((r&0xFF) == PT_SOIL)
-			rnd = rand()%60;
-		else
-			rnd = rand()%15;
-		if (!rnd)
-			sim->part_change_type(i,x,y,PT_PLNT);
-		else if ((r&0xFF) == PT_SEED)
-			sim->part_change_type((r>>8),x+rx,y+ry,PT_VINE);
+		if (!(rndstore % 15))
+			sim->part_change_type(i, x, y, PT_PLNT);
 		else if (!r)
 		{
 			np = sim->create_part(-1,x+rx,y+ry,PT_VINE);
 			if (np<0) return 0;
 			parts[np].temp = parts[i].temp;
-			parts[i].tmp = 1;
 			sim->part_change_type(i,x,y,PT_PLNT);
 		}
 	}

@@ -8,7 +8,7 @@ Element_TRON::Element_TRON()
 	MenuVisible = 1;
 	MenuSection = SC_SPECIAL;
 	Enabled = 1;
-	
+
 	Advection = 0.0f;
 	AirDrag = 0.00f * CFDS;
 	AirLoss = 0.90f;
@@ -18,21 +18,20 @@ Element_TRON::Element_TRON()
 	Diffusion = 0.00f;
 	HotAir = 0.000f  * CFDS;
 	Falldown = 0;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 0;
-	
+
 	Weight = 100;
-	
+
 	Temperature = 0.0f;
 	HeatConduct = 40;
 	Description = "Smart particles, Travels in straight lines and avoids obstacles. Grows with time.";
-	
-	State = ST_NONE;
+
 	Properties = TYPE_SOLID|PROP_LIFE_DEC|PROP_LIFE_KILL;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -41,7 +40,7 @@ Element_TRON::Element_TRON()
 	LowTemperatureTransition = NT;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	
+
 	Update = &Element_TRON::update;
 	Graphics = &Element_TRON::graphics;
 
@@ -90,7 +89,7 @@ void Element_TRON::init_graphics()
 
 //#TPT-Directive ElementHeader Element_TRON static int update(UPDATE_FUNC_ARGS)
 int Element_TRON::update(UPDATE_FUNC_ARGS)
- {
+{
 	if (parts[i].tmp&TRON_WAIT)
 	{
 		parts[i].tmp &= ~TRON_WAIT;
@@ -98,12 +97,12 @@ int Element_TRON::update(UPDATE_FUNC_ARGS)
 	}
 	if (parts[i].tmp&TRON_HEAD)
 	{
-		int firstdircheck = 0,seconddir,seconddircheck = 0,lastdir,lastdircheck = 0;
+		int firstdircheck = 0, seconddir = 0, seconddircheck = 0, lastdir = 0, lastdircheck = 0;
 		int direction = (parts[i].tmp>>5 & 0x3);
 		int originaldir = direction;
 
 		//random turn
-		int random = rand()%340;
+		int random = RNG::Ref().between(0, 339);
 		if ((random==1 || random==3) && !(parts[i].tmp & TRON_NORANDOM))
 		{
 			//randomly turn left(3) or right(1)
@@ -127,7 +126,7 @@ int Element_TRON::update(UPDATE_FUNC_ARGS)
 			}
 			else
 			{
-				seconddir = (direction + ((rand()%2)*2)+1)% 4;
+				seconddir = (direction + (RNG::Ref().between(0, 1)*2)+1)% 4;
 				lastdir = (seconddir + 2)%4;
 			}
 			seconddircheck = trymovetron(sim,x,y,seconddir,i,parts[i].tmp2);
@@ -163,7 +162,7 @@ int Element_TRON::update(UPDATE_FUNC_ARGS)
 
 //#TPT-Directive ElementHeader Element_TRON static int graphics(GRAPHICS_FUNC_ARGS)
 int Element_TRON::graphics(GRAPHICS_FUNC_ARGS)
- {
+{
 	unsigned int col = tron_colours[(cpart->tmp&0xF800)>>11];
 	if(cpart->tmp & TRON_HEAD)
 		*pixel_mode |= PMODE_GLOW;
@@ -200,10 +199,10 @@ int Element_TRON::new_tronhead(Simulation * sim, int x, int y, int i, int direct
 		sim->parts[i].life = 5;
 	}
 	//give new head our properties
-	sim->parts[np].tmp = 1 | direction<<5 | sim->parts[i].tmp&(TRON_NOGROW|TRON_NODIE|TRON_NORANDOM) | (sim->parts[i].tmp&0xF800);
+	sim->parts[np].tmp = 1 | direction<<5 | (sim->parts[i].tmp&(TRON_NOGROW|TRON_NODIE|TRON_NORANDOM)) | (sim->parts[i].tmp&0xF800);
 	if (np > i)
 		sim->parts[np].tmp |= TRON_WAIT;
-	
+
 	sim->parts[np].ctype = sim->parts[i].ctype;
 	sim->parts[np].tmp2 = sim->parts[i].tmp2;
 	sim->parts[np].life = sim->parts[i].life + 2;
@@ -259,9 +258,9 @@ int Element_TRON::trymovetron(Simulation * sim, int x, int y, int dir, int i, in
 //#TPT-Directive ElementHeader Element_TRON static bool canmovetron(Simulation * sim, int r, int len)
 bool Element_TRON::canmovetron(Simulation * sim, int r, int len)
 {
-	if (!r || ((r&0xFF) == PT_SWCH && sim->parts[r>>8].life >= 10) || ((r&0xFF) == PT_INVIS && sim->parts[r>>8].tmp == 1))
+	if (!r || (TYP(r) == PT_SWCH && sim->parts[ID(r)].life >= 10) || (TYP(r) == PT_INVIS && sim->parts[ID(r)].tmp2 == 1))
 		return true;
-	if ((((sim->elements[r&0xFF].Properties & PROP_LIFE_KILL_DEC) && sim->parts[r>>8].life > 0)|| ((sim->elements[r&0xFF].Properties & PROP_LIFE_KILL) && (sim->elements[r&0xFF].Properties & PROP_LIFE_DEC))) && sim->parts[r>>8].life < len)
+	if ((((sim->elements[TYP(r)].Properties & PROP_LIFE_KILL_DEC) && sim->parts[ID(r)].life > 0)|| ((sim->elements[TYP(r)].Properties & PROP_LIFE_KILL) && (sim->elements[TYP(r)].Properties & PROP_LIFE_DEC))) && sim->parts[ID(r)].life < len)
 		return true;
 	return false;
 }

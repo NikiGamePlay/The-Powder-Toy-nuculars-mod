@@ -8,7 +8,7 @@ Element_EMBR::Element_EMBR()
 	MenuVisible = 0;
 	MenuSection = SC_EXPLOSIVE;
 	Enabled = 1;
-	
+
 	Advection = 0.4f;
 	AirDrag = 0.001f * CFDS;
 	AirLoss = 0.99f;
@@ -18,21 +18,20 @@ Element_EMBR::Element_EMBR()
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 1;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 20;
-	
+
 	Weight = 30;
-	
+
 	Temperature = 500.0f +273.15f;
 	HeatConduct = 29;
 	Description = "Sparks. Formed by explosions.";
-	
-	State = ST_NONE;
+
 	Properties = TYPE_PART|PROP_LIFE_DEC|PROP_LIFE_KILL|PROP_SPARKSETTLE;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -41,14 +40,14 @@ Element_EMBR::Element_EMBR()
 	LowTemperatureTransition = NT;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	
+
 	Update = &Element_EMBR::update;
 	Graphics = &Element_EMBR::graphics;
 }
 
 //#TPT-Directive ElementHeader Element_EMBR static int update(UPDATE_FUNC_ARGS)
 int Element_EMBR::update(UPDATE_FUNC_ARGS) {
-	int r, rx, ry, nb;
+	int r, rx, ry;
 	for (rx=-1; rx<2; rx++)
 		for (ry=-1; ry<2; ry++)
 			if (BOUNDS_CHECK && (rx || ry))
@@ -56,7 +55,7 @@ int Element_EMBR::update(UPDATE_FUNC_ARGS) {
 				r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if ((sim->elements[r&0xFF].Properties & (TYPE_SOLID | TYPE_PART | TYPE_LIQUID)) && !(sim->elements[r&0xFF].Properties & PROP_SPARKSETTLE))
+				if ((sim->elements[TYP(r)].Properties & (TYPE_SOLID | TYPE_PART | TYPE_LIQUID)) && !(sim->elements[TYP(r)].Properties & PROP_SPARKSETTLE))
 				{
 					sim->kill_part(i);
 					return 1;

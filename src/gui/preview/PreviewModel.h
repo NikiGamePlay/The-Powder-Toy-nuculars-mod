@@ -3,21 +3,19 @@
 
 #include <vector>
 #include <iostream>
-#include <pthread.h>
-#undef GetUserName //God dammit microsoft!
 #include "PreviewView.h"
 #include "client/SaveInfo.h"
 #include "gui/preview/Comment.h"
-#include "gui/search/Thumbnail.h"
-#include "client/requestbroker/RequestListener.h"
+#include "client/http/Request.h"
 
 using namespace std;
 
 class PreviewView;
-class PreviewModel: RequestListener {
+class PreviewModel {
 	bool doOpen;
+	bool canOpen;
 	vector<PreviewView*> observers;
-	SaveInfo * save;
+	SaveInfo * saveInfo;
 	std::vector<unsigned char> * saveData;
 	std::vector<SaveComment*> * saveComments;
 	void notifySaveChanged();
@@ -25,11 +23,12 @@ class PreviewModel: RequestListener {
 	void notifyCommentsPageChanged();
 	void notifyCommentBoxEnabledChanged();
 
-	//Background retrieval
-	int tSaveID;
-	int tSaveDate;
+	http::Request * saveDataDownload;
+	http::Request * saveInfoDownload;
+	http::Request * commentsDownload;
+	int saveID;
+	int saveDate;
 
-	//
 	bool commentBoxEnabled;
 	bool commentsLoaded;
 	int commentsTotal;
@@ -37,7 +36,7 @@ class PreviewModel: RequestListener {
 
 public:
 	PreviewModel();
-	SaveInfo * GetSave();
+	SaveInfo * GetSaveInfo();
 	std::vector<SaveComment*> * GetComments();
 
 	bool GetCommentBoxEnabled();
@@ -47,14 +46,19 @@ public:
 	int GetCommentsPageNum();
 	int GetCommentsPageCount();
 	void UpdateComments(int pageNumber);
+	void CommentAdded();
 
 	void AddObserver(PreviewView * observer);
 	void UpdateSave(int saveID, int saveDate);
 	void SetFavourite(bool favourite);
 	bool GetDoOpen();
+	bool GetCanOpen();
 	void SetDoOpen(bool doOpen);
 	void Update();
-	virtual void OnResponseReady(void * object, int identifier);
+	void ClearComments();
+	void OnSaveReady();
+	bool ParseSaveInfo(ByteString &saveInfoResponse);
+	bool ParseComments(ByteString &commentsResponse);
 	virtual ~PreviewModel();
 };
 

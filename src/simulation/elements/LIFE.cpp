@@ -12,7 +12,7 @@ Element_LIFE::Element_LIFE()
 	MenuVisible = 0;
 	MenuSection = SC_LIFE;
 	Enabled = 1;
-	
+
 	Advection = 0.0f;
 	AirDrag = 0.00f * CFDS;
 	AirLoss = 0.90f;
@@ -22,21 +22,20 @@ Element_LIFE::Element_LIFE()
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 0;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 0;
-	
+
 	Weight = 100;
-	
+
 	Temperature = 9000.0f;
 	HeatConduct = 40;
 	Description = "Game Of Life! B3/S23";
-	
-	State = ST_NONE;
+
 	Properties = TYPE_SOLID|PROP_LIFE;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -45,30 +44,20 @@ Element_LIFE::Element_LIFE()
 	LowTemperatureTransition = NT;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	
-	Update = NULL;//&Element_LIFE::update;
+
+	Update = NULL;
 	Graphics = &Element_LIFE::graphics;
 
 	if(!Element_GOL_colourInit)
 	{
 		Element_GOL_colourInit = true;
 
-		int golMenuCount;
-		gol_menu * golMenuT = LoadGOLMenu(golMenuCount);
-		for(int i = 0; i < golMenuCount && i < NGOL; i++)
+		std::vector<gol_menu> golMenuT = LoadGOLMenu();
+		for(int i = 0; i < NGOL; i++)
 		{
 			Element_GOL_colour[i] = golMenuT[i].colour;
 		}
-		free(golMenuT);
 	}
-}
-
-//#TPT-Directive ElementHeader Element_LIFE static int update(UPDATE_FUNC_ARGS)
-int Element_LIFE::update(UPDATE_FUNC_ARGS)
-{
-	if (parts[i].tmp <= 0 && parts[i].tmp > NGOL)
-		sim->kill_part(i);
-	return 0;
 }
 
 //#TPT-Directive ElementHeader Element_LIFE static int graphics(GRAPHICS_FUNC_ARGS)

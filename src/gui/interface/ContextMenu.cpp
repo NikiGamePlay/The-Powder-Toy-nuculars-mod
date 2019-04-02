@@ -1,4 +1,6 @@
 #include "ContextMenu.h"
+#include "common/tpt-minmax.h"
+#include "graphics/Graphics.h"
 
 using namespace ui;
 
@@ -8,22 +10,22 @@ class ContextMenu::ItemSelectedAction: public ButtonAction
 	int item;
 public:
 	ItemSelectedAction(ContextMenu * window, int itemID): window(window), item(itemID) { }
-	virtual void ActionCallback(ui::Button *sender)
+	void ActionCallback(ui::Button *sender) override
 	{
-		window->ActionCallback(sender, item);
+		window->ActionCallbackItem(sender, item);
 	}
 };
 
 ContextMenu::ContextMenu(Component * source):
 		Window(ui::Point(0, 0), ui::Point(0, 0)),
-		Appearance(source->Appearance),
-		source(source)
+		source(source),
+		Appearance(source->Appearance)
 {
 }
 
 void ContextMenu::Show(ui::Point position)
 {
-	for(int i = 0; i < buttons.size(); i++)
+	for (size_t i = 0; i < buttons.size(); i++)
 	{
 		RemoveComponent(buttons[i]);
 		delete buttons[i];
@@ -40,7 +42,7 @@ void ContextMenu::Show(ui::Point position)
 	Position = position;
 
 	int currentY = 1;
-	for(int i = 0; i < items.size(); i++)
+	for (size_t i = 0; i < items.size(); i++)
 	{
 		Button * tempButton = new Button(Point(1, currentY), Point(Size.X-2, 16), items[i].Text);
 		tempButton->Appearance = Appearance;
@@ -51,27 +53,28 @@ void ContextMenu::Show(ui::Point position)
 		currentY += 15;
 	}
 
-	ui::Engine::Ref().ShowWindow(this);
+	MakeActiveWindow();
 }
 
-void ContextMenu::ActionCallback(ui::Button *sender, int item)
+void ContextMenu::ActionCallbackItem(ui::Button *sender, int item)
 {
-	ui::Engine::Ref().CloseWindow();
+	CloseActiveWindow();
 	Halt();
 	source->OnContextMenuAction(item);
 }
 
 void ContextMenu::OnMouseDown(int x, int y, unsigned button)
 {
-	if(!(x > Position.X && y > Position.Y && y < Position.Y+Size.Y && x < Position.X+Size.X)) //Clicked outside window
-		ui::Engine::Ref().CloseWindow();
+	// Clicked outside window
+	if (!(x > Position.X && y > Position.Y && y < Position.Y+Size.Y && x < Position.X+Size.X))
+		CloseActiveWindow();
 }
 
-void ContextMenu::SetItem(int id, std::string text)
+void ContextMenu::SetItem(int id, String text)
 {
-	for(int i = 0; i < items.size(); i++)
+	for (size_t i = 0; i < items.size(); i++)
 	{
-		if(items[i].ID == id)
+		if (items[i].ID == id)
 		{
 			items[i].Text = text;
 			break;
@@ -81,9 +84,9 @@ void ContextMenu::SetItem(int id, std::string text)
 
 void ContextMenu::RemoveItem(int id)
 {
-	for(int i = 0; i < items.size(); i++)
+	for (size_t i = 0; i < items.size(); i++)
 	{
-		if(items[i].ID == id)
+		if (items[i].ID == id)
 		{
 			items.erase(items.begin()+i);
 			break;
@@ -98,7 +101,7 @@ void ContextMenu::AddItem(ContextMenuItem item)
 
 void ContextMenu::OnDraw()
 {
-	Graphics * g = ui::Engine::Ref().g;
+	Graphics * g = GetGraphics();
 	g->fillrect(Position.X, Position.Y, Size.X, Size.Y, 100, 100, 100, 255);
 	g->drawrect(Position.X, Position.Y, Size.X, Size.Y, Appearance.BackgroundInactive.Red, Appearance.BackgroundInactive.Green, Appearance.BackgroundInactive.Blue, Appearance.BackgroundInactive.Alpha);
 }

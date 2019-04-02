@@ -3,32 +3,31 @@
 
 #include "AvatarButton.h"
 #include "Format.h"
-#include "Engine.h"
 #include "client/Client.h"
-#include "client/requestbroker/RequestBroker.h"
 #include "graphics/Graphics.h"
 #include "ContextMenu.h"
 #include "Keys.h"
+#include "Mouse.h"
 
 namespace ui {
 
-AvatarButton::AvatarButton(Point position, Point size, std::string username):
+AvatarButton::AvatarButton(Point position, Point size, ByteString username):
 	Component(position, size),
 	name(username),
-	actionCallback(NULL),
-	avatar(NULL),
-	tried(false)
+	tried(false),
+	actionCallback(NULL)
 {
 
 }
 
 AvatarButton::~AvatarButton()
 {
-	RequestBroker::Ref().DetachRequestListener(this);
-	if(avatar)
-		delete avatar;
-	if(actionCallback)
-		delete actionCallback;
+	delete actionCallback;
+}
+
+void AvatarButton::OnResponse(std::unique_ptr<VideoBuffer> Avatar)
+{
+	avatar = std::move(Avatar);
 }
 
 void AvatarButton::Tick(float dt)
@@ -36,28 +35,20 @@ void AvatarButton::Tick(float dt)
 	if(!avatar && !tried && name.size() > 0)
 	{
 		tried = true;
-		RequestBroker::Ref().RetrieveAvatar(name, Size.X, Size.Y, this);
+		RequestSetup(name, Size.X, Size.Y);
+		RequestStart();
 	}
-}
 
-void AvatarButton::OnResponseReady(void * imagePtr, int identifier)
-{
-	VideoBuffer * image = (VideoBuffer*)imagePtr;
-	if(image)
-	{
-		if(avatar)
-			delete avatar;
-		avatar = image;
-	}
+	RequestPoll();
 }
 
 void AvatarButton::Draw(const Point& screenPos)
 {
-	Graphics * g = ui::Engine::Ref().g;
+	Graphics * g = GetGraphics();
 
 	if(avatar)
 	{
-		g->draw_image(avatar, screenPos.X, screenPos.Y, 255);
+		g->draw_image(avatar.get(), screenPos.X, screenPos.Y, 255);
 	}
 }
 
@@ -82,7 +73,7 @@ void AvatarButton::OnContextMenuAction(int item)
 
 void AvatarButton::OnMouseClick(int x, int y, unsigned int button)
 {
-	if(button == BUTTON_RIGHT)
+	if(button == SDL_BUTTON_RIGHT)
 	{
 		if(menu)
 			menu->Show(GetScreenPos() + ui::Point(x, y));

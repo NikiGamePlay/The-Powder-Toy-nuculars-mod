@@ -4,11 +4,11 @@ Element_EXOT::Element_EXOT()
 {
 	Identifier = "DEFAULT_PT_EXOT";
 	Name = "EXOT";
-	Colour = PIXPACK(0x404040);
+	Colour = PIXPACK(0x247BFE);
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;
 	Enabled = 1;
-	
+
 	Advection = 0.3f;
 	AirDrag = 0.02f * CFDS;
 	AirLoss = 0.95f;
@@ -18,21 +18,20 @@ Element_EXOT::Element_EXOT()
 	Diffusion = 0.00f;
 	HotAir = 0.0003f	* CFDS;
 	Falldown = 2;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 2;
-	
+
 	Weight = 46;
-	
+
 	Temperature = R_TEMP-2.0f	+273.15f;
 	HeatConduct = 250;
 	Description = "Exotic matter. Explodes with excess exposure to electrons. Has many other odd reactions.";
-	
-	State = ST_LIQUID;
+
 	Properties = TYPE_LIQUID|PROP_NEUTPASS;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -41,7 +40,7 @@ Element_EXOT::Element_EXOT()
 	LowTemperatureTransition = NT;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	
+
 	Update = &Element_EXOT::update;
 	Graphics = &Element_EXOT::graphics;
 }
@@ -49,7 +48,7 @@ Element_EXOT::Element_EXOT()
 //#TPT-Directive ElementHeader Element_EXOT static int update(UPDATE_FUNC_ARGS)
 int Element_EXOT::update(UPDATE_FUNC_ARGS)
 {
-	int r, rt, rx, ry, nb, rrx, rry, trade, tym;
+	int r, rt, rx, ry, trade, tym;
 	for (rx=-2; rx<=2; rx++)
 		for (ry=-2; ry<=2; ry++)
 			if (BOUNDS_CHECK && (rx || ry))
@@ -57,37 +56,37 @@ int Element_EXOT::update(UPDATE_FUNC_ARGS)
 				r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				rt = r&0xFF;
+				rt = TYP(r);
 				if (rt == PT_WARP)
 				{
-					if (parts[r>>8].tmp2>2000 && !(rand()%100))
+					if (parts[ID(r)].tmp2>2000 && RNG::Ref().chance(1, 100))
 					{
 						parts[i].tmp2 += 100;
 					}
 				}
 				else if (rt == PT_EXOT)
 				{
-					if (parts[r>>8].ctype == PT_PROT)
+					if (parts[ID(r)].ctype == PT_PROT)
 						parts[i].ctype = PT_PROT;
-					if (parts[r>>8].life == 1500 && !(rand()%1000))
+					if (parts[ID(r)].life == 1500 && RNG::Ref().chance(1, 1000))
 						parts[i].life = 1500;
 				}
 				else if (rt == PT_LAVA)
 				{
 					//turn molten TTAN or molten GOLD to molten VIBR
-					if (parts[r>>8].ctype == PT_TTAN || parts[r>>8].ctype == PT_GOLD)
+					if (parts[ID(r)].ctype == PT_TTAN || parts[ID(r)].ctype == PT_GOLD)
 					{
-						if (!(rand()%10))
+						if (RNG::Ref().chance(1, 10))
 						{
-							parts[r>>8].ctype = PT_VIBR;
+							parts[ID(r)].ctype = PT_VIBR;
 							sim->kill_part(i);
 							return 1;
 						}
 					}
 					//molten VIBR will kill the leftover EXOT though, so the VIBR isn't killed later
-					else if (parts[r>>8].ctype == PT_VIBR)
+					else if (parts[ID(r)].ctype == PT_VIBR)
 					{
-						if (!(rand()%1000))
+						if (RNG::Ref().chance(1, 1000))
 						{
 							sim->kill_part(i);
 							return 1;
@@ -116,7 +115,7 @@ int Element_EXOT::update(UPDATE_FUNC_ARGS)
 		if (parts[i].life < 1001)
 		{
 			sim->part_change_type(i, x, y, PT_WARP);
-			return 0;
+			return 1;
 		}
 	}
 	else if(parts[i].life < 1001)
@@ -126,31 +125,31 @@ int Element_EXOT::update(UPDATE_FUNC_ARGS)
 	{
 		parts[i].tmp2 = 6000;
 		sim->part_change_type(i, x, y, PT_WARP);
-		return 0;
+		return 1;
 	}
 	if (parts[i].tmp2 > 100)
 	{
 		for (trade = 0; trade < 9; trade++)
 		{
-			rx = rand()%5-2;
-			ry = rand()%5-2;
+			rx = RNG::Ref().between(-2, 2);
+			ry = RNG::Ref().between(-2, 2);
 			if (BOUNDS_CHECK && (rx || ry))
 			{
 				r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if ((r&0xFF)==PT_EXOT && (parts[i].tmp2 > parts[r>>8].tmp2) && parts[r>>8].tmp2 >= 0) //diffusion
+				if (TYP(r)==PT_EXOT && (parts[i].tmp2 > parts[ID(r)].tmp2) && parts[ID(r)].tmp2 >= 0) //diffusion
 				{
-					tym = parts[i].tmp2 - parts[r>>8].tmp2;
+					tym = parts[i].tmp2 - parts[ID(r)].tmp2;
 					if (tym == 1)
 					{
-						parts[r>>8].tmp2++;
+						parts[ID(r)].tmp2++;
 						parts[i].tmp2--;
 						break;
 					}
 					if (tym > 0)
 					{
-						parts[r>>8].tmp2 += tym/2;
+						parts[ID(r)].tmp2 += tym/2;
 						parts[i].tmp2 -= tym/2;
 						break;
 					}
@@ -187,7 +186,7 @@ int Element_EXOT::graphics(GRAPHICS_FUNC_ARGS)
 	int c = cpart->tmp2;
 	if (cpart->life < 1001)
 	{
-		if ((cpart->tmp2 - 1)>rand()%1000)
+		if (RNG::Ref().chance(cpart->tmp2 - 1, 1000))
 		{
 			float frequency = 0.04045;
 			*colr = (sin(frequency*c + 4) * 127 + 150);
@@ -208,7 +207,7 @@ int Element_EXOT::graphics(GRAPHICS_FUNC_ARGS)
 			*colr = (sin(frequency*q + 4) * 127 + (b/1.7));
 			*colg = (sin(frequency*q + 6) * 127 + (b/1.7));
 			*colb = (sin(frequency*q + 8) * 127 + (b/1.7));
-			*cola = cpart->tmp / 6; 
+			*cola = cpart->tmp / 6;
 
 			*firea = *cola;
 			*firer = *colr;

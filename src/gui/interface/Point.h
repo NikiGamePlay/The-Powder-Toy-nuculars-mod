@@ -1,5 +1,4 @@
 #pragma once
-#include "Platform.h"
 
 namespace ui
 {
@@ -12,7 +11,7 @@ struct Point
 #else
 # define POINT_T int
 #endif
-	
+
 	POINT_T X;
 	POINT_T Y;
 
@@ -135,10 +134,11 @@ struct Point
 		return (X != v.X || Y != v.Y);
 	}
 
-	inline void operator = (const Point& v)
+	inline Point operator = (const Point& v)
 	{
 		X = v.X;
 		Y = v.Y;
+		return Point(X, Y);
 	}
 
 };

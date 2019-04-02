@@ -1,14 +1,15 @@
 #include "ConfirmPrompt.h"
 #include "gui/Style.h"
-#include "gui/interface/Label.h"
 #include "gui/interface/Button.h"
+#include "gui/interface/Engine.h"
+#include "gui/interface/Label.h"
+#include "gui/interface/ScrollPanel.h"
 #include "PowderToy.h"
 
-ConfirmPrompt::ConfirmPrompt(std::string title, std::string message, ConfirmDialogueCallback * callback_):
+ConfirmPrompt::ConfirmPrompt(String title, String message, ConfirmDialogueCallback * callback_):
 	ui::Window(ui::Point(-1, -1), ui::Point(250, 35)),
 	callback(callback_)
 {
-	int width, height;
 	ui::Label * titleLabel = new ui::Label(ui::Point(4, 5), ui::Point(Size.X-8, 15), title);
 	titleLabel->SetTextColour(style::Colour::WarningTitle);
 	titleLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
@@ -16,13 +17,20 @@ ConfirmPrompt::ConfirmPrompt(std::string title, std::string message, ConfirmDial
 	AddComponent(titleLabel);
 
 
-	ui::Label * messageLabel = new ui::Label(ui::Point(4, 25), ui::Point(Size.X-8, -1), message);
-	messageLabel->SetMultiline(true);
+	ui::ScrollPanel *messagePanel = new ui::ScrollPanel(ui::Point(4, 24), ui::Point(Size.X-8, 206));
+	AddComponent(messagePanel);
+
+	ui::Label * messageLabel = new ui::Label(ui::Point(4, 0), ui::Point(Size.X-28, -1), message);
 	messageLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	messageLabel->Appearance.VerticalAlign = ui::Appearance::AlignTop;
-	AddComponent(messageLabel);
+	messageLabel->SetMultiline(true);
+	messagePanel->AddChild(messageLabel);
 
-	Size.Y += messageLabel->Size.Y+12;
+	messagePanel->InnerSize = ui::Point(messagePanel->Size.X, messageLabel->Size.Y+4);
+
+	if (messageLabel->Size.Y < messagePanel->Size.Y)
+		messagePanel->Size.Y = messageLabel->Size.Y+4;
+	Size.Y += messagePanel->Size.Y+12;
 	Position.Y = (ui::Engine::Ref().GetHeight()-Size.Y)/2;
 
 	class CloseAction: public ui::ButtonAction
@@ -31,9 +39,9 @@ ConfirmPrompt::ConfirmPrompt(std::string title, std::string message, ConfirmDial
 		ConfirmPrompt * prompt;
 		DialogueResult result;
 		CloseAction(ConfirmPrompt * prompt_, DialogueResult result_) { prompt = prompt_; result = result_; }
-		void ActionCallback(ui::Button * sender)
+		void ActionCallback(ui::Button * sender) override
 		{
-			ui::Engine::Ref().CloseWindow();
+			prompt->CloseActiveWindow();
 			if(prompt->callback)
 				prompt->callback->ConfirmCallback(result);
 			prompt->SelfDestruct();
@@ -57,14 +65,13 @@ ConfirmPrompt::ConfirmPrompt(std::string title, std::string message, ConfirmDial
 	AddComponent(okayButton);
 	SetOkayButton(okayButton);
 
-	ui::Engine::Ref().ShowWindow(this);
+	MakeActiveWindow();
 }
 
-ConfirmPrompt::ConfirmPrompt(std::string title, std::string message, std::string buttonText, ConfirmDialogueCallback * callback_):
+ConfirmPrompt::ConfirmPrompt(String title, String message, String buttonText, ConfirmDialogueCallback * callback_):
 	ui::Window(ui::Point(-1, -1), ui::Point(250, 50)),
 	callback(callback_)
 {
-	int width, height;
 	ui::Label * titleLabel = new ui::Label(ui::Point(4, 5), ui::Point(Size.X-8, 15), title);
 	titleLabel->SetTextColour(style::Colour::WarningTitle);
 	titleLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
@@ -72,13 +79,20 @@ ConfirmPrompt::ConfirmPrompt(std::string title, std::string message, std::string
 	AddComponent(titleLabel);
 
 
-	ui::Label * messageLabel = new ui::Label(ui::Point(4, 25), ui::Point(Size.X-8, -1), message);
-	messageLabel->SetMultiline(true);
+	ui::ScrollPanel *messagePanel = new ui::ScrollPanel(ui::Point(4, 24), ui::Point(Size.X-8, 206));
+	AddComponent(messagePanel);
+
+	ui::Label * messageLabel = new ui::Label(ui::Point(4, 0), ui::Point(Size.X-28, -1), message);
 	messageLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	messageLabel->Appearance.VerticalAlign = ui::Appearance::AlignTop;
-	AddComponent(messageLabel);
+	messageLabel->SetMultiline(true);
+	messagePanel->AddChild(messageLabel);
 
-	Size.Y += messageLabel->Size.Y+12;
+	messagePanel->InnerSize = ui::Point(messagePanel->Size.X, messageLabel->Size.Y+4);
+
+	if (messageLabel->Size.Y < messagePanel->Size.Y)
+		messagePanel->Size.Y = messageLabel->Size.Y+4;
+	Size.Y += messagePanel->Size.Y+12;
 	Position.Y = (ui::Engine::Ref().GetHeight()-Size.Y)/2;
 
 	class CloseAction: public ui::ButtonAction
@@ -87,9 +101,9 @@ ConfirmPrompt::ConfirmPrompt(std::string title, std::string message, std::string
 		ConfirmPrompt * prompt;
 		DialogueResult result;
 		CloseAction(ConfirmPrompt * prompt_, DialogueResult result_) { prompt = prompt_; result = result_; }
-		void ActionCallback(ui::Button * sender)
+		void ActionCallback(ui::Button * sender) override
 		{
-			ui::Engine::Ref().CloseWindow();
+			prompt->CloseActiveWindow();
 			if(prompt->callback)
 				prompt->callback->ConfirmCallback(result);
 			prompt->SelfDestruct();
@@ -113,16 +127,16 @@ ConfirmPrompt::ConfirmPrompt(std::string title, std::string message, std::string
 	AddComponent(okayButton);
 	SetOkayButton(okayButton);
 
-	ui::Engine::Ref().ShowWindow(this);
+	MakeActiveWindow();
 }
 
-bool ConfirmPrompt::Blocking(std::string title, std::string message, std::string buttonText)
+bool ConfirmPrompt::Blocking(String title, String message, String buttonText)
 {
 	class BlockingPromptCallback: public ConfirmDialogueCallback {
 	public:
 		bool & outputResult;
 		BlockingPromptCallback(bool & output): outputResult(output) {}
-		virtual void ConfirmCallback(ConfirmPrompt::DialogueResult result) {
+		void ConfirmCallback(ConfirmPrompt::DialogueResult result) override {
 			if (result == ConfirmPrompt::ResultOkay)
 				outputResult = true;
 			else
@@ -139,14 +153,13 @@ bool ConfirmPrompt::Blocking(std::string title, std::string message, std::string
 
 void ConfirmPrompt::OnDraw()
 {
-	Graphics * g = ui::Engine::Ref().g;
+	Graphics * g = GetGraphics();
 
 	g->clearrect(Position.X-2, Position.Y-2, Size.X+3, Size.Y+3);
 	g->drawrect(Position.X, Position.Y, Size.X, Size.Y, 200, 200, 200, 255);
 }
 
 ConfirmPrompt::~ConfirmPrompt() {
-	if(callback)
-		delete callback;
+	delete callback;
 }
 

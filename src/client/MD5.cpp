@@ -1,5 +1,5 @@
 // based on public-domain code from Colin Plumb (1993)
-#include <string.h>
+#include <cstring>
 #include "MD5.h"
 
 static unsigned getu32(const unsigned char *addr)
@@ -109,7 +109,7 @@ void md5_final(unsigned char digest[16], struct md5_context *ctx)
 	putu32(ctx->buf[1], digest + 4);
 	putu32(ctx->buf[2], digest + 8);
 	putu32(ctx->buf[3], digest + 12);
-	memset(ctx, 0, sizeof(ctx));
+	memset(&ctx, 0, sizeof(ctx));
 }
 
 #define F1(x, y, z) (z ^ (x & (y ^ z)))

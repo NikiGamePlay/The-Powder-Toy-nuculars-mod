@@ -8,7 +8,7 @@ Element_WIRE::Element_WIRE()
 	MenuVisible = 1;
 	MenuSection = SC_ELEC;
 	Enabled = 1;
-	
+
 	Advection = 0.0f;
 	AirDrag = 0.00f * CFDS;
 	AirLoss = 0.00f;
@@ -18,21 +18,20 @@ Element_WIRE::Element_WIRE()
 	Diffusion = 0.00f;
 	HotAir = 0.000f  * CFDS;
 	Falldown = 0;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 0;
-	
+
 	Weight = 100;
-	
+
 	Temperature = R_TEMP+0.0f +273.15f;
 	HeatConduct = 250;
 	Description = "WireWorld wires, conducts based on a set of GOL-like rules.";
-	
-	State = ST_SOLID;
+
 	Properties = TYPE_SOLID;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -41,7 +40,7 @@ Element_WIRE::Element_WIRE()
 	LowTemperatureTransition = NT;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	
+
 	Update = &Element_WIRE::update;
 	Graphics = &Element_WIRE::graphics;
 }
@@ -49,12 +48,12 @@ Element_WIRE::Element_WIRE()
 //#TPT-Directive ElementHeader Element_WIRE static int update(UPDATE_FUNC_ARGS)
 int Element_WIRE::update(UPDATE_FUNC_ARGS)
 {
-	int s,r,rx,ry,count=0;	
+	int r,rx,ry,count=0;
 	/*
 	  0:  wire
 	  1:  spark head
 	  2:  spark tail
-	  
+
 	  tmp is previous state, ctype is current state
 	*/
 	//parts[i].tmp=parts[i].ctype;
@@ -75,14 +74,14 @@ int Element_WIRE::update(UPDATE_FUNC_ARGS)
 				r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if ((r&0xFF)==PT_SPRK && parts[r>>8].life==3 && parts[r>>8].ctype==PT_PSCN)
+				if (TYP(r)==PT_SPRK && parts[ID(r)].life==3 && parts[ID(r)].ctype==PT_PSCN)
 				{
 					parts[i].ctype=1;
 					return 0;
 				}
-				else if ((r&0xFF)==PT_NSCN && parts[i].tmp==1)
+				else if (TYP(r)==PT_NSCN && parts[i].tmp==1)
 					sim->create_part(-1, x+rx, y+ry, PT_SPRK);
-				else if ((r&0xFF)==PT_WIRE && parts[r>>8].tmp==1 && !parts[i].tmp)
+				else if (TYP(r)==PT_WIRE && parts[ID(r)].tmp==1 && !parts[i].tmp)
 					count++;
 			}
 		}

@@ -8,7 +8,7 @@ Element_PLUT::Element_PLUT()
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;
 	Enabled = 1;
-	
+
 	Advection = 0.4f;
 	AirDrag = 0.01f * CFDS;
 	AirLoss = 0.99f;
@@ -18,21 +18,21 @@ Element_PLUT::Element_PLUT()
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 1;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 0;
-	
+	PhotonReflectWavelengths = 0x001FCE00;
+
 	Weight = 90;
-	
+
 	Temperature = R_TEMP+4.0f	+273.15f;
 	HeatConduct = 251;
-	Description = "Heavy particles. Fissile. Generates neutrons under pressure.";
-	
-	State = ST_SOLID;
+	Description = "Plutonium. Heavy, fissile particles. Generates neutrons under pressure.";
+
 	Properties = TYPE_PART|PROP_NEUTPASS|PROP_RADIOACTIVE;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -41,15 +41,14 @@ Element_PLUT::Element_PLUT()
 	LowTemperatureTransition = NT;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	
+
 	Update = &Element_PLUT::update;
-	
 }
 
 //#TPT-Directive ElementHeader Element_PLUT static int update(UPDATE_FUNC_ARGS)
 int Element_PLUT::update(UPDATE_FUNC_ARGS)
 {
-	if (!(rand()%100) && ((int)(5.0f*sim->pv[y/CELL][x/CELL]))>(rand()%1000))
+	if (RNG::Ref().chance(1, 100) && RNG::Ref().chance(5.0f*sim->pv[y/CELL][x/CELL], 1000))
 	{
 		sim->create_part(i, x, y, PT_NEUT);
 	}

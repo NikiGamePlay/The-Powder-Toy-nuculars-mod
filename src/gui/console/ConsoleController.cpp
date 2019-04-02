@@ -13,37 +13,47 @@ ConsoleController::ConsoleController(ControllerCallback * callback, CommandInter
 	this->commandInterface = commandInterface;
 }
 
-void ConsoleController::EvaluateCommand(std::string command)
+void ConsoleController::EvaluateCommand(String command)
 {
-	consoleModel->ProcessResult(command, FormatCommand(command), commandInterface->Command(command));
+	if(command.length())
+	{
+		if (command.BeginsWith("!load "))
+			CloseConsole();
+		int returnCode = commandInterface->Command(command);
+		consoleModel->AddLastCommand(ConsoleCommand(command, returnCode, commandInterface->GetLastError()));
+	}
+	else
+		CloseConsole();
 }
 
 void ConsoleController::CloseConsole()
 {
-	if(ui::Engine::Ref().GetWindow() == consoleView)
-		ui::Engine::Ref().CloseWindow();
+	consoleView->CloseActiveWindow();
 }
 
-std::string ConsoleController::FormatCommand(std::string command)
+String ConsoleController::FormatCommand(String command)
 {
 	return commandInterface->FormatCommand(command);
 }
 
 void ConsoleController::NextCommand()
 {
-	consoleModel->NextCommand();
+	size_t cIndex = consoleModel->GetCurrentCommandIndex();
+	if (cIndex < consoleModel->GetPreviousCommands().size())
+		consoleModel->SetCurrentCommandIndex(cIndex+1);
 }
 
 void ConsoleController::PreviousCommand()
 {
-	consoleModel->PreviousCommand();
+	size_t cIndex = consoleModel->GetCurrentCommandIndex();
+	if(cIndex > 0)
+		consoleModel->SetCurrentCommandIndex(cIndex-1);
 }
 
 void ConsoleController::Exit()
 {
-	if(ui::Engine::Ref().GetWindow() == consoleView)
-		ui::Engine::Ref().CloseWindow();
-	if(callback)
+	consoleView->CloseActiveWindow();
+	if (callback)
 		callback->ControllerExit();
 	HasDone = true;
 }
@@ -53,11 +63,10 @@ ConsoleView * ConsoleController::GetView()
 	return consoleView;
 }
 
-ConsoleController::~ConsoleController() {
-	if(ui::Engine::Ref().GetWindow() == consoleView)
-		ui::Engine::Ref().CloseWindow();
-	if(callback)
-		delete callback;
+ConsoleController::~ConsoleController()
+{
+	consoleView->CloseActiveWindow();
+	delete callback;
 	delete consoleModel;
 	delete consoleView;
 }

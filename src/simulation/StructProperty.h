@@ -1,22 +1,22 @@
 #ifndef STRUCTPROPERTY_H_
 #define STRUCTPROPERTY_H_
 
-#include <string>
-#include <stdint.h>
+#include "common/String.h"
+#include <cstdint>
 
 struct StructProperty
 {
-	enum PropertyType { ParticleType, Colour, Integer, UInteger, Float, String, Char, UChar };
-	std::string Name;
+	enum PropertyType { ParticleType, Colour, Integer, UInteger, Float, BString, String, Char, UChar, Removed };
+	ByteString Name;
 	PropertyType Type;
 	intptr_t Offset;
-	
-	StructProperty(std::string name, PropertyType type, intptr_t offset):
+
+	StructProperty(ByteString name, PropertyType type, intptr_t offset):
 	Name(name),
 	Type(type),
 	Offset(offset)
 	{
-		
+
 	}
 
 	StructProperty():
@@ -24,7 +24,7 @@ struct StructProperty
 	Type(Char),
 	Offset(0)
 	{
-		
+
 	}
 };
 

@@ -2,18 +2,21 @@
 
 #include "Activity.h"
 #include "client/SaveInfo.h"
-#include "client/requestbroker/RequestListener.h"
 #include "tasks/TaskListener.h"
+
+#include <memory>
 
 namespace ui
 {
+	class Label;
 	class Textbox;
 	class Checkbox;
 }
 
+class ThumbnailRendererTask;
 class Task;
-class Thumbnail;
-class ServerSaveActivity: public WindowActivity, public RequestListener, public TaskListener
+class VideoBuffer;
+class ServerSaveActivity: public WindowActivity, public TaskListener
 {
 public:
 	class SaveUploadedCallback
@@ -26,20 +29,23 @@ public:
 	ServerSaveActivity(SaveInfo save, SaveUploadedCallback * callback);
 	ServerSaveActivity(SaveInfo save, bool saveNow, SaveUploadedCallback * callback);
 	void saveUpload();
-	virtual void Save();
-	virtual void Exit();
-	virtual void ShowPublishingInfo();
-	virtual void ShowRules();
-	virtual void OnDraw();
-	virtual void OnResponseReady(void * imagePtr, int identifier);
-	virtual void OnTick(float dt);
+	void Save();
+	virtual void Exit() override;
+	void ShowPublishingInfo();
+	void ShowRules();
+	void CheckName(String newname);
+	virtual void OnDraw() override;
+	virtual void OnTick(float dt) override;
 	virtual ~ServerSaveActivity();
 protected:
-	virtual void NotifyDone(Task * task);
-	Task * saveUploadTask;
-	SaveUploadedCallback * callback;
+	void AddAuthorInfo();
+	void NotifyDone(Task * task) override;
+	ThumbnailRendererTask *thumbnailRenderer;
+	std::unique_ptr<VideoBuffer> thumbnail;
 	SaveInfo save;
-	VideoBuffer * thumbnail;
+	SaveUploadedCallback * callback;
+	Task * saveUploadTask;
+	ui::Label * titleLabel;
 	ui::Textbox * nameField;
 	ui::Textbox * descriptionField;
 	ui::Checkbox * publishedCheckbox;
@@ -48,4 +54,5 @@ protected:
 	class SaveAction;
 	class PublishingAction;
 	class RulesAction;
+	class NameChangedAction;
 };

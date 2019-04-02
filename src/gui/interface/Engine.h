@@ -1,17 +1,17 @@
 #pragma once
 
 #include <stack>
-#include "Singleton.h"
-#include "Platform.h"
+#include "common/Singleton.h"
 #include "graphics/Graphics.h"
 #include "Window.h"
+#include "PowderToy.h"
 
 namespace ui
 {
 	class Window;
 
 	/* class Engine
-	 * 
+	 *
 	 * Controls the User Interface.
 	 * Send user inputs to the Engine and the appropriate controls and components will interact.
 	 */
@@ -28,24 +28,32 @@ namespace ui
 		void onMouseClick(int x, int y, unsigned button);
 		void onMouseUnclick(int x, int y, unsigned button);
 		void onMouseWheel(int x, int y, int delta);
-		void onKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt);
-		void onKeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt);
+		void onKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt);
+		void onKeyRelease(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt);
+		void onTextInput(String text);
 		void onResize(int newWidth, int newHeight);
 		void onClose();
 
 		void Begin(int width, int height);
 		inline bool Running() { return running_; }
-		inline bool Broken() { return break_; } 
-		inline int LastTick() { return lastTick; }
-		inline void LastTick(int tick) { lastTick = tick; }
+		inline bool Broken() { return break_; }
+		inline long unsigned int LastTick() { return lastTick; }
+		inline void LastTick(long unsigned int tick) { lastTick = tick; }
 		void Exit();
+		void ConfirmExit();
 		void Break();
 		void UnBreak();
 
 		void SetFullscreen(bool fullscreen) { Fullscreen = fullscreen; }
 		inline bool GetFullscreen() { return Fullscreen; }
+		void SetAltFullscreen(bool altFullscreen) { this->altFullscreen = altFullscreen; }
+		inline bool GetAltFullscreen() { return altFullscreen; }
+		void SetForceIntegerScaling(bool forceIntegerScaling) { this->forceIntegerScaling = forceIntegerScaling; }
+		inline bool GetForceIntegerScaling() { return forceIntegerScaling; }
 		void SetScale(int scale) { Scale = scale; }
 		inline int GetScale() { return Scale; }
+		void SetResizable(bool resizable) { this->resizable = resizable; }
+		inline bool GetResizable() { return resizable; }
 		void SetFastQuit(bool fastquit) { FastQuit = fastquit; }
 		inline bool GetFastQuit() {return FastQuit; }
 
@@ -54,7 +62,6 @@ namespace ui
 
 		void SetFps(float fps);
 		inline float GetFps() { return fps; }
-		inline float GetDelta() { return dt; }
 
 		inline int GetMouseButton() { return mouseb_; }
 		inline int GetMouseX() { return mousex_; }
@@ -67,7 +74,7 @@ namespace ui
 		void SetMaxSize(int width, int height);
 
 		inline void SetSize(int width, int height);
-		
+
 		//void SetState(Window* state);
 		//inline State* GetState() { return state_; }
 		inline Window* GetWindow() { return state_; }
@@ -78,6 +85,10 @@ namespace ui
 
 		unsigned int FrameIndex;
 	private:
+		bool altFullscreen;
+		bool forceIntegerScaling = true;
+		bool resizable;
+
 		float dt;
 		float fps;
 		pixel * lastBuffer;
@@ -87,13 +98,14 @@ namespace ui
 		//Window* statequeued_;
 		Window* state_;
 		Point windowTargetPosition;
-		float windowOpenState;
+		int windowOpenState;
+		bool ignoreEvents = false;
 
 		bool running_;
 		bool break_;
 		bool FastQuit;
-		
-		int lastTick;
+
+		long unsigned int lastTick;
 		int mouseb_;
 		int mousex_;
 		int mousey_;

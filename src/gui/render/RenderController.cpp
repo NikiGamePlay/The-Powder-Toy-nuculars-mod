@@ -45,22 +45,16 @@ void RenderController::LoadRenderPreset(int presetNum)
 
 void RenderController::Exit()
 {
-	if(ui::Engine::Ref().GetWindow() == renderView)
-	{
-		ui::Engine::Ref().CloseWindow();
-	}
+	renderView->CloseActiveWindow();
 	if(callback)
 		callback->ControllerExit();
 	HasExited = true;
 }
 
-RenderController::~RenderController() {
-	if(ui::Engine::Ref().GetWindow() == renderView)
-	{
-		ui::Engine::Ref().CloseWindow();
-	}
-	if(callback)
-		delete callback;
+RenderController::~RenderController()
+{
+	renderView->CloseActiveWindow();
+	delete callback;
 	delete renderModel;
 	delete renderView;
 }

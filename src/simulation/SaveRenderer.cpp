@@ -3,7 +3,6 @@
 #include "graphics/Graphics.h"
 #include "Simulation.h"
 #include "graphics/Renderer.h"
-#include "gui/search/Thumbnail.h"
 
 
 SaveRenderer::SaveRenderer(){
@@ -30,20 +29,24 @@ SaveRenderer::SaveRenderer(){
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // Reset framebuffer binding
 	glDisable(GL_TEXTURE_2D);
 #endif
+
+	pthread_mutex_init(&renderMutex, NULL);
 }
 
 VideoBuffer * SaveRenderer::Render(GameSave * save, bool decorations, bool fire)
 {
+	pthread_mutex_lock(&renderMutex);
+
 	int width, height;
-	VideoBuffer * tempThumb;
+	VideoBuffer * tempThumb = NULL;
 	width = save->blockWidth;
 	height = save->blockHeight;
 	bool doCollapse = save->Collapsed();
-	
+
 	g->Acquire();
 	g->Clear();
 	sim->clear_sim();
-	
+
 	if(!sim->Load(save))
 	{
 		ren->decorations_enable = true;
@@ -56,7 +59,7 @@ VideoBuffer * SaveRenderer::Render(GameSave * save, bool decorations, bool fire)
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		
+
 		ren->clearScreen(1.0f);
 		ren->ClearAccumulation();
 
@@ -130,7 +133,7 @@ VideoBuffer * SaveRenderer::Render(GameSave * save, bool decorations, bool fire)
 		ren->RenderBegin();
 		ren->RenderEnd();
 
-	
+
 		pData = (pixel *)malloc(PIXELSIZE * ((width*CELL)*(height*CELL)));
 		dst = pData;
 		for(int i = 0; i < height*CELL; i++)
@@ -140,34 +143,41 @@ VideoBuffer * SaveRenderer::Render(GameSave * save, bool decorations, bool fire)
 			src+=WINDOWW;
 		}
 		tempThumb = new VideoBuffer(pData, width*CELL, height*CELL);
-		if(pData)
-			free(pData);
+		free(pData);
 #endif
 	}
 	if(doCollapse)
 		save->Collapse();
 	g->Release();
+
+	pthread_mutex_unlock(&renderMutex);
 	return tempThumb;
 }
 
 VideoBuffer * SaveRenderer::Render(unsigned char * saveData, int dataSize, bool decorations, bool fire)
 {
+	pthread_mutex_lock(&renderMutex);
+
 	GameSave * tempSave;
 	try {
 		tempSave = new GameSave((char*)saveData, dataSize);
 	} catch (std::exception & e) {
-		
+
 		//Todo: make this look a little less shit
 		VideoBuffer * buffer = new VideoBuffer(64, 64);
 		buffer->BlendCharacter(32, 32, 'x', 255, 255, 255, 255);
-		
+
+		pthread_mutex_unlock(&renderMutex);
 		return buffer;
 	}
 	VideoBuffer * thumb = Render(tempSave, decorations, fire);
 	delete tempSave;
+
+	pthread_mutex_unlock(&renderMutex);
 	return thumb;
 }
 
 SaveRenderer::~SaveRenderer() {
+	pthread_mutex_destroy(&renderMutex);
 }
 

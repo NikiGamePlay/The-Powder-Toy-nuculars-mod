@@ -1,9 +1,10 @@
 #ifndef LUASCRIPTINTERFACE_H_
 #define LUASCRIPTINTERFACE_H_
 
-#include "luainc.h"
+#include "LuaCompat.h"
 
 #include "CommandInterface.h"
+#include "lua/LuaEvents.h"
 #include "simulation/Simulation.h"
 
 namespace ui
@@ -15,11 +16,11 @@ class Tool;
 
 //Because lua only has bindings for C, we're going to have to go outside "outside" the LuaScriptInterface, this means we can only have one instance :(
 
-#define LOCAL_LUA_DIR "Lua"
-
 #define LUACON_MDOWN 1
 #define LUACON_MUP 2
 #define LUACON_MPRESS 3
+#define LUACON_MUPALT 4
+#define LUACON_MUPZOOM 5
 #define LUACON_KDOWN 1
 #define LUACON_KUP 2
 
@@ -34,18 +35,24 @@ class Tool;
 	lua_setfield(L, -2, #NAME)
 
 class TPTScriptInterface;
+
 class LuaScriptInterface: public CommandInterface
 {
-	int luacon_mousex, luacon_mousey, luacon_mousebutton, luacon_brushx, luacon_brushy;
-	std::string luacon_selectedl, luacon_selectedr, luacon_selectedalt, luacon_selectedreplace;
+	int luacon_mousex, luacon_mousey, luacon_mousebutton;
+	ByteString luacon_selectedl, luacon_selectedr, luacon_selectedalt, luacon_selectedreplace;
 	bool luacon_mousedown;
 	bool currentCommand;
 	TPTScriptInterface * legacy;
 
+	// signs
+	static int simulation_signIndex(lua_State *l);
+	static int simulation_signNewIndex(lua_State *l);
+	static int simulation_newsign(lua_State *l);
+
 	//Simulation
 	static StructProperty * particleProperties;
 	static int particlePropertiesCount;
-	//
+
 	void initSimulationAPI();
 	static void set_map(int x, int y, int width, int height, float value, int mapType);
 	static int simulation_partNeighbours(lua_State * l);
@@ -77,6 +84,7 @@ class LuaScriptInterface: public CommandInterface
 	static int simulation_decoBox(lua_State * l);
 	static int simulation_decoColor(lua_State * l);
 	static int simulation_clearSim(lua_State * l);
+	static int simulation_clearRect(lua_State * l);
 	static int simulation_resetTemp(lua_State * l);
 	static int simulation_resetPressure(lua_State * l);
 	static int simulation_saveStamp(lua_State * l);
@@ -96,8 +104,13 @@ class LuaScriptInterface: public CommandInterface
 	static int simulation_elementCount(lua_State * l);
 	static int simulation_canMove(lua_State * l);
 	static int simulation_parts(lua_State * l);
+	static int simulation_brush(lua_State * l);
 	static int simulation_pmap(lua_State * l);
+	static int simulation_photons(lua_State * l);
 	static int simulation_neighbours(lua_State * l);
+	static int simulation_framerender(lua_State * l);
+	static int simulation_gspeed(lua_State * l);
+	static int simulation_takeSnapshot(lua_State *l);
 
 	//Renderer
 	void initRendererAPI();
@@ -107,6 +120,10 @@ class LuaScriptInterface: public CommandInterface
 	static int renderer_decorations(lua_State * l);
 	static int renderer_grid(lua_State * l);
 	static int renderer_debugHUD(lua_State * l);
+	static int renderer_depth3d(lua_State * l);
+	static int renderer_zoomEnabled(lua_State *l);
+	static int renderer_zoomWindowInfo(lua_State *l);
+	static int renderer_zoomScopeInfo(lua_State *l);
 
 	//Elements
 	void initElementsAPI();
@@ -145,24 +162,40 @@ class LuaScriptInterface: public CommandInterface
 	static int fileSystem_move(lua_State * l);
 	static int fileSystem_copy(lua_State * l);
 
+	void initPlatformAPI();
+	static int platform_platform(lua_State * l);
+	static int platform_build(lua_State * l);
+	static int platform_releaseType(lua_State * l);
+	static int platform_exeName(lua_State * l);
+	static int platform_restart(lua_State * l);
+	static int platform_openLink(lua_State * l);
+	static int platform_clipboardCopy(lua_State * l);
+	static int platform_clipboardPaste(lua_State * l);
+
+	void initEventAPI();
+	static int event_register(lua_State * l);
+	static int event_unregister(lua_State * l);
+	static int event_getmodifiers(lua_State * l);
+
 public:
+	int tpt_index(lua_State *l);
+	int tpt_newIndex(lua_State *l);
+
+	static void LuaGetProperty(lua_State* l, StructProperty property, intptr_t propertyAddress);
+	static void LuaSetProperty(lua_State* l, StructProperty property, intptr_t propertyAddress, int stackPos);
+
 	ui::Window * Window;
 	lua_State *l;
 	std::string buffer;
 	LuaScriptInterface(GameController * c, GameModel * m);
-	virtual bool OnBrushChanged(int brushType, int rx, int ry);
-	virtual bool OnActiveToolChanged(int toolSelection, Tool * tool);
-	virtual bool OnMouseMove(int x, int y, int dx, int dy);
-	virtual bool OnMouseDown(int x, int y, unsigned button);
-	virtual bool OnMouseUp(int x, int y, unsigned button);
-	virtual bool OnMouseWheel(int x, int y, int d);
-	virtual bool OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt);
-	virtual bool OnKeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt);
-	virtual void OnTick();
-	virtual void Init();
-	virtual void SetWindow(ui::Window * window);
-	virtual EvalResult * Command(std::string command);
-	virtual std::string FormatCommand(std::string command);
+
+	void OnTick() override;
+	bool HandleEvent(LuaEvents::EventTypes eventType, Event * event) override;
+
+	void Init();
+	void SetWindow(ui::Window * window);
+	int Command(String command) override;
+	String FormatCommand(String command) override;
 	virtual ~LuaScriptInterface();
 };
 

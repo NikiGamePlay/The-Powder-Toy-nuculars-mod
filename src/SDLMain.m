@@ -5,11 +5,7 @@
     Feel free to customize this file to suit your needs
 */
 
-#ifdef SDL_INC
-#include "SDL/SDL.h"
-#else
-#include "SDL.h"
-#endif
+#include "SDLCompat.h"
 #include "SDLMain.h"
 #include <sys/param.h> /* for MAXPATHLEN */
 #include <unistd.h>
@@ -54,7 +50,7 @@ static NSString *getApplicationName(void)
     dict = (const NSDictionary *)CFBundleGetInfoDictionary(CFBundleGetMainBundle());
     if (dict)
         appName = [dict objectForKey: @"CFBundleName"];
-    
+
     if (![appName length])
         appName = [[NSProcessInfo processInfo] processName];
 
@@ -85,50 +81,26 @@ static NSString *getApplicationName(void)
 /* The main class of the application, the application's delegate */
 @implementation SDLMain
 
-/* Set the working directory to the .app's parent directory */
+/* Set the working directory to Application Support */
 - (void) setupWorkingDirectory:(BOOL)shouldChdir
 {
-    SInt32 versionMajor = 0, versionMinor = 0;
-    Gestalt(gestaltSystemVersionMajor, &versionMajor);
-    Gestalt(gestaltSystemVersionMinor, &versionMinor);
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
+    if ([paths count] < 1)
+        return;
 
-    /* Set the working directory to Application Support on Mavericks and above */
-    if (versionMajor > 10 || versionMinor >= 9)
+    NSString *appSupportPath = [paths objectAtIndex:0];
+    BOOL isDir = NO;
+    NSError *error = nil;
+    NSString *appPath = [appSupportPath stringByAppendingPathComponent:@"The Powder Toy"];
+    if (![[NSFileManager defaultManager] fileExistsAtPath:appPath isDirectory:&isDir] && isDir == NO)
     {
-        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
-        if ([paths count] < 1)
+        if (![[NSFileManager defaultManager] createDirectoryAtPath:appPath withIntermediateDirectories:YES attributes:nil error:&error])
+        {
+            NSLog(@"Could not set up working dir. Error: %@", error);
             return;
-
-        NSString *appSupportPath = [paths objectAtIndex:0];
-        BOOL isDir = NO;
-        NSError *error = nil;
-        NSString *appPath = [appSupportPath stringByAppendingPathComponent:@"The Powder Toy"];
-        if (![[NSFileManager defaultManager] fileExistsAtPath:appPath isDirectory:&isDir] && isDir == NO)
-        {
-            if (![[NSFileManager defaultManager] createDirectoryAtPath:appPath withIntermediateDirectories:YES attributes:nil error:&error])
-            {
-                NSLog(@"Could not set up working dir. Error: %@", error);
-                return;
-            }
-        }
-        chdir([appPath UTF8String]);
-    }
-    /* Set the working directory to the .app's parent directory, because the code above breaks anything below Mavericks? (just a guess) */
-    else
-    {
-        if (shouldChdir)
-        {
-            char parentdir[MAXPATHLEN];
-            CFURLRef url = CFBundleCopyBundleURL(CFBundleGetMainBundle());
-            CFURLRef url2 = CFURLCreateCopyDeletingLastPathComponent(0, url);
-            if (CFURLGetFileSystemRepresentation(url2, 1, (UInt8 *)parentdir, MAXPATHLEN))
-            {
-                chdir(parentdir);   /* chdir to the binary app's parent */
-            }
-            CFRelease(url);
-            CFRelease(url2);
         }
     }
+    chdir([appPath UTF8String]);
 }
 
 #if SDL_USE_NIB_FILE
@@ -164,10 +136,10 @@ static void setApplicationMenu(void)
     NSMenuItem *menuItem;
     NSString *title;
     NSString *appName;
-    
+
     appName = getApplicationName();
     appleMenu = [[NSMenu alloc] initWithTitle:@""];
-    
+
     /* Add menu items */
     title = [@"About " stringByAppendingString:appName];
     [appleMenu addItemWithTitle:title action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@""];
@@ -187,7 +159,7 @@ static void setApplicationMenu(void)
     title = [@"Quit " stringByAppendingString:appName];
     [appleMenu addItemWithTitle:title action:@selector(terminate:) keyEquivalent:@"q"];
 
-    
+
     /* Put menu into the menubar */
     menuItem = [[NSMenuItem alloc] initWithTitle:@"" action:nil keyEquivalent:@""];
     [menuItem setSubmenu:appleMenu];
@@ -209,17 +181,17 @@ static void setupWindowMenu(void)
     NSMenuItem  *menuItem;
 
     windowMenu = [[NSMenu alloc] initWithTitle:@"Window"];
-    
+
     /* "Minimize" item */
     menuItem = [[NSMenuItem alloc] initWithTitle:@"Minimize" action:@selector(performMiniaturize:) keyEquivalent:@"m"];
     [windowMenu addItem:menuItem];
     [menuItem release];
-    
+
     /* Put menu into the menubar */
     windowMenuItem = [[NSMenuItem alloc] initWithTitle:@"Window" action:nil keyEquivalent:@""];
     [windowMenuItem setSubmenu:windowMenu];
     [[NSApp mainMenu] addItem:windowMenuItem];
-    
+
     /* Tell the application object that this is now the window menu */
     [NSApp setWindowsMenu:windowMenu];
 
@@ -236,7 +208,7 @@ static void CustomApplicationMain (int argc, char **argv)
 
     /* Ensure the application object is initialised */
     [NSApplication sharedApplication];
-    
+
 #ifdef SDL_USE_CPS
     {
         CPSProcessSerNum PSN;
@@ -256,10 +228,10 @@ static void CustomApplicationMain (int argc, char **argv)
     /* Create SDLMain and make it the app delegate */
     sdlMain = [[SDLMain alloc] init];
     [NSApp setDelegate:sdlMain];
-    
+
     /* Start the main event loop */
     [NSApp run];
-    
+
     [sdlMain release];
     [pool release];
 }
@@ -365,67 +337,41 @@ static void CustomApplicationMain (int argc, char **argv)
 
     bufferSize = selfLen + aStringLen - aRange.length;
     buffer = (unichar *)NSAllocateMemoryPages(bufferSize*sizeof(unichar));
-    
+
     /* Get first part into buffer */
     localRange.location = 0;
     localRange.length = aRange.location;
     [self getCharacters:buffer range:localRange];
-    
+
     /* Get middle part into buffer */
     localRange.location = 0;
     localRange.length = aStringLen;
     [aString getCharacters:(buffer+aRange.location) range:localRange];
-     
+
     /* Get last part into buffer */
     localRange.location = aRange.location + aRange.length;
     localRange.length = selfLen - localRange.location;
     [self getCharacters:(buffer+aRange.location+aStringLen) range:localRange];
-    
+
     /* Build output string */
     result = [NSString stringWithCharacters:buffer length:bufferSize];
-    
+
     NSDeallocateMemoryPages(buffer, bufferSize);
-    
+
     return result;
 }
 
 @end
 
-char * readUserPreferences() {
-    NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
-
-    NSString *prefDataNSString = [prefs stringForKey:@"powder.pref"];
-    const char *prefData = [prefDataNSString UTF8String];
-    if(prefData == NULL)
-        prefData = "";
-
-    char *prefDataCopy = calloc([prefDataNSString length]+1, 1);
-    SDL_strlcpy(prefDataCopy, prefData, [prefDataNSString length]+1);
-
-    [prefDataNSString release];
-    [prefs release];
-
-    return prefDataCopy;
-}
-
-void writeUserPreferences(const char * prefData) {
-    NSString *prefDataNSString = [NSString stringWithUTF8String:prefData];
-
-    NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
-    [prefs setObject:prefDataNSString forKey:@"powder.pref"];
-    [prefs synchronize];
-
-    [prefDataNSString release];
-    [prefs release];
-}
-
-char * readClipboard() {
+//doesn't work on OS X 10.5 or below
+char * readClipboard()
+{
     NSPasteboard *clipboard = [NSPasteboard generalPasteboard];
 
     NSArray *classes = [[NSArray alloc] initWithObjects:[NSString class], nil];
     NSDictionary *options = [NSDictionary dictionary];
     NSArray *clipboardItems = [clipboard readObjectsForClasses:classes options:options];
-    
+
     if(clipboardItems == nil || [clipboardItems count] == 0) return NULL;
 
     NSString *newString = [clipboardItems objectAtIndex:0];
@@ -439,7 +385,9 @@ char * readClipboard() {
     return clipboardDataCopy;
 }
 
-void writeClipboard(const char * clipboardData) {
+//doesn't work on OS X 10.5 or below
+void writeClipboard(const char * clipboardData)
+{
     NSPasteboard *clipboard = [NSPasteboard generalPasteboard];
 
     NSString *newString = [NSString stringWithUTF8String: clipboardData];

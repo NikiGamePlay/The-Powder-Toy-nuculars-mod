@@ -6,9 +6,9 @@ Element_FUSE::Element_FUSE()
 	Name = "FUSE";
 	Colour = PIXPACK(0x0A5706);
 	MenuVisible = 1;
-	MenuSection = SC_SOLIDS;
+	MenuSection = SC_EXPLOSIVE;
 	Enabled = 1;
-	
+
 	Advection = 0.0f;
 	AirDrag = 0.00f * CFDS;
 	AirLoss = 0.90f;
@@ -18,21 +18,20 @@ Element_FUSE::Element_FUSE()
 	Diffusion = 0.0f;
 	HotAir = 0.0f	* CFDS;
 	Falldown = 0;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 20;
-	
+
 	Weight = 100;
-	
+
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 200;
 	Description = "Burns slowly. Ignites at somewhat high temperatures or with electricity.";
-	
-	State = ST_SOLID;
+
 	Properties = TYPE_SOLID;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -41,14 +40,13 @@ Element_FUSE::Element_FUSE()
 	LowTemperatureTransition = NT;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	
+
 	Update = &Element_FUSE::update;
-	
 }
 
 //#TPT-Directive ElementHeader Element_FUSE static int update(UPDATE_FUNC_ARGS)
 int Element_FUSE::update(UPDATE_FUNC_ARGS)
- {
+{
 	int r, rx, ry;
 	if (parts[i].life<=0) {
 		r = sim->create_part(i, x, y, PT_PLSM);
@@ -58,8 +56,8 @@ int Element_FUSE::update(UPDATE_FUNC_ARGS)
 	}
 	else if (parts[i].life < 40) {
 		parts[i].life--;
-		if (!(rand()%100)) {
-			r = sim->create_part(-1, x+rand()%3-1, y+rand()%3-1, PT_PLSM);
+		if (RNG::Ref().chance(1, 100)) {
+			r = sim->create_part(-1, x + RNG::Ref().chance(-1, 1), y + RNG::Ref().chance(-1, 1), PT_PLSM);
 			if (r>-1)
 				parts[r].life = 50;
 		}
@@ -72,7 +70,7 @@ int Element_FUSE::update(UPDATE_FUNC_ARGS)
 	}
 	else if (parts[i].tmp<40)
 		parts[i].tmp--;
-	
+
 	for (rx=-2; rx<3; rx++)
 		for (ry=-2; ry<3; ry++)
 			if (BOUNDS_CHECK && (rx || ry))
@@ -80,10 +78,10 @@ int Element_FUSE::update(UPDATE_FUNC_ARGS)
 				r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if ((r&0xFF)==PT_SPRK || ((parts[i].temp>=(273.15+700.0f)) && parts[i].life>40 && !(rand()%20)))
+				if (TYP(r)==PT_SPRK || (parts[i].temp>=(273.15+700.0f) && RNG::Ref().chance(1, 20)))
 				{
-					parts[i].life = 39;
-					
+					if (parts[i].life > 40)
+						parts[i].life = 39;
 				}
 			}
 	return 0;

@@ -1,4 +1,4 @@
- #ifndef GAMECONTROLLER_H
+#ifndef GAMECONTROLLER_H
 #define GAMECONTROLLER_H
 
 #include <queue>
@@ -29,9 +29,9 @@ class ConsoleController;
 class GameController: public ClientListener
 {
 private:
-	//Simulation * sim;
 	bool firstTick;
-	int screenshotIndex;
+	int foundSignID;
+
 	PreviewController * activePreview;
 	GameView * gameView;
 	GameModel * gameModel;
@@ -44,6 +44,7 @@ private:
 	OptionsController * options;
 	CommandInterface * commandInterface;
 	vector<DebugInfo*> debugInfo;
+	unsigned int debugFlags;
 public:
 	bool HasDone;
 	class SearchCallback;
@@ -56,22 +57,25 @@ public:
 	GameController();
 	~GameController();
 	GameView * GetView();
-	sign * GetSignAt(int x, int y);
+	int GetSignAt(int x, int y);
+	String GetSignText(int signID);
 
-	bool BrushChanged(int brushType, int rx, int ry);
 	bool MouseMove(int x, int y, int dx, int dy);
 	bool MouseDown(int x, int y, unsigned button);
-	bool MouseUp(int x, int y, unsigned button);
+	bool MouseUp(int x, int y, unsigned button, char type);
 	bool MouseWheel(int x, int y, int d);
-	bool KeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt);
-	bool KeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt);
+	bool TextInput(String text);
+	bool KeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt);
+	bool KeyRelease(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt);
 	void Tick();
+	void Blur();
 	void Exit();
 
 	void Install();
 
 	void HistoryRestore();
 	void HistorySnapshot();
+	void HistoryForward();
 
 	void AdjustGridSize(int direction);
 	void InvertAirSim();
@@ -79,15 +83,16 @@ public:
 	void SetZoomEnabled(bool zoomEnable);
 	void SetZoomPosition(ui::Point position);
 	void AdjustBrushSize(int direction, bool logarithmic = false, bool xAxis = false, bool yAxis = false);
+	void SetBrushSize(ui::Point newSize);
 	void AdjustZoomSize(int direction, bool logarithmic = false);
 	void ToolClick(int toolSelection, ui::Point point);
-	void DrawPoints(int toolSelection, queue<ui::Point> & pointQueue);
+	void DrawPoints(int toolSelection, ui::Point oldPos, ui::Point newPos, bool held);
 	void DrawRect(int toolSelection, ui::Point point1, ui::Point point2);
 	void DrawLine(int toolSelection, ui::Point point1, ui::Point point2);
 	void DrawFill(int toolSelection, ui::Point point);
-	std::string StampRegion(ui::Point point1, ui::Point point2);
-	void CopyRegion(ui::Point point1, ui::Point point2);
-	void CutRegion(ui::Point point1, ui::Point point2);
+	ByteString StampRegion(ui::Point point1, ui::Point point2, bool includePressure);
+	void CopyRegion(ui::Point point1, ui::Point point2, bool includePressure);
+	void CutRegion(ui::Point point1, ui::Point point2, bool includePressure);
 	void Update();
 	void SetPaused(bool pauseState);
 	void SetPaused();
@@ -98,19 +103,23 @@ public:
 	bool GetHudEnable();
 	void SetDebugHUD(bool hudState);
 	bool GetDebugHUD();
+	void SetDebugFlags(unsigned int flags) { debugFlags = flags; }
 	void SetActiveMenu(int menuID);
 	std::vector<Menu*> GetMenuList();
+	int GetNumMenus(bool onlyEnabled);
+	void RebuildFavoritesMenu();
 	Tool * GetActiveTool(int selection);
 	void SetActiveTool(int toolSelection, Tool * tool);
+	void SetActiveTool(int toolSelection, ByteString identifier);
+	void SetLastTool(Tool * tool);
 	int GetReplaceModeFlags();
 	void SetReplaceModeFlags(int flags);
-	void ActiveToolChanged(int toolSelection, Tool *tool);
 	void SetActiveColourPreset(int preset);
 	void SetColour(ui::Colour colour);
 	void SetToolStrength(float value);
 	void LoadSaveFile(SaveFile * file);
 	void LoadSave(SaveInfo * save);
-	void OpenSearch();
+	void OpenSearch(String searchText);
 	void OpenLogin();
 	void OpenProfile();
 	void OpenTags();
@@ -125,7 +134,7 @@ public:
 	void OpenStamps();
 	void OpenElementSearch();
 	void OpenColourPicker();
-	void PlaceSave(ui::Point position);
+	void PlaceSave(ui::Point position, bool includePressure);
 	void ClearSim();
 	void ReloadSim();
 	void Vote(int direction);
@@ -135,27 +144,31 @@ public:
 	void FrameStep();
 	void TranslateSave(ui::Point point);
 	void TransformSave(matrix2d transform);
+	bool MouseInZoom(ui::Point position);
 	ui::Point PointTranslate(ui::Point point);
 	ui::Point NormaliseBlockCoord(ui::Point point);
-	std::string ElementResolve(int type, int ctype);
+	String ElementResolve(int type, int ctype);
+	String BasicParticleInfo(Particle const &sample_part);
 	bool IsValidElement(int type);
-	std::string WallName(int type);
+	String WallName(int type);
+	int Record(bool record);
 
 	void ResetAir();
 	void ResetSpark();
 	void SwitchGravity();
 	void SwitchAir();
 	void ToggleAHeat();
+	bool GetAHeatEnable();
 	void ToggleNewtonianGravity();
 
-	void LoadClipboard();
-	void LoadStamp();
+	bool LoadClipboard();
+	void LoadStamp(GameSave *stamp);
 
 	void RemoveNotification(Notification * notification);
 
-	virtual void NotifyUpdateAvailable(Client * sender);
-	virtual void NotifyAuthUserChanged(Client * sender);
-	virtual void NotifyNewNotification(Client * sender, std::pair<std::string, std::string> notification);
+	void NotifyUpdateAvailable(Client * sender) override;
+	void NotifyAuthUserChanged(Client * sender) override;
+	void NotifyNewNotification(Client * sender, std::pair<String, ByteString> notification) override;
 	void RunUpdater();
 };
 

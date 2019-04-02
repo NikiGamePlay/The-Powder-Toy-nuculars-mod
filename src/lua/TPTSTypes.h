@@ -1,28 +1,29 @@
 #ifndef TPTSTYPES_H_
 #define TPTSTYPES_H_
 
-#include <string>
+#include "common/String.h"
 #include <typeinfo>
 #include "gui/interface/Point.h"
 
-enum ValueType { TypeNumber, TypePoint, TypeString, TypeNull, TypeFunction };
-typedef union { int num; std::string* str; ui::Point* pt; } ValueValue;
+enum ValueType { TypeNumber, TypeFloat, TypePoint, TypeString, TypeNull, TypeFunction };
+typedef union { int num; float numf; String* str; ui::Point* pt; } ValueValue;
 
 class GeneralException
 {
 protected:
-	std::string exception;
+	String exception;
 public:
-	GeneralException(std::string message){
+	GeneralException(String message){
 		exception = message;
 	}
-	std::string GetExceptionMessage() {
+	String GetExceptionMessage() {
 		return exception;
 	}
 };
 
 
 class NumberType;
+class FloatType;
 class StringType;
 class PointType;
 
@@ -35,15 +36,18 @@ public:
 	AnyType(ValueType type_, ValueValue value_);
 	AnyType(const AnyType & v);
 	operator NumberType();
+	operator FloatType();
 	operator StringType();
 	operator PointType();
 	ValueType GetType();
-	std::string TypeName()
+	ByteString TypeName()
 	{
 		switch(type)
 		{
 		case TypeNumber:
 			return "Number";
+		case TypeFloat:
+			return "Float";
 		case TypePoint:
 			return "Point";
 		case TypeString:
@@ -56,12 +60,14 @@ public:
 			return "Unknown";
 		}
 	}
-	static std::string TypeName(ValueType type)
+	static ByteString TypeName(ValueType type)
 	{
 		switch(type)
 		{
 		case TypeNumber:
 			return "Number";
+		case TypeFloat:
+			return "Float";
 		case TypePoint:
 			return "Point";
 		case TypeString:
@@ -79,12 +85,9 @@ public:
 
 class InvalidConversionException: public GeneralException
 {
-private:
-	ValueType from;
-	ValueType to;
 public:
 	InvalidConversionException(ValueType from_, ValueType to_):
-	GeneralException("Invalid conversion from " + AnyType::TypeName(from_) + " to " + AnyType::TypeName(to_)), from(from_), to(to_) {
+	GeneralException("Invalid conversion from " + AnyType::TypeName(from_).FromAscii() + " to " + AnyType::TypeName(to_).FromAscii()) {
 	}
 };
 
@@ -95,11 +98,18 @@ public:
 	int Value();
 };
 
+class FloatType: public AnyType
+{
+public:
+	FloatType(float number);
+	float Value();
+};
+
 class StringType: public AnyType
 {
 public:
-	StringType(std::string string);
-	std::string Value();
+	StringType(String string);
+	String Value();
 };
 
 class PointType: public AnyType

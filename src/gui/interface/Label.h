@@ -1,10 +1,9 @@
 #ifndef LABEL_H
 #define LABEL_H
 
-#include <string>
+#include "common/String.h"
 
 #include "Component.h"
-#include "PowderToy.h"
 #include "Colour.h"
 
 namespace ui
@@ -12,14 +11,13 @@ namespace ui
 	class Label : public Component
 	{
 	protected:
-		std::string textFragments;
-		std::string textLines;
-		std::string displayText;
-		std::string tDisplayText;
+		String textFragments;
+		String textLines;
+		String displayText;
+		String tDisplayText;
 
-		std::string text;
+		String text;
 		Colour textColour;
-		int caret;
 		int selectionIndex0;
 		int selectionIndex1;
 
@@ -40,32 +38,33 @@ namespace ui
 		int getLowerSelectionBound();
 		int getHigherSelectionBound();
 
-		virtual void copySelection();
+		void copySelection();
 	public:
-		//Label(Window* parent_state, std::string labelText);
-		Label(Point position, Point size, std::string labelText);
-		//Label(std::string labelText);
+		//Label(Window* parent_state, String labelText);
+		Label(Point position, Point size, String labelText);
+		//Label(String labelText);
 		virtual ~Label();
 
-		virtual void SetMultiline(bool status);
+		void SetMultiline(bool status);
 
-		virtual void SetText(std::string text);
-		virtual void SetDisplayText(std::string newText);
-		virtual std::string GetText();
+		virtual void SetText(String text);
+		virtual void SetDisplayText(String newText);
+		virtual String GetText();
 
-		virtual bool HasSelection();
-		virtual void ClearSelection();
-		virtual void AutoHeight();
+		bool HasSelection();
+		void ClearSelection();
+		void selectAll();
+		void AutoHeight();
 
 		void SetTextColour(Colour textColour) { this->textColour = textColour; }
 
-		virtual void OnContextMenuAction(int item);
-		virtual void OnMouseClick(int x, int y, unsigned button);
-		virtual void OnMouseUp(int x, int y, unsigned button);
-		virtual void OnMouseMoved(int localx, int localy, int dx, int dy);
-		virtual void OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt);
-		virtual void Draw(const Point& screenPos);
-		virtual void Tick(float dt);
+		void OnContextMenuAction(int item) override;
+		void OnMouseClick(int x, int y, unsigned button) override;
+		void OnMouseUp(int x, int y, unsigned button) override;
+		void OnMouseMoved(int localx, int localy, int dx, int dy) override;
+		void OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt) override;
+		void Draw(const Point& screenPos) override;
+		void Tick(float dt) override;
 	};
 }
 

@@ -1,22 +1,24 @@
 #include <iostream>
 #include "ScrollPanel.h"
+#include "common/tpt-minmax.h"
+#include "graphics/Graphics.h"
 
 using namespace ui;
 
 ScrollPanel::ScrollPanel(Point position, Point size):
 	Panel(position, size),
+	scrollBarWidth(0),
 	maxOffset(0, 0),
 	offsetX(0),
 	offsetY(0),
 	yScrollVel(0.0f),
 	xScrollVel(0.0f),
-	scrollBarWidth(0),
 	isMouseInsideScrollbar(false),
 	isMouseInsideScrollbarArea(false),
-	scrollbarClickLocation(0),
 	scrollbarSelected(false),
 	scrollbarInitialYOffset(0),
-	scrollbarInitialYClick(0)
+	scrollbarInitialYClick(0),
+	scrollbarClickLocation(0)
 {
 
 }
@@ -33,7 +35,7 @@ int ScrollPanel::GetScrollLimit()
 void ScrollPanel::SetScrollPosition(int position)
 {
 	offsetY = position;
-	ViewportPosition.Y = position;
+	ViewportPosition.Y = -position;
 }
 
 void ScrollPanel::XOnMouseWheelInside(int localx, int localy, int d)
@@ -47,7 +49,7 @@ void ScrollPanel::Draw(const Point& screenPos)
 {
 	Panel::Draw(screenPos);
 
-	Graphics * g = ui::Engine::Ref().g;
+	Graphics * g = GetGraphics();
 
 	//Vertical scroll bar
 	if (maxOffset.Y>0 && InnerSize.Y>0)
@@ -60,7 +62,7 @@ void ScrollPanel::Draw(const Point& screenPos)
 		}
 
 		g->fillrect(screenPos.X+(Size.X-scrollBarWidth), screenPos.Y, scrollBarWidth, Size.Y, 125, 125, 125, 100);
-		g->fillrect(screenPos.X+(Size.X-scrollBarWidth), screenPos.Y+scrollPos, scrollBarWidth, scrollHeight, 255, 255, 255, 255);
+		g->fillrect(screenPos.X+(Size.X-scrollBarWidth), screenPos.Y+scrollPos, scrollBarWidth, scrollHeight+1, 255, 255, 255, 255);
 	}
 }
 
@@ -92,7 +94,7 @@ void ScrollPanel::XOnMouseMoved(int x, int y, int dx, int dy)
 		{
 			scrollPos = float(Size.Y-scrollHeight)*(float(offsetY)/float(maxOffset.Y));
 		}
-		
+
 		if (scrollbarSelected)
 		{
 			if (x > 0)
@@ -135,7 +137,6 @@ void ScrollPanel::XTick(float dt)
 
 	int oldOffsetY = offsetY;
 	offsetY += yScrollVel;
-	int oldOffsetX = offsetX;
 	offsetX += xScrollVel;
 
 	yScrollVel*=0.98f;

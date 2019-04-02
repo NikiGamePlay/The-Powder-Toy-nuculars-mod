@@ -1,50 +1,36 @@
 #ifndef COMMANDINTERFACE_H_
 #define COMMANDINTERFACE_H_
 
-#include <string>
+#include "common/String.h"
+#include "lua/LuaEvents.h"
 #include "gui/interface/Engine.h"
-//#include "game/GameModel.h"
 
+class Event;
 class GameModel;
 class GameController;
 class Tool;
-class CommandInterface {
+
+class CommandInterface
+{
 protected:
+	String lastError;
 	GameModel * m;
 	GameController * c;
 public:
 	enum LogType { LogError, LogWarning, LogNotice };
-	enum FormatType { FormatInt, FormatString, FormatChar, FormatFloat };
+	enum FormatType { FormatInt, FormatString, FormatChar, FormatFloat, FormatElement };
 	CommandInterface(GameController * c, GameModel * m);
-	int GetPropertyOffset(std::string key_, FormatType & format);
-	int GetParticleType(std::string type);
-	void Log(LogType type, std::string message);
+	int GetPropertyOffset(ByteString key, FormatType & format);
+	void Log(LogType type, String message);
 	//void AttachGameModel(GameModel * m);
-	virtual bool OnBrushChanged(int brushType, int rx, int ry) {return true;}
-	virtual bool OnActiveToolChanged(int toolSelection, Tool * tool) {return true;}
-	virtual bool OnMouseMove(int x, int y, int dx, int dy) {return true;}
-	virtual bool OnMouseDown(int x, int y, unsigned button) {return true;}
-	virtual bool OnMouseUp(int x, int y, unsigned button) {return true;}
-	virtual bool OnMouseWheel(int x, int y, int d) {return true;}
-	virtual bool OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt) {return true;}
-	virtual bool OnKeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt) {return true;}
-	virtual void OnTick() {}
-	enum EvalStatus
-	{
-		EvalSuccess, EvalFail, EvalMore
-	};
-	class EvalResult
-	{
-		public:
-		EvalStatus status;
-		std::string buffer;
-		EvalResult(EvalStatus Status, std::string Buffer):
-			status(Status),
-			buffer(Buffer)
-		{}
-	};
-	virtual EvalResult * Command(std::string command);
-	virtual std::string FormatCommand(std::string command);
+
+	virtual void OnTick() { }
+
+	virtual bool HandleEvent(LuaEvents::EventTypes eventType, Event * event) { return true; }
+
+	virtual int Command(String command);
+	virtual String FormatCommand(String command);
+	String GetLastError();
 	virtual ~CommandInterface();
 };
 

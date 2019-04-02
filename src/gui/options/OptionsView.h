@@ -5,6 +5,7 @@
 #include "OptionsController.h"
 #include "gui/interface/Checkbox.h"
 #include "gui/interface/DropDown.h"
+#include "gui/interface/Textbox.h"
 #include "OptionsModel.h"
 
 class OptionsModel;
@@ -18,16 +19,19 @@ class OptionsView: public ui::Window {
 	ui::DropDown * airMode;
 	ui::DropDown * gravityMode;
 	ui::DropDown * edgeMode;
-	ui::Checkbox * scale;
+	ui::DropDown * scale;
+	ui::Checkbox * resizable;
 	ui::Checkbox * fullscreen;
+	ui::Checkbox * altFullscreen;
+	ui::Checkbox * forceIntegerScaling;
 	ui::Checkbox * fastquit;
 	ui::Checkbox * showAvatars;
 public:
 	OptionsView();
 	void NotifySettingsChanged(OptionsModel * sender);
 	void AttachController(OptionsController * c_);
-	void OnDraw();
-	void OnTryExit(ExitMethod method);
+	void OnDraw() override;
+	void OnTryExit(ExitMethod method) override;
 	virtual ~OptionsView();
 };
 

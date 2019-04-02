@@ -1,5 +1,5 @@
-//#include "Platform.h"
 #include <iostream>
+#include "graphics/Graphics.h"
 #include "gui/interface/Component.h"
 #include "gui/interface/Engine.h"
 #include "gui/interface/Point.h"
@@ -12,15 +12,15 @@ using namespace ui;
 Component::Component(Window* parent_state):
 	parentstate_(parent_state),
 	_parent(NULL),
-	Position(Point(0,0)),
-	Size(Point(0,0)),
-	Locked(false),
-	Visible(true),
+	drawn(false),
 	textPosition(0, 0),
 	textSize(0, 0),
 	iconPosition(0, 0),
-	drawn(false),
-	menu(NULL)
+	menu(NULL),
+	Position(Point(0,0)),
+	Size(Point(0,0)),
+	Enabled(true),
+	Visible(true)
 {
 
 }
@@ -28,15 +28,15 @@ Component::Component(Window* parent_state):
 Component::Component(Point position, Point size):
 	parentstate_(0),
 	_parent(NULL),
-	Position(position),
-	Size(size),
-	Locked(false),
-	Visible(true),
+	drawn(false),
 	textPosition(0, 0),
 	textSize(0, 0),
 	iconPosition(0, 0),
-	drawn(false),
-	menu(NULL)
+	menu(NULL),
+	Position(position),
+	Size(size),
+	Enabled(true),
+	Visible(true)
 {
 
 }
@@ -44,15 +44,15 @@ Component::Component(Point position, Point size):
 Component::Component():
 	parentstate_(NULL),
 	_parent(NULL),
-	Position(Point(0,0)),
-	Size(Point(0,0)),
-	Locked(false),
-	Visible(true),
+	drawn(false),
 	textPosition(0, 0),
 	textSize(0, 0),
 	iconPosition(0, 0),
-	drawn(false),
-	menu(NULL)
+	menu(NULL),
+	Position(Point(0,0)),
+	Size(Point(0,0)),
+	Enabled(true),
+	Visible(true)
 {
 
 }
@@ -62,13 +62,13 @@ void Component::Refresh()
 	drawn = false;
 }
 
-void Component::TextPosition(std::string displayText)
+void Component::TextPosition(String displayText)
 {
 
 	textPosition = ui::Point(0, 0);
-	
+
 	int textWidth, textHeight = 10;
-	Graphics::textsize((char*)displayText.c_str(), textWidth, textHeight);
+	Graphics::textsize(displayText, textWidth, textHeight);
 	textSize.X = textWidth; textSize.Y = textHeight;
 	textHeight-=3;
 	textWidth-=1;
@@ -76,10 +76,10 @@ void Component::TextPosition(std::string displayText)
 	{
 		textWidth += 13;
 	}
-	
+
 	int textAreaWidth = Size.X-(Appearance.Margin.Right+Appearance.Margin.Left);
 	int textAreaHeight = Size.Y-(Appearance.Margin.Top+Appearance.Margin.Bottom);
-	
+
 	switch(Appearance.VerticalAlign)
 	{
 		case ui::Appearance::AlignTop:
@@ -92,7 +92,7 @@ void Component::TextPosition(std::string displayText)
 			textPosition.Y = Size.Y-(textHeight+Appearance.Margin.Bottom);
 			break;
 	}
-	
+
 	switch(Appearance.HorizontalAlign)
 	{
 		case ui::Appearance::AlignLeft:
@@ -137,10 +137,10 @@ void Component::SetParent(Panel* new_parent)
 				{
 					// remove ourself from parent component
 					_parent->RemoveChild(i, false);
-					
+
 					// add ourself to the parent state
 					GetParentWindow()->AddComponent(this);
-					
+
 					//done in this loop.
 					break;
 				}
@@ -168,6 +168,11 @@ Point Component::GetScreenPos()
 	return newPos;
 }
 
+Graphics * Component::GetGraphics()
+{
+	return parentstate_->GetGraphics();
+}
+
 // ***** OVERRIDEABLES *****
 // Kept empty.
 
@@ -185,11 +190,15 @@ void Component::Tick(float dt)
 {
 }
 
-void Component::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt)
+void Component::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
 {
 }
 
-void Component::OnKeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt)
+void Component::OnKeyRelease(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
+{
+}
+
+void Component::OnTextInput(String text)
 {
 }
 
@@ -239,6 +248,5 @@ void Component::OnMouseWheelInside(int localx, int localy, int d)
 
 Component::~Component()
 {
-	if(menu)
-		delete menu;
+	delete menu;
 }

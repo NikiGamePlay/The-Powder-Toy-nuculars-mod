@@ -8,7 +8,7 @@ Element_PVOD::Element_PVOD()
 	MenuVisible = 1;
 	MenuSection = SC_POWERED;
 	Enabled = 1;
-	
+
 	Advection = 0.0f;
 	AirDrag = 0.00f * CFDS;
 	AirLoss = 0.90f;
@@ -18,21 +18,20 @@ Element_PVOD::Element_PVOD()
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 0;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 1;
-	
+
 	Weight = 100;
-	
+
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 251;
 	Description = "Powered VOID. When activated, destroys entering particles.";
-	
-	State = ST_NONE;
+
 	Properties = TYPE_SOLID;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -41,14 +40,14 @@ Element_PVOD::Element_PVOD()
 	LowTemperatureTransition = NT;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	
+
 	Update = &Element_PVOD::update;
 	Graphics = &Element_PVOD::graphics;
 }
 
 //#TPT-Directive ElementHeader Element_PVOD static int update(UPDATE_FUNC_ARGS)
 int Element_PVOD::update(UPDATE_FUNC_ARGS)
- {
+{
 	int r, rx, ry;
 	if (parts[i].life>0 && parts[i].life!=10)
 		parts[i].life--;
@@ -59,21 +58,21 @@ int Element_PVOD::update(UPDATE_FUNC_ARGS)
 				r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if ((r&0xFF)==PT_SPRK)
+				if (TYP(r)==PT_SPRK)
 				{
-					if (parts[r>>8].life>0 && parts[r>>8].life<4)
+					if (parts[ID(r)].life>0 && parts[ID(r)].life<4)
 					{
-						if (parts[r>>8].ctype==PT_PSCN)
+						if (parts[ID(r)].ctype==PT_PSCN)
 							parts[i].life = 10;
-						else if (parts[r>>8].ctype==PT_NSCN)
+						else if (parts[ID(r)].ctype==PT_NSCN)
 							parts[i].life = 9;
 					}
 				}
-				else if ((r&0xFF)==PT_PVOD)
+				else if (TYP(r)==PT_PVOD)
 				{
-					if (parts[i].life==10&&parts[r>>8].life<10&&parts[r>>8].life>0)
+					if (parts[i].life==10&&parts[ID(r)].life<10&&parts[ID(r)].life>0)
 						parts[i].life = 9;
-					else if (parts[i].life==0&&parts[r>>8].life==10)
+					else if (parts[i].life==0&&parts[ID(r)].life==10)
 						parts[i].life = 10;
 				}
 			}

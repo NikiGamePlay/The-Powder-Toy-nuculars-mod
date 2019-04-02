@@ -23,9 +23,12 @@ public:
 	void SetWaterEqualisation(bool state);
 	void SetGravityMode(int gravityMode);
 	void SetAirMode(int airMode);
-	void SetEdgeMode(int airMode);
+	void SetEdgeMode(int edgeMode);
 	void SetFullscreen(bool fullscreen);
-	void SetScale(bool scale);
+	void SetAltFullscreen(bool altFullscreen);
+	void SetForceIntegerScaling(bool forceIntegerScaling);
+	void SetScale(int scale);
+	void SetResizable(bool resizable);
 	void SetFastQuit(bool fastquit);
 	void SetShowAvatars(bool showAvatars);
 	void Exit();

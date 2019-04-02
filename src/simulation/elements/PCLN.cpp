@@ -8,7 +8,7 @@ Element_PCLN::Element_PCLN()
 	MenuVisible = 1;
 	MenuSection = SC_POWERED;
 	Enabled = 1;
-	
+
 	Advection = 0.0f;
 	AirDrag = 0.00f * CFDS;
 	AirLoss = 0.90f;
@@ -18,21 +18,20 @@ Element_PCLN::Element_PCLN()
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 0;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 1;
-	
+
 	Weight = 100;
-	
+
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 251;
 	Description = "Powered clone. When activated, duplicates any particles it touches.";
-	
-	State = ST_NONE;
+
 	Properties = TYPE_SOLID|PROP_NOCTYPEDRAW;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -41,7 +40,7 @@ Element_PCLN::Element_PCLN()
 	LowTemperatureTransition = NT;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	
+
 	Update = &Element_PCLN::update;
 	Graphics = &Element_PCLN::graphics;
 }
@@ -59,21 +58,21 @@ int Element_PCLN::update(UPDATE_FUNC_ARGS)
 				r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if ((r&0xFF)==PT_SPRK)
+				if (TYP(r)==PT_SPRK)
 				{
-					if (parts[r>>8].life>0 && parts[r>>8].life<4)
+					if (parts[ID(r)].life>0 && parts[ID(r)].life<4)
 					{
-						if (parts[r>>8].ctype==PT_PSCN)
+						if (parts[ID(r)].ctype==PT_PSCN)
 							parts[i].life = 10;
-						else if (parts[r>>8].ctype==PT_NSCN)
+						else if (parts[ID(r)].ctype==PT_NSCN)
 							parts[i].life = 9;
 					}
 				}
-				else if ((r&0xFF)==PT_PCLN)
+				else if (TYP(r)==PT_PCLN)
 				{
-					if (parts[i].life==10&&parts[r>>8].life<10&&parts[r>>8].life>0)
+					if (parts[i].life==10&&parts[ID(r)].life<10&&parts[ID(r)].life>0)
 						parts[i].life = 9;
-					else if (parts[i].life==0&&parts[r>>8].life==10)
+					else if (parts[i].life==0&&parts[ID(r)].life==10)
 						parts[i].life = 10;
 				}
 			}
@@ -87,7 +86,7 @@ int Element_PCLN::update(UPDATE_FUNC_ARGS)
 						r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
-					rt = r&0xFF;
+					rt = TYP(r);
 					if (rt!=PT_CLNE && rt!=PT_PCLN &&
 					    rt!=PT_BCLN &&  rt!=PT_SPRK &&
 					    rt!=PT_NSCN && rt!=PT_PSCN &&
@@ -96,7 +95,7 @@ int Element_PCLN::update(UPDATE_FUNC_ARGS)
 					{
 						parts[i].ctype = rt;
 						if (rt==PT_LIFE || rt==PT_LAVA)
-							parts[i].tmp = parts[r>>8].ctype;
+							parts[i].tmp = parts[ID(r)].ctype;
 					}
 				}
 	if (parts[i].ctype>0 && parts[i].ctype<PT_NUM && sim->elements[parts[i].ctype].Enabled && parts[i].life==10)
@@ -106,7 +105,7 @@ int Element_PCLN::update(UPDATE_FUNC_ARGS)
 				for (ry = -1; ry < 2; ry++)
 					if (rx || ry)
 					{
-						int r = sim->create_part(-1, x + rx, y + ry, parts[i].ctype);
+						int r = sim->create_part(-1, x + rx, y + ry, PT_PHOT);
 						if (r != -1)
 						{
 							parts[r].vx = rx * 3;
@@ -122,11 +121,11 @@ int Element_PCLN::update(UPDATE_FUNC_ARGS)
 		else if (parts[i].ctype==PT_LIFE)//create life a different way
 			for (rx=-1; rx<2; rx++)
 				for (ry=-1; ry<2; ry++)
-					sim->create_part(-1, x+rx, y+ry, parts[i].ctype|(parts[i].tmp<<8));
+					sim->create_part(-1, x+rx, y+ry, PT_LIFE, parts[i].tmp);
 
-		else if (parts[i].ctype!=PT_LIGH || (rand()%30)==0)
+		else if (parts[i].ctype != PT_LIGH || RNG::Ref().chance(1, 30))
 		{
-			int np = sim->create_part(-1, x+rand()%3-1, y+rand()%3-1, parts[i].ctype);
+			int np = sim->create_part(-1, x + RNG::Ref().between(-1, 1), y + RNG::Ref().between(-1, 1), TYP(parts[i].ctype));
 			if (np>=0)
 			{
 				if (parts[i].ctype==PT_LAVA && parts[i].tmp>0 && parts[i].tmp<PT_NUM && sim->elements[parts[i].tmp].HighTemperatureTransition==PT_LAVA)

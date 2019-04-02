@@ -7,6 +7,7 @@
 namespace ui
 {
 	class Label;
+	class Textbox;
 	class Button;
 	class SaveButton;
 }
@@ -19,19 +20,26 @@ class LocalBrowserView: public ui::Window {
 	ui::Button * undeleteButton;
 	ui::Button * previousButton;
 	ui::Button * nextButton;
-	ui::Label * infoLabel;
+	ui::Label * pageLabel;
+	ui::Label * pageCountLabel;
+	ui::Textbox * pageTextbox;
 	ui::Button * removeSelected;
+
+	void textChanged();
+	bool changed;
+	unsigned int lastChanged;
+	int pageCount;
 public:
 	LocalBrowserView();
 	//virtual void OnDraw();
-	virtual void OnTick(float dt);
-	void AttachController(LocalBrowserController * c_) { c = c_; };
+	void OnTick(float dt) override;
+	void AttachController(LocalBrowserController * c_) { c = c_; }
 	void NotifyPageChanged(LocalBrowserModel * sender);
 	void NotifySavesListChanged(LocalBrowserModel * sender);
 	void NotifySelectedChanged(LocalBrowserModel * sender);
-	virtual void OnMouseWheel(int x, int y, int d);
-	virtual void OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt);
-	virtual void OnKeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt);
+	void OnMouseWheel(int x, int y, int d) override;
+	void OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt) override;
+	void OnKeyRelease(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt) override;
 	virtual ~LocalBrowserView();
 };
 

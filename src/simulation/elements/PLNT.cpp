@@ -1,4 +1,6 @@
+#include "common/tpt-minmax.h"
 #include "simulation/Elements.h"
+
 //#TPT-Directive ElementClass Element_PLNT PT_PLNT 20
 Element_PLNT::Element_PLNT()
 {
@@ -8,7 +10,7 @@ Element_PLNT::Element_PLNT()
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;
 	Enabled = 1;
-	
+
 	Advection = 0.0f;
 	AirDrag = 0.00f * CFDS;
 	AirLoss = 0.95f;
@@ -18,21 +20,21 @@ Element_PLNT::Element_PLNT()
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 0;
-	
+
 	Flammable = 20;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 10;
-	
+	PhotonReflectWavelengths = 0x0007C000;
+
 	Weight = 100;
-	
+
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 65;
 	Description = "Plant, drinks water and grows.";
-	
-	State = ST_SOLID;
+
 	Properties = TYPE_SOLID|PROP_NEUTPENETRATE|PROP_LIFE_DEC;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -41,32 +43,32 @@ Element_PLNT::Element_PLNT()
 	LowTemperatureTransition = NT;
 	HighTemperature = 573.0f;
 	HighTemperatureTransition = PT_FIRE;
-	
+
 	Update = &Element_PLNT::update;
 	Graphics = &Element_PLNT::graphics;
 }
 
 //#TPT-Directive ElementHeader Element_PLNT static int update(UPDATE_FUNC_ARGS)
 int Element_PLNT::update(UPDATE_FUNC_ARGS)
- {
-	int r, rx, ry, np;
+{
+	int r, rx, ry, np, rndstore;
 	for (rx=-1; rx<2; rx++)
 		for (ry=-1; ry<2; ry++)
 			if (BOUNDS_CHECK && (rx || ry))
 			{
 				r = pmap[y+ry][x+rx];
-				switch (r&0xFF)
+				switch (TYP(r))
 				{
 				case PT_WATR:
-					if (!(rand()%50))
+					if (RNG::Ref().chance(1, 50))
 					{
-						np = sim->create_part(r>>8,x+rx,y+ry,PT_PLNT);
+						np = sim->create_part(ID(r),x+rx,y+ry,PT_PLNT);
 						if (np<0) continue;
 						parts[np].life = 0;
 					}
 					break;
 				case PT_LAVA:
-					if (!(rand()%50))
+					if (RNG::Ref().chance(1, 50))
 					{
 						sim->part_change_type(i,x,y,PT_FIRE);
 						parts[i].life = 4;
@@ -74,18 +76,21 @@ int Element_PLNT::update(UPDATE_FUNC_ARGS)
 					break;
 				case PT_SMKE:
 				case PT_CO2:
-					if (!(rand()%50))
+					if (RNG::Ref().chance(1, 50))
 					{
-						sim->kill_part(r>>8);
-						parts[i].life = rand()%60 + 60;
+						sim->kill_part(ID(r));
+						parts[i].life = RNG::Ref().between(60, 119);
 					}
 					break;
 				case PT_WOOD:
-					if (surround_space && !(rand()%4) && (abs(rx+ry)<=2) && parts[i].tmp==1)
+					rndstore = RNG::Ref().gen();
+					if (surround_space && !(rndstore%4) && parts[i].tmp==1)
 					{
-						int nnx = rand()%3 -1;
-						int nny = rand()%3 -1;
-						if (x+rx+nnx>=0 && y+ry+nny>0 && x+rx+nnx<XRES && y+ry+nny<YRES && (nnx || nny))
+						rndstore >>= 3;
+						int nnx = (rndstore%3) -1;
+						rndstore >>= 2;
+						int nny = (rndstore%3) -1;
+						if (nnx || nny)
 						{
 							if (pmap[y+ry+nny][x+rx+nnx])
 								continue;

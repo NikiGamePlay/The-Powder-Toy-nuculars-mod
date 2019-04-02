@@ -8,7 +8,7 @@ Element_LAVA::Element_LAVA()
 	MenuVisible = 1;
 	MenuSection = SC_LIQUID;
 	Enabled = 1;
-	
+
 	Advection = 0.3f;
 	AirDrag = 0.02f * CFDS;
 	AirLoss = 0.95f;
@@ -18,30 +18,30 @@ Element_LAVA::Element_LAVA()
 	Diffusion = 0.00f;
 	HotAir = 0.0003f	* CFDS;
 	Falldown = 2;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 2;
-	
+	PhotonReflectWavelengths = 0x3FF00000;
+
 	Weight = 45;
-	
+
 	Temperature = R_TEMP+1500.0f+273.15f;
 	HeatConduct = 60;
 	Description = "Molten lava. Ignites flammable materials. Generated when metals and other materials melt, solidifies when cold.";
-	
-	State = ST_LIQUID;
+
 	Properties = TYPE_LIQUID|PROP_LIFE_DEC;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
 	HighPressureTransition = NT;
-	LowTemperature = 3695.0f;// Highest temperature at which any type of lava can solidify
+	LowTemperature = MAX_TEMP;// check for lava solidification at all temperatures
 	LowTemperatureTransition = ST;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	
+
 	Update = &Element_FIRE::update;
 	Graphics = &Element_LAVA::graphics;
 }

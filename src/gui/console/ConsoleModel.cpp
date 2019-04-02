@@ -5,8 +5,8 @@
 #include "ConsoleModel.h"
 
 ConsoleModel::ConsoleModel() {
-	std::vector<std::string> previousHistory = Client::Ref().GetPrefStringArray("Console.History");
-	for(std::vector<std::string>::iterator iter = previousHistory.begin(), end = previousHistory.end(); iter != end; ++iter)
+	std::vector<String> previousHistory = Client::Ref().GetPrefStringArray("Console.History");
+	for(std::vector<String>::reverse_iterator iter = previousHistory.rbegin(), end = previousHistory.rend(); iter != end; ++iter)
 	{
 		if(previousCommands.size()<25)
 		{
@@ -23,7 +23,7 @@ void ConsoleModel::AddObserver(ConsoleView * observer)
 	observers.push_back(observer);
 }
 
-void ConsoleModel::ProcessResult(std::string cmd, std::string highlighted, CommandInterface::EvalResult * result)
+size_t ConsoleModel::GetCurrentCommandIndex()
 {
 	int newlines;
 	switch(result->status)
@@ -100,9 +100,15 @@ void ConsoleModel::ProcessResult(std::string cmd, std::string highlighted, Comma
 	notifyHistoryChanged();
 }
 
-void ConsoleModel::notifyHistoryChanged()
+void ConsoleModel::SetCurrentCommandIndex(size_t index)
 {
-	for(int i = 0; i < observers.size(); i++)
+	currentCommandIndex = index;
+	notifyCurrentCommandChanged();
+}
+
+ConsoleCommand ConsoleModel::GetCurrentCommand()
+{
+	if (currentCommandIndex >= previousCommands.size())
 	{
 		observers[i]->NotifyHistoryChanged(this, command, promptHistory, history);
 	}
@@ -110,8 +116,21 @@ void ConsoleModel::notifyHistoryChanged()
 
 void ConsoleModel::NextCommand()
 {
-	int newlines;
-	if(currentCommandIndex>-1)
+	previousCommands.push_back(command);
+	if(previousCommands.size()>25)
+		previousCommands.pop_front();
+	currentCommandIndex = previousCommands.size();
+	notifyPreviousCommandsChanged();
+}
+
+std::deque<ConsoleCommand> ConsoleModel::GetPreviousCommands()
+{
+	return previousCommands;
+}
+
+void ConsoleModel::notifyPreviousCommandsChanged()
+{
+	for (size_t i = 0; i < observers.size(); i++)
 	{
 		currentCommandIndex--;
 		if(currentCommandIndex>-1)
@@ -125,8 +144,7 @@ void ConsoleModel::NextCommand()
 
 void ConsoleModel::PreviousCommand()
 {
-	int newlines;
-	if(currentCommandIndex+1<previousCommands.size())
+	for (size_t i = 0; i < observers.size(); i++)
 	{
 		currentCommandIndex++;
 		command=previousCommands.at(currentCommandIndex);
@@ -136,6 +154,6 @@ void ConsoleModel::PreviousCommand()
 }
 
 ConsoleModel::~ConsoleModel() {
-	Client::Ref().SetPref("Console.History", std::vector<std::string>(previousCommands.begin(), previousCommands.end()));
+	Client::Ref().SetPref("Console.History", std::vector<Json::Value>(previousCommands.begin(), previousCommands.end()));
 }
 

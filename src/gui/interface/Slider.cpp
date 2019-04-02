@@ -1,6 +1,7 @@
 #include <iostream>
 #include "Slider.h"
 #include "Colour.h"
+#include "graphics/Graphics.h"
 
 namespace ui {
 
@@ -25,7 +26,6 @@ void Slider::updatePosition(int position)
 
 	float fPosition = position-3;
 	float fSize = Size.X-6;
-	float fSteps = sliderSteps;
 
 	float fSliderPosition = (fPosition/fSize)*sliderSteps;//position;//((x-3)/(Size.X-6))*sliderSteps;
 
@@ -67,10 +67,9 @@ void Slider::OnMouseUp(int x, int y, unsigned button)
 
 void Slider::SetColour(Colour col1, Colour col2)
 {
-	pixel pix[2] = {PIXRGB(col1.Red, col1.Green, col1.Blue), PIXRGB(col2.Red, col2.Green, col2.Blue)};
+	pixel pix[2] = {(pixel)PIXRGB(col1.Red, col1.Green, col1.Blue), (pixel)PIXRGB(col2.Red, col2.Green, col2.Blue)};
 	float fl[2] = {0.0f, 1.0f};
-	if(bgGradient)
-		free(bgGradient);
+	free(bgGradient);
 	this->col1 = col1;
 	this->col2 = col2;
 	bgGradient = (unsigned char*)Graphics::GenerateGradient(pix, fl, 2, Size.X-7);
@@ -106,7 +105,7 @@ void Slider::SetSteps(int steps)
 
 void Slider::Draw(const Point& screenPos)
 {
-	Graphics * g = Engine::Ref().g;
+	Graphics * g = GetGraphics();
 	//g->drawrect(screenPos.X, screenPos.Y, Size.X, Size.Y, 255, 255, 255, 255);
 
 	if(bgGradient)

@@ -8,7 +8,7 @@ Element_SNOW::Element_SNOW()
 	MenuVisible = 1;
 	MenuSection = SC_POWDERS;
 	Enabled = 1;
-	
+
 	Advection = 0.7f;
 	AirDrag = 0.01f * CFDS;
 	AirLoss = 0.96f;
@@ -18,32 +18,31 @@ Element_SNOW::Element_SNOW()
 	Diffusion = 0.01f;
 	HotAir = -0.00005f* CFDS;
 	Falldown = 1;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 20;
-	
+	PhotonReflectWavelengths = 0x03FFFFFF;
+
 	Weight = 50;
-	
+
 	Temperature = R_TEMP-30.0f+273.15f;
 	HeatConduct = 46;
 	Description = "Light particles. Created when ICE breaks under pressure.";
-	
-	State = ST_SOLID;
-	Properties = TYPE_PART|PROP_LIFE_DEC|PROP_NEUTPASS;
-	
+
+	Properties = TYPE_PART|PROP_NEUTPASS;
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
 	HighPressureTransition = NT;
 	LowTemperature = ITL;
 	LowTemperatureTransition = NT;
-	HighTemperature = 273.0f;
+	HighTemperature = 252.05f;
 	HighTemperatureTransition = ST;
-	
+
 	Update = &Element_SNOW::update;
-	
 }
 
 //#TPT-Directive ElementHeader Element_SNOW static int update(UPDATE_FUNC_ARGS)
@@ -61,10 +60,10 @@ int Element_SNOW::update(UPDATE_FUNC_ARGS)
 				r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if (((r&0xFF)==PT_SALT || (r&0xFF)==PT_SLTW) && !(rand()%333))
+				if ((TYP(r)==PT_SALT || TYP(r)==PT_SLTW) && RNG::Ref().chance(1, 333))
 				{
 					sim->part_change_type(i,x,y,PT_SLTW);
-					sim->part_change_type(r>>8,x+rx,y+ry,PT_SLTW);
+					sim->part_change_type(ID(r),x+rx,y+ry,PT_SLTW);
 				}
 			}
 	return 0;

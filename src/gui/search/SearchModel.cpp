@@ -4,18 +4,18 @@
 #include "client/Client.h"
 
 SearchModel::SearchModel():
+	loadedSave(NULL),
 	currentSort("best"),
+	currentPage(1),
+	resultCount(0),
 	showOwn(false),
 	showFavourite(false),
-	loadedSave(NULL),
+	showTags(true),
+	saveListLoaded(false),
 	updateSaveListWorking(false),
 	updateSaveListFinished(false),
 	updateTagListWorking(false),
-	updateTagListFinished(false),
-	saveListLoaded(false),
-	currentPage(1),
-	resultCount(0),
-	showTags(true)
+	updateTagListFinished(false)
 {
 }
 
@@ -26,20 +26,20 @@ void SearchModel::SetShowTags(bool show)
 
 bool SearchModel::GetShowTags()
 {
-	return showTags;	
+	return showTags;
 }
 
-void * SearchModel::updateSaveListTHelper(void * obj)
+TH_ENTRY_POINT void * SearchModel::updateSaveListTHelper(void * obj)
 {
 	return ((SearchModel *)obj)->updateSaveListT();
 }
 
 void * SearchModel::updateSaveListT()
 {
-	std::string category = "";
+	ByteString category = "";
 	if(showFavourite)
 		category = "Favourites";
-	if(showOwn && Client::Ref().GetAuthUser().ID)
+	if(showOwn && Client::Ref().GetAuthUser().UserID)
 		category = "by:"+Client::Ref().GetAuthUser().Username;
 	vector<SaveInfo*> * saveList = Client::Ref().SearchSaves((currentPage-1)*20, 20, lastQuery, currentSort=="new"?"date":"votes", category, thResultCount);
 
@@ -47,7 +47,7 @@ void * SearchModel::updateSaveListT()
 	return saveList;
 }
 
-void * SearchModel::updateTagListTHelper(void * obj)
+TH_ENTRY_POINT void * SearchModel::updateTagListTHelper(void * obj)
 {
 	return ((SearchModel *)obj)->updateTagListT();
 }
@@ -55,16 +55,16 @@ void * SearchModel::updateTagListTHelper(void * obj)
 void * SearchModel::updateTagListT()
 {
 	int tagResultCount;
-	std::vector<std::pair<std::string, int> > * tagList = Client::Ref().GetTags(0, 24, "", tagResultCount);
+	std::vector<std::pair<ByteString, int> > * tagList = Client::Ref().GetTags(0, 24, "", tagResultCount);
 
 	updateTagListFinished = true;
 	return tagList;
 }
 
-void SearchModel::UpdateSaveList(int pageNumber, std::string query)
+bool SearchModel::UpdateSaveList(int pageNumber, String query)
 {
 	//Threading
-	if(!updateSaveListWorking)
+	if (!updateSaveListWorking)
 	{
 		lastQuery = query;
 		lastError = "";
@@ -90,11 +90,13 @@ void SearchModel::UpdateSaveList(int pageNumber, std::string query)
 			updateTagListWorking = true;
 			pthread_create(&updateTagListThread, 0, &SearchModel::updateTagListTHelper, this);
 		}
-		
+
 		updateSaveListFinished = false;
 		updateSaveListWorking = true;
 		pthread_create(&updateSaveListThread, 0, &SearchModel::updateSaveListTHelper, this);
+		return true;
 	}
+	return false;
 }
 
 void SearchModel::SetLoadedSave(SaveInfo * save)
@@ -120,7 +122,7 @@ vector<SaveInfo*> SearchModel::GetSaveList()
 	return saveList;
 }
 
-vector<pair<string, int> > SearchModel::GetTagList()
+vector<pair<ByteString, int> > SearchModel::GetTagList()
 {
 	return tagList;
 }
@@ -147,8 +149,10 @@ void SearchModel::Update()
 			if(!saveList.size())
 			{
 				lastError = Client::Ref().GetLastError();
+				if (lastError == "Unspecified Error")
+					lastError = "";
 			}
-			
+
 			resultCount = thResultCount;
 			notifyPageChanged();
 			notifySaveListChanged();
@@ -160,7 +164,7 @@ void SearchModel::Update()
 		{
 			updateTagListWorking = false;
 
-			vector<pair<string, int> > * tempTagList;
+			vector<pair<ByteString, int> > * tempTagList;
 			pthread_join(updateTagListThread, (void**)&tempTagList);
 
 			if(tempTagList)
@@ -185,9 +189,9 @@ void SearchModel::AddObserver(SearchView * observer)
 
 void SearchModel::SelectSave(int saveID)
 {
-	for(int i = 0; i < selected.size(); i++)
+	for (size_t i = 0; i < selected.size(); i++)
 	{
-		if(selected[i]==saveID)
+		if (selected[i] == saveID)
 		{
 			return;
 		}
@@ -200,9 +204,9 @@ void SearchModel::DeselectSave(int saveID)
 {
 	bool changed = false;
 restart:
-	for(int i = 0; i < selected.size(); i++)
+	for (size_t i = 0; i < selected.size(); i++)
 	{
-		if(selected[i]==saveID)
+		if (selected[i] == saveID)
 		{
 			selected.erase(selected.begin()+i);
 			changed = true;
@@ -215,7 +219,7 @@ restart:
 
 void SearchModel::notifySaveListChanged()
 {
-	for(int i = 0; i < observers.size(); i++)
+	for (size_t i = 0; i < observers.size(); i++)
 	{
 		SearchView* cObserver = observers[i];
 		cObserver->NotifySaveListChanged(this);
@@ -224,7 +228,7 @@ void SearchModel::notifySaveListChanged()
 
 void SearchModel::notifyTagListChanged()
 {
-	for(int i = 0; i < observers.size(); i++)
+	for (size_t i = 0; i < observers.size(); i++)
 	{
 		SearchView* cObserver = observers[i];
 		cObserver->NotifyTagListChanged(this);
@@ -233,7 +237,7 @@ void SearchModel::notifyTagListChanged()
 
 void SearchModel::notifyPageChanged()
 {
-	for(int i = 0; i < observers.size(); i++)
+	for (size_t i = 0; i < observers.size(); i++)
 	{
 		SearchView* cObserver = observers[i];
 		cObserver->NotifyPageChanged(this);
@@ -242,7 +246,7 @@ void SearchModel::notifyPageChanged()
 
 void SearchModel::notifySortChanged()
 {
-	for(int i = 0; i < observers.size(); i++)
+	for (size_t i = 0; i < observers.size(); i++)
 	{
 		SearchView* cObserver = observers[i];
 		cObserver->NotifySortChanged(this);
@@ -251,7 +255,7 @@ void SearchModel::notifySortChanged()
 
 void SearchModel::notifyShowOwnChanged()
 {
-	for(int i = 0; i < observers.size(); i++)
+	for (size_t i = 0; i < observers.size(); i++)
 	{
 		SearchView* cObserver = observers[i];
 		cObserver->NotifyShowOwnChanged(this);
@@ -260,7 +264,7 @@ void SearchModel::notifyShowOwnChanged()
 
 void SearchModel::notifyShowFavouriteChanged()
 {
-	for(int i = 0; i < observers.size(); i++)
+	for (size_t i = 0; i < observers.size(); i++)
 	{
 		SearchView* cObserver = observers[i];
 		cObserver->NotifyShowOwnChanged(this);
@@ -269,7 +273,7 @@ void SearchModel::notifyShowFavouriteChanged()
 
 void SearchModel::notifySelectedChanged()
 {
-	for(int i = 0; i < observers.size(); i++)
+	for (size_t i = 0; i < observers.size(); i++)
 	{
 		SearchView* cObserver = observers[i];
 		cObserver->NotifySelectedChanged(this);
@@ -278,6 +282,5 @@ void SearchModel::notifySelectedChanged()
 
 SearchModel::~SearchModel()
 {
-	if(loadedSave)
-		delete loadedSave;
+	delete loadedSave;
 }

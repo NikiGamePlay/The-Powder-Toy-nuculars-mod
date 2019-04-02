@@ -8,7 +8,7 @@ Element_DLAY::Element_DLAY()
 	MenuVisible = 1;
 	MenuSection = SC_POWERED;
 	Enabled = 1;
-	
+
 	Advection = 0.0f;
 	AirDrag = 0.00f * CFDS;
 	AirLoss = 0.90f;
@@ -18,21 +18,20 @@ Element_DLAY::Element_DLAY()
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 0;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 1;
-	
+
 	Weight = 100;
-	
+
 	Temperature = 4.0f+273.15f;
 	HeatConduct = 0;
 	Description = "Conducts with temperature-dependent delay. (use HEAT/COOL).";
-	
-	State = ST_SOLID;
+
 	Properties = TYPE_SOLID;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -41,14 +40,14 @@ Element_DLAY::Element_DLAY()
 	LowTemperatureTransition = NT;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	
+
 	Update = &Element_DLAY::update;
 	Graphics = &Element_DLAY::graphics;
 }
 
 //#TPT-Directive ElementHeader Element_DLAY static int update(UPDATE_FUNC_ARGS)
 int Element_DLAY::update(UPDATE_FUNC_ARGS)
- {
+{
 	int r, rx, ry, oldl;
 	oldl = parts[i].life;
 	if (parts[i].life>0)
@@ -60,31 +59,31 @@ int Element_DLAY::update(UPDATE_FUNC_ARGS)
 			if (BOUNDS_CHECK && (rx || ry))
 			{
 				r = pmap[y+ry][x+rx];
-				if (!r || sim->parts_avg(r>>8, i,PT_INSL)==PT_INSL)
+				if (!r || sim->parts_avg(ID(r), i,PT_INSL)==PT_INSL)
 					continue;
-				if ((r&0xFF)==PT_SPRK && parts[i].life==0 && parts[r>>8].life>0 && parts[r>>8].life<4 && parts[r>>8].ctype==PT_PSCN)
+				if (TYP(r)==PT_SPRK && parts[i].life==0 && parts[ID(r)].life>0 && parts[ID(r)].life<4 && parts[ID(r)].ctype==PT_PSCN)
 				{
-					parts[i].life = (int)(parts[i].temp-273.15);
+					parts[i].life = (int)(parts[i].temp-273.15f+0.5f);
 				}
-				else if ((r&0xFF)==PT_DLAY)
+				else if (TYP(r)==PT_DLAY)
 				{
 					if (!parts[i].life)
 					{
-						if (parts[r>>8].life)
+						if (parts[ID(r)].life)
 						{
-							parts[i].life = parts[r>>8].life;
-							if((r>>8)>i) //If the other particle hasn't been life updated
+							parts[i].life = parts[ID(r)].life;
+							if((ID(r))>i) //If the other particle hasn't been life updated
 								parts[i].life--;
 						}
 					}
-					else if (!parts[r>>8].life)
+					else if (!parts[ID(r)].life)
 					{
-						parts[r>>8].life = parts[i].life;
-						if((r>>8)>i) //If the other particle hasn't been life updated
-							parts[r>>8].life++;
+						parts[ID(r)].life = parts[i].life;
+						if((ID(r))>i) //If the other particle hasn't been life updated
+							parts[ID(r)].life++;
 					}
 				}
-				else if((r&0xFF)==PT_NSCN && oldl==1)
+				else if(TYP(r)==PT_NSCN && oldl==1)
 				{
 					sim->create_part(-1, x+rx, y+ry, PT_SPRK);
 				}

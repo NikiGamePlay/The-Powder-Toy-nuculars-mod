@@ -8,7 +8,7 @@ Element_THDR::Element_THDR()
 	MenuVisible = 1;
 	MenuSection = SC_EXPLOSIVE;
 	Enabled = 1;
-	
+
 	Advection = 0.0f;
 	AirDrag = 0.00f * CFDS;
 	AirLoss = 1.0f;
@@ -18,21 +18,20 @@ Element_THDR::Element_THDR()
 	Diffusion = 0.62f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 0;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 0;
-	
+
 	Weight = 1;
-	
+
 	Temperature = 9000.0f		+273.15f;
 	HeatConduct = 1;
 	Description = "Lightning! Very hot, inflicts damage upon most materials, and transfers current to metals.";
-	
-	State = ST_NONE;
+
 	Properties = TYPE_PART;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -41,7 +40,7 @@ Element_THDR::Element_THDR()
 	LowTemperatureTransition = NT;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	
+
 	Update = &Element_THDR::update;
 	Graphics = &Element_THDR::graphics;
 }
@@ -58,20 +57,20 @@ int Element_THDR::update(UPDATE_FUNC_ARGS)
 				r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				rt = r&0xFF;
-				if ((sim->elements[r&0xFF].Properties&PROP_CONDUCTS) && parts[r>>8].life==0 && !(rt==PT_WATR||rt==PT_SLTW) && parts[r>>8].ctype!=PT_SPRK)
+				rt = TYP(r);
+				if ((sim->elements[TYP(r)].Properties&PROP_CONDUCTS) && parts[ID(r)].life==0 && !(rt==PT_WATR||rt==PT_SLTW) && parts[ID(r)].ctype!=PT_SPRK)
 				{
-					parts[r>>8].ctype = parts[r>>8].type;
-					sim->part_change_type(r>>8,x+rx,y+ry,PT_SPRK);
-					parts[r>>8].life = 4;
+					parts[ID(r)].ctype = parts[ID(r)].type;
+					sim->part_change_type(ID(r),x+rx,y+ry,PT_SPRK);
+					parts[ID(r)].life = 4;
 					kill=true;
 				}
 				else if (rt!=PT_CLNE&&rt!=PT_THDR&&rt!=PT_SPRK&&rt!=PT_DMND&&rt!=PT_FIRE)
 				{
 					sim->pv[y/CELL][x/CELL] += 100.0f;
-					if (sim->legacy_enable&&1>(rand()%200))
+					if (sim->legacy_enable && RNG::Ref().chance(1, 200))
 					{
-						parts[i].life = rand()%50+120;
+						parts[i].life = RNG::Ref().between(120, 169);
 						sim->part_change_type(i,x,y,PT_FIRE);
 					}
 					else

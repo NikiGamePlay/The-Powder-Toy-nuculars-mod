@@ -1,14 +1,16 @@
+#include "common/tpt-minmax.h"
 #include "simulation/Elements.h"
+
 //#TPT-Directive ElementClass Element_GRAV PT_GRAV 102
 Element_GRAV::Element_GRAV()
 {
 	Identifier = "DEFAULT_PT_GRAV";
 	Name = "GRAV";
-	Colour = PIXPACK(0xFFE0A0);
+	Colour = PIXPACK(0x202020);
 	MenuVisible = 1;
 	MenuSection = SC_POWDERS;
 	Enabled = 1;
-	
+
 	Advection = 0.7f;
 	AirDrag = 0.00f * CFDS;
 	AirLoss = 1.00f;
@@ -18,21 +20,20 @@ Element_GRAV::Element_GRAV()
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 1;
-	
+
 	Flammable = 10;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 30;
-	
+
 	Weight = 85;
-	
+
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 70;
 	Description = "Very light dust. Changes colour based on velocity.";
-	
-	State = ST_SOLID;
-	Properties = TYPE_PART;
-	
+
+	Properties = TYPE_PART | PROP_LIFE_DEC;
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -41,13 +42,25 @@ Element_GRAV::Element_GRAV()
 	LowTemperatureTransition = NT;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	
-	Update = NULL;
+
+	Update = &Element_GRAV::update;
 	Graphics = &Element_GRAV::graphics;
 }
+
+//#TPT-Directive ElementHeader Element_GRAV static int update(UPDATE_FUNC_ARGS)
+int Element_GRAV::update(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].vx*parts[i].vx + parts[i].vy*parts[i].vy >= 0.1f && RNG::Ref().chance(1, 512))
+	{
+		if (!parts[i].life)
+			parts[i].life = 48;
+	}
+
+	return 0;
+}
+
 //#TPT-Directive ElementHeader Element_GRAV static int graphics(GRAPHICS_FUNC_ARGS)
 int Element_GRAV::graphics(GRAPHICS_FUNC_ARGS)
-
 {
 	int GRAV_R, GRAV_B, GRAV_G, GRAV_R2, GRAV_B2, GRAV_G2;
 
@@ -88,6 +101,19 @@ int Element_GRAV::graphics(GRAPHICS_FUNC_ARGS)
 		*colg -= (cpart->vy)*GRAV_G2;
 		*colb -= (cpart->vy)*GRAV_B2;
 	}
+
+	if (cpart->life)
+	{
+		*pixel_mode = FIRE_ADD | PMODE_ADD | PMODE_GLOW | PMODE_FLARE;
+		*firer = std::min(*colr * 3, 255);
+		*fireg = std::min(*colg * 3, 255);
+		*fireb = std::min(*colb * 3, 255);
+		*firea = (cpart->life+15)*4;
+		*cola = (cpart->life+15)*4;
+	}
+	else
+		*pixel_mode = PMODE_ADD;
+
 	return 0;
 }
 

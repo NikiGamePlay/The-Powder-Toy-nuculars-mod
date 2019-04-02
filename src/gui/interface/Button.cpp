@@ -1,33 +1,32 @@
 #include <iostream>
 #include "gui/interface/Button.h"
+#include "gui/interface/Window.h"
 #include "graphics/Graphics.h"
-#include "Engine.h"
 #include "Misc.h"
 
 namespace ui {
 
-Button::Button(Point position, Point size, std::string buttonText, std::string toolTip):
+Button::Button(Point position, Point size, String buttonText, String toolTip):
 	Component(position, size),
 	ButtonText(buttonText),
-	isMouseInside(false),
+	toolTip(toolTip),
 	isButtonDown(false),
+	isMouseInside(false),
 	isTogglable(false),
 	toggle(false),
-	actionCallback(NULL),
-	Enabled(true),
-	toolTip(toolTip)
+	actionCallback(NULL)
 {
-	TextPosition();
+	TextPosition(ButtonText);
 }
 
-void Button::TextPosition()
+void Button::TextPosition(String ButtonText)
 {
 	buttonDisplayText = ButtonText;
 	if(buttonDisplayText.length())
 	{
-		if(Graphics::textwidth((char *)buttonDisplayText.c_str()) > Size.X - (Appearance.icon? 22 : 0))
+		if(Graphics::textwidth(buttonDisplayText) > Size.X - (Appearance.icon? 22 : 0))
 		{
-			int position = Graphics::textwidthx((char *)buttonDisplayText.c_str(), Size.X - (Appearance.icon? 38 : 22));
+			int position = Graphics::textwidthx(buttonDisplayText, Size.X - (Appearance.icon? 38 : 22));
 			buttonDisplayText = buttonDisplayText.erase(position, buttonDisplayText.length()-position);
 			buttonDisplayText += "...";
 		}
@@ -39,13 +38,13 @@ void Button::TextPosition()
 void Button::SetIcon(Icon icon)
 {
 	Appearance.icon = icon;
-	TextPosition();
+	TextPosition(ButtonText);
 }
 
-void Button::SetText(std::string buttonText)
+void Button::SetText(String buttonText)
 {
 	ButtonText = buttonText;
-	TextPosition();
+	TextPosition(ButtonText);
 }
 
 void Button::SetTogglable(bool togglable)
@@ -73,10 +72,10 @@ void Button::Draw(const Point& screenPos)
 {
 	if(!drawn)
 	{
-		TextPosition();
+		TextPosition(ButtonText);
 		drawn = true;
 	}
-	Graphics * g = ui::Engine::Ref().g;
+	Graphics * g = GetGraphics();
 	Point Position = screenPos;
 	ui::Colour bgColour(0, 0, 0);
 
@@ -84,9 +83,9 @@ void Button::Draw(const Point& screenPos)
 	ui::Colour borderColour = Appearance.BorderInactive;
 	ui::Colour backgroundColour = Appearance.BackgroundInactive;
 
-	if(Enabled)
+	if (Enabled)
 	{
-		if(isButtonDown || (isTogglable && toggle))
+		if (isButtonDown || (isTogglable && toggle))
 		{
 			textColour = Appearance.TextActive;
 			borderColour = Appearance.BorderActive;
@@ -134,14 +133,7 @@ void Button::Draw(const Point& screenPos)
 	if(Appearance.icon)
 	{
 		if(Enabled)
-			if(isButtonDown || (isTogglable && toggle))
-			{
-				g->draw_icon(Position.X+iconPosition.X, Position.Y+iconPosition.Y, Appearance.icon, 255, iconInvert);
-			}
-			else
-			{
-				g->draw_icon(Position.X+iconPosition.X, Position.Y+iconPosition.Y, Appearance.icon, 255, iconInvert);	
-			}
+			g->draw_icon(Position.X+iconPosition.X, Position.Y+iconPosition.Y, Appearance.icon, 255, iconInvert);
 		else
 			g->draw_icon(Position.X+iconPosition.X, Position.Y+iconPosition.Y, Appearance.icon, 180, iconInvert);
 	}
@@ -171,6 +163,13 @@ void Button::OnMouseUnclick(int x, int y, unsigned int button)
 	}
 }
 
+void Button::OnMouseUp(int x, int y, unsigned int button)
+{
+	// mouse was unclicked, reset variables in case the unclick happened outside
+	isButtonDown = false;
+	isAltButtonDown = false;
+}
+
 void Button::OnMouseClick(int x, int y, unsigned int button)
 {
 	if(!Enabled)
@@ -198,7 +197,7 @@ void Button::OnMouseHover(int x, int y)
 {
 	if(Enabled && toolTip.length()>0 && GetParentWindow())
 	{
-		GetParentWindow()->ToolTip(this, ui::Point(x, y), toolTip);
+		GetParentWindow()->ToolTip(Position, toolTip);
 	}
 }
 
@@ -226,15 +225,13 @@ void Button::DoAltAction()
 
 void Button::SetActionCallback(ButtonAction * action)
 {
-	if(actionCallback)
-		delete actionCallback;
+	delete actionCallback;
 	actionCallback = action;
 }
 
 Button::~Button()
 {
-	if(actionCallback)
-		delete actionCallback;
+	delete actionCallback;
 }
 
 } /* namespace ui */

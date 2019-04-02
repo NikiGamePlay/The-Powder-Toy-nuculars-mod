@@ -1,8 +1,7 @@
 #include <vector>
-//#include "Platform.h"
 
 #include "gui/interface/Panel.h"
-
+#include "gui/interface/Engine.h"
 #include "gui/interface/Point.h"
 #include "gui/interface/Window.h"
 #include "gui/interface/Component.h"
@@ -46,8 +45,7 @@ Panel::~Panel()
 {
 	for(unsigned i = 0; i < children.size(); ++i)
 	{
-		if( children[i] )
-			delete children[i];
+		delete children[i];
 	}
 #ifdef OGLI
 	glDeleteTextures(1, &myVidTex);
@@ -75,9 +73,9 @@ Component* Panel::GetChild(unsigned idx)
 
 void Panel::RemoveChild(Component* c)
 {
-	for(int i = 0; i < children.size(); ++i)
+	for (size_t i = 0; i < children.size(); ++i)
 	{
-		if(children[i] == c)
+		if (children[i] == c)
 		{
 			//remove child from parent. Does not free memory
 			children.erase(children.begin() + i);
@@ -112,15 +110,15 @@ void Panel::Draw(const Point& screenPos)
 	ui::Engine::Ref().g->vid = myVid;
 	std::fill(myVid, myVid+(WINDOWW*WINDOWH), 0);
 #endif
-	
+
 	// attempt to draw all children
-	for(int i = 0; i < children.size(); ++i)
+	for (size_t i = 0; i < children.size(); ++i)
 	{
 		// the component must be visible
-		if(children[i]->Visible)
+		if (children[i]->Visible)
 		{
 			//check if the component is in the screen, draw if it is
-			if( children[i]->Position.X + ViewportPosition.X + children[i]->Size.X >= 0 &&
+			if (children[i]->Position.X + ViewportPosition.X + children[i]->Size.X >= 0 &&
 				children[i]->Position.Y + ViewportPosition.Y + children[i]->Size.Y >= 0 &&
 				children[i]->Position.X + ViewportPosition.X < ui::Engine::Ref().GetWidth() &&
 				children[i]->Position.Y + ViewportPosition.Y < ui::Engine::Ref().GetHeight() )
@@ -171,31 +169,31 @@ void Panel::Tick(float dt)
 {
 	// tick ourself first
 	XTick(dt);
-	
+
 	// tick our children
 	for(unsigned i = 0; i < children.size(); ++i)
 		children[i]->Tick(dt);
 }
 
-void Panel::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt)
+void Panel::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
 {
-	XOnKeyPress(key, character, shift, ctrl, alt);
+	XOnKeyPress(key, scan, repeat, shift, ctrl, alt);
 }
 
-void Panel::OnKeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt)
+void Panel::OnKeyRelease(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
 {
-	XOnKeyRelease(key, character, shift, ctrl, alt);
+	XOnKeyRelease(key, scan, repeat, shift, ctrl, alt);
 }
 
 void Panel::OnMouseClick(int localx, int localy, unsigned button)
 {
 	bool childclicked = false;
-	
+
 	//check if clicked a child
 	for(int i = children.size()-1; i >= 0 ; --i)
 	{
-		//child must be unlocked
-		if(!children[i]->Locked)
+		//child must be enabled
+		if(children[i]->Enabled)
 		{
 			//is mouse inside?
 			if( localx >= children[i]->Position.X + ViewportPosition.X &&
@@ -210,7 +208,7 @@ void Panel::OnMouseClick(int localx, int localy, unsigned button)
 			}
 		}
 	}
-	
+
 	//if a child wasn't clicked, send click to ourself
 	if(!childclicked)
 	{
@@ -222,9 +220,9 @@ void Panel::OnMouseClick(int localx, int localy, unsigned button)
 void Panel::OnMouseDown(int x, int y, unsigned button)
 {
 	XOnMouseDown(x, y, button);
-	for(int i = 0; i < children.size(); ++i)
+	for (size_t i = 0; i < children.size(); ++i)
 	{
-		if(!children[i]->Locked)
+		if(children[i]->Enabled)
 			children[i]->OnMouseDown(x, y, button);
 	}
 }
@@ -232,9 +230,9 @@ void Panel::OnMouseDown(int x, int y, unsigned button)
 void Panel::OnMouseHover(int localx, int localy)
 {
 	// check if hovering on children
-	for(int i = children.size() - 1; i >= 0; --i)
+	for (int i = children.size() - 1; i >= 0; --i)
 	{
-		if(!children[i]->Locked)
+		if (children[i]->Enabled)
 		{
 			if( localx >= children[i]->Position.X &&
 				localy >= children[i]->Position.Y &&
@@ -246,7 +244,7 @@ void Panel::OnMouseHover(int localx, int localy)
 			}
 		}
 	}
-	
+
 	// always allow hover on parent (?)
 	XOnMouseHover(localx, localy);
 }
@@ -254,9 +252,9 @@ void Panel::OnMouseHover(int localx, int localy)
 void Panel::OnMouseMoved(int localx, int localy, int dx, int dy)
 {
 	XOnMouseMoved(localx, localy, dx, dy);
-	for(int i = 0; i < children.size(); ++i)
+	for (size_t i = 0; i < children.size(); ++i)
 	{
-		if(!children[i]->Locked)
+		if(children[i]->Enabled)
 			children[i]->OnMouseMoved(localx - children[i]->Position.X - ViewportPosition.X, localy - children[i]->Position.Y - ViewportPosition.Y, dx, dy);
 	}
 }
@@ -264,13 +262,13 @@ void Panel::OnMouseMoved(int localx, int localy, int dx, int dy)
 void Panel::OnMouseMovedInside(int localx, int localy, int dx, int dy)
 {
 	mouseInside = true;
-	for(int i = 0; i < children.size(); ++i)
+	for (size_t i = 0; i < children.size(); ++i)
 	{
-		if(!children[i]->Locked)
+		if (children[i]->Enabled)
 		{
 			Point local	(localx - children[i]->Position.X - ViewportPosition.X, localy - children[i]->Position.Y - ViewportPosition.Y)
 			, prevlocal (local.X - dx, local.Y - dy);
-			
+
 			// mouse currently inside?
 			if( local.X >= 0 &&
 				local.Y >= 0 &&
@@ -278,7 +276,7 @@ void Panel::OnMouseMovedInside(int localx, int localy, int dx, int dy)
 				local.Y < children[i]->Size.Y )
 			{
 				children[i]->OnMouseMovedInside(localx - children[i]->Position.X - ViewportPosition.X, localy - children[i]->Position.Y - ViewportPosition.Y, dx, dy);
-				
+
 				// was the mouse outside?
 				if(!(prevlocal.X >= 0 &&
 					 prevlocal.Y >= 0 &&
@@ -299,11 +297,11 @@ void Panel::OnMouseMovedInside(int localx, int localy, int dx, int dy)
 				{
 					children[i]->OnMouseLeave(local.X, local.Y);
 				}
-				
+
 			}
 		}
 	}
-	
+
 	// always allow hover on parent (?)
 	XOnMouseMovedInside(localx, localy, dx, dy);
 }
@@ -323,12 +321,12 @@ void Panel::OnMouseLeave(int localx, int localy)
 void Panel::OnMouseUnclick(int localx, int localy, unsigned button)
 {
 	bool childunclicked = false;
-	
+
 	//check if clicked a child
 	for(int i = children.size()-1; i >= 0 ; --i)
 	{
 		//child must be unlocked
-		if(!children[i]->Locked)
+		if(children[i]->Enabled)
 		{
 			//is mouse inside?
 			if( localx >= children[i]->Position.X + ViewportPosition.X &&
@@ -342,9 +340,9 @@ void Panel::OnMouseUnclick(int localx, int localy, unsigned button)
 			}
 		}
 	}
-	
+
 	//if a child wasn't clicked, send click to ourself
-	if(!childunclicked)
+	if (!childunclicked)
 	{
 		XOnMouseUnclick(localx, localy, button);
 	}
@@ -353,9 +351,9 @@ void Panel::OnMouseUnclick(int localx, int localy, unsigned button)
 void Panel::OnMouseUp(int x, int y, unsigned button)
 {
 	XOnMouseUp(x, y, button);
-	for(int i = 0; i < children.size(); ++i)
+	for (size_t i = 0; i < children.size(); ++i)
 	{
-		if(!children[i]->Locked)
+		if (children[i]->Enabled)
 			children[i]->OnMouseUp(x, y, button);
 	}
 }
@@ -363,9 +361,9 @@ void Panel::OnMouseUp(int x, int y, unsigned button)
 void Panel::OnMouseWheel(int localx, int localy, int d)
 {
 	XOnMouseWheel(localx, localy, d);
-	for(int i = 0; i < children.size(); ++i)
+	for (size_t i = 0; i < children.size(); ++i)
 	{
-		if(!children[i]->Locked)
+		if (children[i]->Enabled)
 			children[i]->OnMouseWheel(localx - children[i]->Position.X - ViewportPosition.X, localy - children[i]->Position.Y - ViewportPosition.Y, d);
 	}
 }
@@ -374,13 +372,13 @@ void Panel::OnMouseWheelInside(int localx, int localy, int d)
 {
 	XOnMouseWheelInside(localx, localy, d);
 	//check if clicked a child
-	for(int i = children.size()-1; i >= 0 ; --i)
+	for (int i = children.size()-1; i >= 0 ; --i)
 	{
 		//child must be unlocked
-		if(!children[i]->Locked)
+		if (children[i]->Enabled)
 		{
 			//is mouse inside?
-			if( localx >= children[i]->Position.X + ViewportPosition.X &&
+			if (localx >= children[i]->Position.X + ViewportPosition.X &&
 				localy >= children[i]->Position.Y + ViewportPosition.Y &&
 				localx < children[i]->Position.X + ViewportPosition.X + children[i]->Size.X &&
 				localy < children[i]->Position.Y + ViewportPosition.Y + children[i]->Size.Y )
@@ -403,11 +401,11 @@ void Panel::XTick(float dt)
 {
 }
 
-void Panel::XOnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt)
+void Panel::XOnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
 {
 }
 
-void Panel::XOnKeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt)
+void Panel::XOnKeyRelease(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
 {
 }
 

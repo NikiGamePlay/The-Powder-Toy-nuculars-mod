@@ -1,53 +1,54 @@
 #include <iostream>
 #include <stack>
 #include <cstdio>
+#include <cmath>
 
 #include "Config.h"
-#include "Misc.h"
+#include "Platform.h"
 #include "gui/interface/Window.h"
-#include "gui/interface/Platform.h"
 #include "gui/interface/Engine.h"
+#include "gui/dialogues/ConfirmPrompt.h"
 #include "graphics/Graphics.h"
 
 using namespace ui;
 using namespace std;
 
 Engine::Engine():
+	FpsLimit(60.0f),
+	Scale(1),
+	Fullscreen(false),
+	FrameIndex(0),
+	altFullscreen(false),
+	resizable(false),
+	lastBuffer(NULL),
+	prevBuffers(stack<pixel*>()),
+	windows(stack<Window*>()),
+	mousePositions(stack<Point>()),
 	state_(NULL),
-	maxWidth(0),
-	maxHeight(0),
+	windowTargetPosition(0, 0),
+	break_(false),
+	FastQuit(1),
+	lastTick(0),
 	mouseb_(0),
 	mousex_(0),
 	mousey_(0),
 	mousexp_(0),
 	mouseyp_(0),
-	FpsLimit(60.0f),
-	windows(stack<Window*>()),
-	mousePositions(stack<Point>()),
-	lastBuffer(NULL),
-	prevBuffers(stack<pixel*>()),
-	windowTargetPosition(0, 0),
-	FrameIndex(0),
-	Fullscreen(false),
-	Scale(1),
-	FastQuit(1),
-	break_(false),
-	lastTick(0)
+	maxWidth(0),
+	maxHeight(0)
 {
 }
 
 Engine::~Engine()
 {
-	if(state_ != NULL)
-		delete state_;
+	delete state_;
 	//Dispose of any Windows.
 	while(!windows.empty())
 	{
 		delete windows.top();
 		windows.pop();
 	}
-	if (lastBuffer)
-		free(lastBuffer);
+	free(lastBuffer);
 }
 
 void Engine::Begin(int width, int height)
@@ -71,12 +72,31 @@ void Engine::UnBreak()
 
 void Engine::Exit()
 {
+	onClose();
 	running_ = false;
+}
+
+void Engine::ConfirmExit()
+{
+	class ExitConfirmation: public ConfirmDialogueCallback {
+	public:
+		ExitConfirmation() {}
+		void ConfirmCallback(ConfirmPrompt::DialogueResult result) override {
+			if (result == ConfirmPrompt::ResultOkay)
+			{
+				ui::Engine::Ref().Exit();
+			}
+		}
+		virtual ~ExitConfirmation() { }
+	};
+	new ConfirmPrompt("You are about to quit", "Are you sure you want to exit the game?", new ExitConfirmation());
 }
 
 void Engine::ShowWindow(Window * window)
 {
-	windowOpenState = 0.0f;
+	windowOpenState = 0;
+	if (state_)
+		ignoreEvents = true;
 	if(window->Position.X==-1)
 	{
 		window->Position.X = (width_-window->Size.X)/2;
@@ -142,6 +162,7 @@ int Engine::CloseWindow()
 			mousexp_ = mousex_;
 			mouseyp_ = mousey_;
 		}
+		ignoreEvents = true;
 		return 0;
 	}
 	else
@@ -181,24 +202,9 @@ void Engine::Tick()
 		state_->DoTick(dt);
 
 
-	lastTick = gettime();
-	if(windowOpenState<1.0f)
-	{
-		if(lastBuffer)
-		{
-			pixel * vid = g->vid;
-			g->vid = lastBuffer;
-			g->fillrect(0, 0, width_, height_, 0, 0, 0, 5);
-			g->vid = vid;
+	lastTick = Platform::GetTime();
 
-		}
-		/*if(windowTargetPosition.Y < state_->Position.Y)
-		{
-			state_->Position.Y += windowTargetPosition.Y/20;
-		}*/
-		windowOpenState += 0.05f;//*dt;
-	}
-
+	ignoreEvents = false;
 	/*if(statequeued_ != NULL)
 	{
 		if(state_ != NULL)
@@ -217,12 +223,15 @@ void Engine::Tick()
 
 void Engine::Draw()
 {
-	if(lastBuffer && !(state_->Position.X == 0 && state_->Position.Y == 0 && state_->Size.X == width_ && state_->Size.Y == height_))
+	if(lastBuffer && !(state_ && state_->Position.X == 0 && state_->Position.Y == 0 && state_->Size.X == width_ && state_->Size.Y == height_))
 	{
 		g->Acquire();
 		g->Clear();
 #ifndef OGLI
 		memcpy(g->vid, lastBuffer, (width_ * height_) * PIXELSIZE);
+		if(windowOpenState < 20)
+			windowOpenState++;
+		g->fillrect(0, 0, width_, height_, 0, 0, 0, 255-std::pow(.98, windowOpenState)*255);
 #endif
 	}
 	else
@@ -247,29 +256,35 @@ void Engine::SetFps(float fps)
 		this->dt = 1.0f;
 }
 
-void Engine::onKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt)
+void Engine::onKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
 {
-	if(state_)
-		state_->DoKeyPress(key, character, shift, ctrl, alt);
+	if (state_ && !ignoreEvents)
+		state_->DoKeyPress(key, scan, repeat, shift, ctrl, alt);
 }
 
-void Engine::onKeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt)
+void Engine::onKeyRelease(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
 {
-	if(state_)
-		state_->DoKeyRelease(key, character, shift, ctrl, alt);
+	if (state_ && !ignoreEvents)
+		state_->DoKeyRelease(key, scan, repeat, shift, ctrl, alt);
+}
+
+void Engine::onTextInput(String text)
+{
+	if (state_ && !ignoreEvents)
+		state_->DoTextInput(text);
 }
 
 void Engine::onMouseClick(int x, int y, unsigned button)
 {
 	mouseb_ |= button;
-	if(state_)
+	if (state_ && !ignoreEvents)
 		state_->DoMouseDown(x, y, button);
 }
 
 void Engine::onMouseUnclick(int x, int y, unsigned button)
 {
 	mouseb_ &= ~button;
-	if(state_)
+	if (state_ && !ignoreEvents)
 		state_->DoMouseUp(x, y, button);
 }
 
@@ -277,7 +292,7 @@ void Engine::onMouseMove(int x, int y)
 {
 	mousex_ = x;
 	mousey_ = y;
-	if(state_)
+	if (state_ && !ignoreEvents)
 	{
 		state_->DoMouseMove(x, y, mousex_ - mousexp_, mousey_ - mouseyp_);
 	}
@@ -287,7 +302,7 @@ void Engine::onMouseMove(int x, int y)
 
 void Engine::onMouseWheel(int x, int y, int delta)
 {
-	if(state_)
+	if (state_ && !ignoreEvents)
 		state_->DoMouseWheel(x, y, delta);
 }
 
@@ -298,6 +313,6 @@ void Engine::onResize(int newWidth, int newHeight)
 
 void Engine::onClose()
 {
-	if(state_)
+	if (state_)
 		state_->DoExit();
 }

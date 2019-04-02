@@ -8,7 +8,7 @@ Element_PUMP::Element_PUMP()
 	MenuVisible = 1;
 	MenuSection = SC_POWERED;
 	Enabled = 1;
-	
+
 	Advection = 0.0f;
 	AirDrag = 0.00f * CFDS;
 	AirLoss = 0.95f;
@@ -18,21 +18,20 @@ Element_PUMP::Element_PUMP()
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 0;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 10;
-	
+
 	Weight = 100;
-	
+
 	Temperature = 273.15f;
 	HeatConduct = 0;
 	Description = "Pressure pump. Changes pressure to its temp when activated. (use HEAT/COOL).";
-	
-	State = ST_SOLID;
+
 	Properties = TYPE_SOLID;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -41,46 +40,61 @@ Element_PUMP::Element_PUMP()
 	LowTemperatureTransition = NT;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	
+
 	Update = &Element_PUMP::update;
 	Graphics = &Element_PUMP::graphics;
 }
 
 //#TPT-Directive ElementHeader Element_PUMP static int update(UPDATE_FUNC_ARGS)
 int Element_PUMP::update(UPDATE_FUNC_ARGS)
- {
+{
 	int r, rx, ry;
-	if (parts[i].life!=10)
+	if (parts[i].life != 10)
 	{
 		if (parts[i].life>0)
 			parts[i].life--;
 	}
 	else
 	{
-		if (parts[i].temp>=256.0+273.15)
-			parts[i].temp=256.0+273.15;
-		if (parts[i].temp<= -256.0+273.15)
+		if (parts[i].temp >= 256.0+273.15)
+			parts[i].temp = 256.0+273.15;
+		if (parts[i].temp <= -256.0+273.15)
 			parts[i].temp = -256.0+273.15;
 
-		for (rx=-1; rx<2; rx++)
-			for (ry=-1; ry<2; ry++)
-				if ((x+rx)-CELL>=0 && (y+ry)-CELL>0 && (x+rx)+CELL<XRES && (y+ry)+CELL<YRES && !(rx && ry))
+		for (rx = -1; rx <= 1; rx++)
+			for (ry = -1; ry <= 1; ry++)
+			{
+				if (parts[i].tmp != 1)
 				{
-					sim->pv[(y/CELL)+ry][(x/CELL)+rx] += 0.1f*((parts[i].temp-273.15)-sim->pv[(y/CELL)+ry][(x/CELL)+rx]);
+					if (!(rx && ry))
+						sim->pv[(y/CELL)+ry][(x/CELL)+rx] += 0.1f*((parts[i].temp-273.15)-sim->pv[(y/CELL)+ry][(x/CELL)+rx]);
 				}
-		for (rx=-2; rx<3; rx++)
-			for (ry=-2; ry<3; ry++)
+				else
+				{
+					int r = pmap[y+ry][x+rx];
+					if (TYP(r) == PT_FILT)
+					{
+						int newPressure = parts[ID(r)].ctype - 0x10000000;
+						if (newPressure >= 0 && newPressure <= 512)
+						{
+							sim->pv[(y + ry) / CELL][(x + rx) / CELL] = newPressure - 256;
+						}
+					}
+				}
+			}
+		for (rx = -2; rx <= 2; rx++)
+			for (ry = -2; ry <= 2; ry++)
 				if (BOUNDS_CHECK && (rx || ry))
 				{
 					r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
-					if ((r&0xFF)==PT_PUMP)
+					if (TYP(r) == PT_PUMP)
 					{
-						if (parts[r>>8].life<10&&parts[r>>8].life>0)
+						if (parts[ID(r)].life < 10 && parts[ID(r)].life > 0)
 							parts[i].life = 9;
-						else if (parts[r>>8].life==0)
-							parts[r>>8].life = 10;
+						else if (parts[ID(r)].life == 0)
+							parts[ID(r)].life = 10;
 					}
 				}
 	}

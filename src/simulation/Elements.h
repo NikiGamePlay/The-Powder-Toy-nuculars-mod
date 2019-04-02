@@ -13,8 +13,9 @@
 #define TYPE_PART			0x00001  //1 Powders
 #define TYPE_LIQUID			0x00002  //2 Liquids
 #define TYPE_SOLID			0x00004  //4 Solids
-#define TYPE_GAS			0x00008  //8 Gasses (Includes plasma)
+#define TYPE_GAS			0x00008  //8 Gases (Includes plasma)
 #define TYPE_ENERGY			0x00010  //16 Energy (Thunder, Light, Neutrons etc.)
+#define STATE_FLAGS			0x0001F
 #define PROP_CONDUCTS		0x00020  //32 Conducts electricity
 #define PROP_BLACK			0x00040  //64 Absorbs Photons (not currently implemented or used, a photwl attribute might be better)
 #define PROP_NEUTPENETRATE	0x00080  //128 Penetrated by neutrons
@@ -35,12 +36,9 @@
 #define FLAG_STAGNANT	0x1
 #define FLAG_SKIPMOVE  0x2 // skip movement for one frame, only implemented for PHOT
 #define FLAG_WATEREQUAL 0x4 //if a liquid was already checked during equalization
-#define FLAG_MOVABLE  0x8 // if can move
+#define FLAG_MOVABLE  0x8 // compatibility with old saves (moving SPNG), only applies to SPNG
+#define FLAG_PHOTDECO  0x8 // compatibility with old saves (decorated photons), only applies to PHOT. Having the same value as FLAG_MOVABLE is fine because they apply to different elements, and this saves space for future flags,
 
-#define ST_NONE 0
-#define ST_SOLID 1
-#define ST_LIQUID 2
-#define ST_GAS 3
 
 #define UPDATE_FUNC_ARGS Simulation* sim, int i, int x, int y, int surround_space, int nt, Particle *parts, int pmap[YRES][XRES]
 #define UPDATE_FUNC_SUBCALL_ARGS sim, i, x, y, surround_space, nt, parts, pmap
@@ -52,8 +50,22 @@
 
 #define OLD_PT_WIND 147
 
-//#define PT_NUM  161
-#define PT_NUM	256
+// Change this to change the amount of bits used to store type in pmap (and a few elements such as PIPE and CRAY)
+#define PMAPBITS 9
+#define PMAPMASK ((1<<PMAPBITS)-1)
+#define ID(r) ((r)>>PMAPBITS)
+#define TYP(r) ((r)&PMAPMASK)
+#define PMAP(id, typ) ((id)<<PMAPBITS | ((typ)&PMAPMASK))
+#define PMAPID(id) ((id)<<PMAPBITS)
+
+#define PT_NUM	(1<<PMAPBITS)
+
+#if PMAPBITS > 16
+#error PMAPBITS is too large
+#endif
+#if ((XRES*YRES)<<PMAPBITS) > 0x100000000L
+#error not enough space in pmap
+#endif
 
 struct playerst;
 

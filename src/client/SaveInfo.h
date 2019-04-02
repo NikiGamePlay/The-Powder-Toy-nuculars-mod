@@ -3,8 +3,8 @@
 
 #include <list>
 #include <vector>
-#include <string>
-#include <stdlib.h>
+#include "common/String.h"
+#include <cstdlib>
 #include <iostream>
 
 class GameSave;
@@ -14,45 +14,43 @@ class SaveInfo
 private:
 public:
 	int id;
-	int date;
+	int createdDate;
+	int updatedDate;
 	int votesUp, votesDown;
+	int vote;
 	bool Favourite;
 	int Comments;
 	int Views;
 	int Version;
 
+	ByteString userName;
+
+	String name;
+	String Description;
+	bool Published;
+
+	std::list<ByteString> tags;
 	GameSave * gameSave;
 
 	SaveInfo(SaveInfo & save);
 
-	SaveInfo(int _id, int _date, int _votesUp, int _votesDown, std::string _userName, std::string _name);
+	SaveInfo(int _id, int _createdDate, int _updatedDate, int _votesUp, int _votesDown, ByteString _userName, String _name);
 
-	SaveInfo(int _id, int date_, int _votesUp, int _votesDown, int _vote, std::string _userName, std::string _name, std::string description_, bool published_, std::list<std::string> tags);
+	SaveInfo(int _id, int _createdDate, int _updatedDate, int _votesUp, int _votesDown, int _vote, ByteString _userName, String _name, String description_, bool published_, std::list<ByteString> tags);
 
 	~SaveInfo();
 
-	std::string userName;
-	std::string name;
+	void SetName(String name);
+	String GetName();
 
-	std::string Description;
-
-	std::list<std::string> tags;
-
-	int vote;
-
-	bool Published;
-
-	void SetName(std::string name);
-	std::string GetName();
-
-	void SetDescription(std::string description);
-	std::string GetDescription();
+	void SetDescription(String description);
+	String GetDescription();
 
 	void SetPublished(bool published);
 	bool GetPublished();
 
-	void SetUserName(std::string userName);
-	std::string GetUserName();
+	void SetUserName(ByteString userName);
+	ByteString GetUserName();
 
 	void SetID(int id);
 	int GetID();
@@ -69,8 +67,8 @@ public:
 	void SetVersion(int version);
 	int GetVersion();
 
-	void SetTags(std::list<std::string> tags);
-	std::list<std::string> GetTags();
+	void SetTags(std::list<ByteString> tags);
+	std::list<ByteString> GetTags();
 
 	GameSave * GetGameSave();
 	void SetGameSave(GameSave * gameSave);

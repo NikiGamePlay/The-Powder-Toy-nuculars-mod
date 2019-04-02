@@ -15,8 +15,11 @@ stderr.txt
 build*/*
 stamps/*
 Saves/*
+scripts/*
 generated/*
 includes/*
+recordings/
+font/*
 generate
 Makefile.me
 *.xcodeproj
@@ -44,6 +47,7 @@ Makefile.me
 *.lastbuildstate
 *.unsuccessfulbuild
 *.pdb
+*.db
 *.sublime-*
 *.project
 *.cproject
@@ -61,6 +65,5 @@ config.log
 *.pyc
 site_scons/site_tools/mfprogram/*.pyc
 site_scons/site_tools/gch/*.pyc
-others*
-*.bat
-*.zip
+
+screenshot_*

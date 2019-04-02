@@ -19,10 +19,9 @@ public:
 	{
 		SetRadius(size_);
 	};
-	virtual void GenerateBitmap()
+	void GenerateBitmap() override
 	{
-		if(bitmap)
-			delete[] bitmap;
+		delete[] bitmap;
 		bitmap = new unsigned char[size.X*size.Y];
 		int rx = radius.X;
 		int ry = radius.Y;

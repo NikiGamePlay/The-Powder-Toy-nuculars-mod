@@ -36,7 +36,7 @@ int buffer_open(lua_State *L) {
 }
 
 /*-------------------------------------------------------------------------*\
-* Initializes C structure 
+* Initializes C structure
 \*-------------------------------------------------------------------------*/
 void buffer_init(p_buffer buf, p_io io, p_timeout tm) {
 	buf->first = buf->last = 0;
@@ -60,8 +60,8 @@ int buffer_meth_getstats(lua_State *L, p_buffer buf) {
 * object:setstats() interface
 \*-------------------------------------------------------------------------*/
 int buffer_meth_setstats(lua_State *L, p_buffer buf) {
-    buf->received = (long) luaL_optnumber(L, 2, buf->received); 
-    buf->sent = (long) luaL_optnumber(L, 3, buf->sent); 
+    buf->received = (long) luaL_optnumber(L, 2, buf->received);
+    buf->sent = (long) luaL_optnumber(L, 3, buf->sent);
     if (lua_isnumber(L, 4)) buf->birthday = timeout_gettime() - lua_tonumber(L, 4);
     lua_pushnumber(L, 1);
     return 1;
@@ -77,7 +77,11 @@ int buffer_meth_send(lua_State *L, p_buffer buf) {
     const char *data = luaL_checklstring(L, 2, &size);
     long start = (long) luaL_optnumber(L, 3, 1);
     long end = (long) luaL_optnumber(L, 4, -1);
+#ifdef LUASOCKET_DEBUG
     p_timeout tm = timeout_markstart(buf->tm);
+#else
+    timeout_markstart(buf->tm); //not sure if this is needed, but prevent warning anyway
+#endif
     if (start < 0) start = (long) (size+start+1);
     if (end < 0) end = (long) (size+end+1);
     if (start < 1) start = (long) 1;
@@ -86,7 +90,7 @@ int buffer_meth_send(lua_State *L, p_buffer buf) {
     /* check if there was an error */
     if (err != IO_DONE) {
         lua_pushnil(L);
-        lua_pushstring(L, buf->io->error(buf->io->ctx, err)); 
+        lua_pushstring(L, buf->io->error(buf->io->ctx, err));
         lua_pushnumber(L, sent+start-1);
     } else {
         lua_pushnumber(L, sent+start-1);
@@ -108,8 +112,12 @@ int buffer_meth_receive(lua_State *L, p_buffer buf) {
     luaL_Buffer b;
     size_t size;
     const char *part = luaL_optlstring(L, 3, "", &size);
+#ifdef LUASOCKET_DEBUG
     p_timeout tm = timeout_markstart(buf->tm);
-    /* initialize buffer with optional extra prefix 
+#else
+    timeout_markstart(buf->tm);
+#endif
+    /* initialize buffer with optional extra prefix
      * (useful for concatenating previous partial results) */
     luaL_buffinit(L, &b);
     luaL_addlstring(&b, part, size);
@@ -117,9 +125,9 @@ int buffer_meth_receive(lua_State *L, p_buffer buf) {
     if (!lua_isnumber(L, 2)) {
         const char *p= luaL_optstring(L, 2, "*l");
         if (p[0] == '*' && p[1] == 'l') err = recvline(buf, &b);
-        else if (p[0] == '*' && p[1] == 'a') err = recvall(buf, &b); 
+        else if (p[0] == '*' && p[1] == 'a') err = recvall(buf, &b);
         else luaL_argcheck(L, 0, 2, "invalid receive pattern");
-        /* get a fixed number of bytes (minus what was already partially 
+        /* get a fixed number of bytes (minus what was already partially
          * received) */
     } else err = recvraw(buf, (size_t) lua_tonumber(L, 2)-size, &b);
     /* check if there was an error */
@@ -127,8 +135,8 @@ int buffer_meth_receive(lua_State *L, p_buffer buf) {
         /* we can't push anyting in the stack before pushing the
          * contents of the buffer. this is the reason for the complication */
         luaL_pushresult(&b);
-        lua_pushstring(L, buf->io->error(buf->io->ctx, err)); 
-        lua_pushvalue(L, -2); 
+        lua_pushstring(L, buf->io->error(buf->io->ctx, err));
+        lua_pushvalue(L, -2);
         lua_pushnil(L);
         lua_replace(L, -4);
     } else {
@@ -211,7 +219,7 @@ static int recvall(p_buffer buf, luaL_Buffer *b) {
 }
 
 /*-------------------------------------------------------------------------*\
-* Reads a line terminated by a CR LF pair or just by a LF. The CR and LF 
+* Reads a line terminated by a CR LF pair or just by a LF. The CR and LF
 * are not returned by the function and are discarded from the buffer
 \*-------------------------------------------------------------------------*/
 static int recvline(p_buffer buf, luaL_Buffer *b) {
@@ -222,7 +230,7 @@ static int recvline(p_buffer buf, luaL_Buffer *b) {
         pos = 0;
         while (pos < count && data[pos] != '\n') {
             /* we ignore all \r's */
-            if (data[pos] != '\r') luaL_putchar(b, data[pos]);
+            if (data[pos] != '\r') luaL_addchar(b, data[pos]);
             pos++;
         }
         if (pos < count) { /* found '\n' */
@@ -241,7 +249,7 @@ static int recvline(p_buffer buf, luaL_Buffer *b) {
 static void buffer_skip(p_buffer buf, size_t count) {
     buf->received += count;
     buf->first += count;
-    if (buffer_isempty(buf)) 
+    if (buffer_isempty(buf))
         buf->first = buf->last = 0;
 }
 

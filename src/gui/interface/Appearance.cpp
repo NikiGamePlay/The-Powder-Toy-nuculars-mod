@@ -1,22 +1,25 @@
 #include <iostream>
 #include "Appearance.h"
+#include "graphics/Graphics.h"
 
 namespace ui
 {
 	Appearance::Appearance():
-		HorizontalAlign(AlignCentre),
+		texture(NULL),
+
 		VerticalAlign(AlignMiddle),
-	
+		HorizontalAlign(AlignCentre),
+
 		BackgroundHover(20, 20, 20),
 		BackgroundInactive(0, 0, 0),
 		BackgroundActive(255, 255, 255),
 		BackgroundDisabled(10, 10, 10),
-		
+
 		TextHover(255, 255, 255),
 		TextInactive(255, 255, 255),
 		TextActive(0, 0, 0),
 		TextDisabled(100, 100, 100),
-		
+
 		BorderHover(255, 255, 255),
 		BorderInactive(200, 200, 200),
 		BorderActive(235, 235, 235),
@@ -24,11 +27,9 @@ namespace ui
 
 		Margin(1, 4),
 		Border(1),
-	
-		icon(NoIcon),
 
-		texture(NULL)
-	{};
+		icon(NoIcon)
+	{}
 
 	VideoBuffer * Appearance::GetTexture()
 	{
@@ -37,8 +38,7 @@ namespace ui
 
 	void Appearance::SetTexture(VideoBuffer * texture)
 	{
-		if(this->texture)
-			delete this->texture;
+		delete this->texture;
 		if(texture)
 			this->texture = new VideoBuffer(texture);
 		else
@@ -47,8 +47,7 @@ namespace ui
 
 	Appearance::~Appearance()
 	{
-		if(texture)
-			delete texture;
+		delete texture;
 	}
 
 }

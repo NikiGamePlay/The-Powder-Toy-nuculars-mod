@@ -8,7 +8,7 @@ Element_QRTZ::Element_QRTZ()
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;
 	Enabled = 1;
-	
+
 	Advection = 0.0f;
 	AirDrag = 0.00f * CFDS;
 	AirLoss = 0.90f;
@@ -18,21 +18,20 @@ Element_QRTZ::Element_QRTZ()
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 0;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 0;
-	
+
 	Weight = 100;
-	
+
 	Temperature = R_TEMP+273.15f;
 	HeatConduct = 3;
 	Description = "Quartz, breakable mineral. Conducts but becomes brittle at lower temperatures.";
-	
-	State = ST_SOLID;
+
 	Properties = TYPE_SOLID|PROP_HOT_GLOW|PROP_LIFE_DEC;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -41,7 +40,7 @@ Element_QRTZ::Element_QRTZ()
 	LowTemperatureTransition = NT;
 	HighTemperature = 2573.15f;
 	HighTemperatureTransition = PT_LAVA;
-	
+
 	Update = &Element_QRTZ::update;
 	Graphics = &Element_QRTZ::graphics;
 }
@@ -71,9 +70,9 @@ int Element_QRTZ::update(UPDATE_FUNC_ARGS)
 					r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
-					else if ((r&0xFF)==PT_SLTW && !(rand()%500))
+					else if (TYP(r)==PT_SLTW && RNG::Ref().chance(1, 500))
 					{
-						sim->kill_part(r>>8);
+						sim->kill_part(ID(r));
 						parts[i].tmp++;
 					}
 				}
@@ -84,7 +83,7 @@ int Element_QRTZ::update(UPDATE_FUNC_ARGS)
 		int rnd, sry, srx;
 		for (trade = 0; trade < 9; trade++)
 		{
-			rnd = rand()%0x3FF;
+			rnd = RNG::Ref().gen() % 0x3FF;
 			rx = (rnd%5)-2;
 			srx = (rnd%3)-1;
 			rnd >>= 3;
@@ -107,11 +106,11 @@ int Element_QRTZ::update(UPDATE_FUNC_ARGS)
 								// If PQRT is stationary and has started growing particles of QRTZ, the PQRT is basically part of a new QRTZ crystal. So turn it back into QRTZ so that it behaves more like part of the crystal.
 								sim->part_change_type(i,x,y,PT_QRTZ);
 							}
-							if (rand()%2)
+							if (RNG::Ref().chance(1, 2))
 							{
 								parts[np].tmp=-1;//dead qrtz
 							}
-							else if (!parts[i].tmp && !(rand()%15))
+							else if (!parts[i].tmp && RNG::Ref().chance(1, 15))
 							{
 								parts[i].tmp=-1;
 							}
@@ -123,18 +122,18 @@ int Element_QRTZ::update(UPDATE_FUNC_ARGS)
 				r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				else if ((r&0xFF)==PT_QRTZ && (parts[i].tmp>parts[r>>8].tmp) && parts[r>>8].tmp>=0)
+				else if (TYP(r)==PT_QRTZ && (parts[i].tmp>parts[ID(r)].tmp) && parts[ID(r)].tmp>=0)
 				{
-					tmp = parts[i].tmp - parts[r>>8].tmp;
+					tmp = parts[i].tmp - parts[ID(r)].tmp;
 					if (tmp ==1)
 					{
-						parts[r>>8].tmp++;
+						parts[ID(r)].tmp++;
 						parts[i].tmp--;
 						break;
 					}
 					if (tmp>0)
 					{
-						parts[r>>8].tmp += tmp/2;
+						parts[ID(r)].tmp += tmp/2;
 						parts[i].tmp -= tmp/2;
 						break;
 					}
@@ -150,21 +149,10 @@ int Element_QRTZ::update(UPDATE_FUNC_ARGS)
 int Element_QRTZ::graphics(GRAPHICS_FUNC_ARGS)
  //QRTZ and PQRT
 {
-	int t = cpart->type, z = cpart->tmp2 - 5;//speckles!
-	/*if (cpart->temp>(ptransitions[t].thv-800.0f))//hotglow for quartz
-	{
-		float frequency = 3.1415/(2*ptransitions[t].thv-(ptransitions[t].thv-800.0f));
-		int q = (cpart->temp>ptransitions[t].thv)?ptransitions[t].thv-(ptransitions[t].thv-800.0f):cpart->temp-(ptransitions[t].thv-800.0f);
-		*colr += sin(frequency*q) * 226 + (z * 16);
-		*colg += sin(frequency*q*4.55 +3.14) * 34 + (z * 16);
-		*colb += sin(frequency*q*2.22 +3.14) * 64 + (z * 16);
-	}
-	else*/
-	{
-		*colr += z * 16;
-		*colg += z * 16;
-		*colb += z * 16;
-	}
+	int z = (cpart->tmp2 - 5) * 16;//speckles!
+	*colr += z;
+	*colg += z;
+	*colb += z;
 	return 0;
 }
 

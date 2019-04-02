@@ -1,35 +1,65 @@
-#include <sstream>
-
 #include "SearchView.h"
 #include "client/Client.h"
 #include "gui/interface/Keys.h"
 #include "gui/interface/SaveButton.h"
+#include "gui/interface/Button.h"
 #include "gui/interface/Label.h"
 #include "gui/interface/RichLabel.h"
 #include "gui/interface/Textbox.h"
+#include "gui/interface/Spinner.h"
 #include "Misc.h"
+#include "Format.h"
+#include "PowderToy.h"
 
 SearchView::SearchView():
 	ui::Window(ui::Point(0, 0), ui::Point(WINDOWW, WINDOWH)),
+	c(NULL),
 	saveButtons(vector<ui::SaveButton*>()),
 	errorLabel(NULL),
-	c(NULL)
+	changed(true),
+	lastChanged(0),
+	pageCount(0),
+	publishButtonShown(false)
 {
 
 	Client::Ref().AddListener(this);
 
-	nextButton = new ui::Button(ui::Point(WINDOWW-52, WINDOWH-18), ui::Point(50, 16), "Next \x95");
-	previousButton = new ui::Button(ui::Point(1, WINDOWH-18), ui::Point(50, 16), "\x96 Prev");
-	infoLabel  = new ui::Label(ui::Point(260, WINDOWH-18), ui::Point(WINDOWW-520, 16), "Page 1 of 1");
+	nextButton = new ui::Button(ui::Point(WINDOWW-52, WINDOWH-18), ui::Point(50, 16), String("Next ") + 0xE015);
+	previousButton = new ui::Button(ui::Point(2, WINDOWH-18), ui::Point(50, 16), 0xE016 + String(" Prev"));
 	tagsLabel  = new ui::Label(ui::Point(270, WINDOWH-18), ui::Point(WINDOWW-540, 16), "\boPopular Tags:");
-	motdLabel  = new ui::RichLabel(ui::Point(51, WINDOWH-18), ui::Point(WINDOWW-102, 16), Client::Ref().GetMessageOfTheDay());
+	try
+	{
+		motdLabel  = new ui::RichLabel(ui::Point(51, WINDOWH-18), ui::Point(WINDOWW-102, 16), Client::Ref().GetMessageOfTheDay());
+	}
+	catch (std::exception & e) { }
+
+	class PageNumAction : public ui::TextboxAction
+	{
+		SearchView * v;
+	public:
+		PageNumAction(SearchView * _v) { v = _v; }
+		void TextChangedCallback(ui::Textbox * sender) override
+		{
+			v->textChanged();
+		}
+	};
+	pageTextbox = new ui::Textbox(ui::Point(283, WINDOWH-18), ui::Point(41, 16), "");
+	pageTextbox->SetActionCallback(new PageNumAction(this));
+	pageTextbox->SetInputType(ui::Textbox::Number);
+	pageLabel = new ui::Label(ui::Point(0, WINDOWH-18), ui::Point(30, 16), "Page"); //page [TEXTBOX] of y
+	pageLabel->Appearance.HorizontalAlign = ui::Appearance::AlignRight;
+	pageCountLabel = new ui::Label(ui::Point(WINDOWW/2+6, WINDOWH-18), ui::Point(50, 16), "");
+	pageCountLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+	AddComponent(pageLabel);
+	AddComponent(pageCountLabel);
+	AddComponent(pageTextbox);
 
 	class SearchAction : public ui::TextboxAction
 	{
 		SearchView * v;
 	public:
 		SearchAction(SearchView * _v) { v = _v; }
-		void TextChangedCallback(ui::Textbox * sender)
+		void TextChangedCallback(ui::Textbox * sender) override
 		{
 			v->doSearch();
 		}
@@ -47,7 +77,7 @@ SearchView::SearchView():
 		SearchView * v;
 	public:
 		SortAction(SearchView * _v) { v = _v; }
-		void ActionCallback(ui::Button * sender)
+		void ActionCallback(ui::Button * sender) override
 		{
 			v->c->ChangeSort();
 		}
@@ -65,7 +95,7 @@ SearchView::SearchView():
 		SearchView * v;
 	public:
 		MyOwnAction(SearchView * _v) { v = _v; }
-		void ActionCallback(ui::Button * sender)
+		void ActionCallback(ui::Button * sender) override
 		{
 			v->c->ShowOwn(sender->GetToggleState());
 		}
@@ -83,7 +113,7 @@ SearchView::SearchView():
 		SearchView * v;
 	public:
 		FavAction(SearchView * _v) { v = _v; }
-		void ActionCallback(ui::Button * sender)
+		void ActionCallback(ui::Button * sender) override
 		{
 			v->c->ShowFavourite(sender->GetToggleState());
 		}
@@ -97,13 +127,13 @@ SearchView::SearchView():
 	favButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	favButton->Appearance.BorderInactive = ui::Colour(170,170,170);
 	AddComponent(favButton);
-	
+
 	class ClearSearchAction : public ui::ButtonAction
 	{
 		SearchView * v;
 	public:
 		ClearSearchAction(SearchView * _v) { v = _v; }
-		void ActionCallback(ui::Button * sender)
+		void ActionCallback(ui::Button * sender) override
 		{
 			v->clearSearch();
 		}
@@ -118,36 +148,28 @@ SearchView::SearchView():
 	clearSearchButton->Appearance.BorderInactive = ui::Colour(170,170,170);
 	AddComponent(clearSearchButton);
 
-	class NextPageAction : public ui::ButtonAction
+	class RelativePageAction : public ui::ButtonAction
 	{
 		SearchView * v;
+		int offset;
 	public:
-		NextPageAction(SearchView * _v) { v = _v; }
-		void ActionCallback(ui::Button * sender)
+		RelativePageAction(SearchView * _v, int _offset): v(_v), offset(_offset) {}
+		void ActionCallback(ui::Button * sender) override
 		{
-			v->c->NextPage();
+			v->c->SetPageRelative(offset);
 		}
 	};
-	nextButton->SetActionCallback(new NextPageAction(this));
+	nextButton->SetActionCallback(new RelativePageAction(this, 1));
 	nextButton->Appearance.HorizontalAlign = ui::Appearance::AlignRight;
 	nextButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
-	class PrevPageAction : public ui::ButtonAction
-	{
-		SearchView * v;
-	public:
-		PrevPageAction(SearchView * _v) { v = _v; }
-		void ActionCallback(ui::Button * sender)
-		{
-			v->c->PrevPage();
-		}
-	};
-	previousButton->SetActionCallback(new PrevPageAction(this));
+	nextButton->Visible = false;
+	previousButton->SetActionCallback(new RelativePageAction(this, -1));
 	previousButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	previousButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
+	previousButton->Visible = false;
 	AddComponent(nextButton);
 	AddComponent(previousButton);
 	AddComponent(searchField);
-	AddComponent(infoLabel);
 
 	loadingSpinner = new ui::Spinner(ui::Point((WINDOWW/2)-12, (WINDOWH/2)+12), ui::Point(24, 24));
 	AddComponent(loadingSpinner);
@@ -162,7 +184,7 @@ SearchView::SearchView():
 		SearchView * v;
 	public:
 		RemoveSelectedAction(SearchView * _v) { v = _v; }
-		void ActionCallback(ui::Button * sender)
+		void ActionCallback(ui::Button * sender) override
 		{
 			v->c->RemoveSelected();
 		}
@@ -173,9 +195,9 @@ SearchView::SearchView():
 		SearchView * v;
 	public:
 		UnpublishSelectedAction(SearchView * _v) { v = _v; }
-		void ActionCallback(ui::Button * sender)
+		void ActionCallback(ui::Button * sender) override
 		{
-			v->c->UnpublishSelected();
+			v->c->UnpublishSelected(v->publishButtonShown);
 		}
 	};
 
@@ -184,7 +206,7 @@ SearchView::SearchView():
 		SearchView * v;
 	public:
 		FavouriteSelectedAction(SearchView * _v) { v = _v; }
-		void ActionCallback(ui::Button * sender)
+		void ActionCallback(ui::Button * sender) override
 		{
 			v->c->FavouriteSelected();
 		}
@@ -195,7 +217,7 @@ SearchView::SearchView():
 		SearchView * v;
 	public:
 		ClearSelectionAction(SearchView * _v) { v = _v; }
-		void ActionCallback(ui::Button * sender)
+		void ActionCallback(ui::Button * sender) override
 		{
 			v->c->ClearSelection();
 		}
@@ -226,7 +248,18 @@ SearchView::SearchView():
 
 void SearchView::NotifyMessageOfTheDay(Client * sender)
 {
-	motdLabel->SetText(sender->GetMessageOfTheDay());
+	if (motdLabel)
+	{
+		try
+		{
+			motdLabel->SetText(sender->GetMessageOfTheDay());
+		}
+		catch (std::exception & e)
+		{
+			motdLabel = nullptr;
+		}
+	}
+
 }
 
 void SearchView::doSearch()
@@ -235,11 +268,21 @@ void SearchView::doSearch()
 		c->DoSearch(searchField->GetText());
 }
 
-
 void SearchView::clearSearch()
 {
 	searchField->SetText("");
 	c->DoSearch(searchField->GetText(), true);
+}
+
+void SearchView::textChanged()
+{
+	int num = pageTextbox->GetText().ToNumber<int>(true);
+	if (num < 0) //0 is allowed so that you can backspace the 1
+		pageTextbox->SetText("1");
+	else if (num > pageCount)
+		pageTextbox->SetText(String::Build(pageCount));
+	changed = true;
+	lastChanged = GetTicks()+600;
 }
 
 void SearchView::OnTryOkay(OkayMethod method)
@@ -252,21 +295,24 @@ SearchView::~SearchView()
 	Client::Ref().RemoveListener(this);
 	RemoveComponent(nextButton);
 	RemoveComponent(previousButton);
-	RemoveComponent(infoLabel);
+	RemoveComponent(pageTextbox);
+	RemoveComponent(pageLabel);
+	RemoveComponent(pageCountLabel);
+	delete nextButton;
+	delete previousButton;
+	delete pageTextbox;
+	delete pageLabel;
+	delete pageCountLabel;
 
-	for(int i = 0; i < saveButtons.size(); i++)
+	for (size_t i = 0; i < saveButtons.size(); i++)
 	{
 		RemoveComponent(saveButtons[i]);
 		delete saveButtons[i];
 	}
 	saveButtons.clear();
-
-	delete nextButton;
-	delete previousButton;
-	delete infoLabel;
 }
 
-void SearchView::Search(std::string query)
+void SearchView::Search(String query)
 {
 	searchField->SetText(query);
 	c->DoSearch(query, true);
@@ -295,11 +341,6 @@ void SearchView::NotifyShowOwnChanged(SearchModel * sender)
 	{
 		unpublishSelected->Enabled = true;
 		removeSelected->Enabled = true;
-	}
-	else if(sender->GetShowFavourite())
-	{
-		unpublishSelected->Enabled = false;
-		removeSelected->Enabled = false;
 	}
 	else
 	{
@@ -330,9 +371,26 @@ void SearchView::NotifyShowFavouriteChanged(SearchModel * sender)
 
 void SearchView::NotifyPageChanged(SearchModel * sender)
 {
-	std::stringstream pageInfo;
-	pageInfo << "Page " << sender->GetPageNum() << " of " << sender->GetPageCount();
-	infoLabel->SetText(pageInfo.str());
+	pageCount = sender->GetPageCount();
+	if (!sender->GetSaveList().size()) //no saves
+	{
+		pageLabel->Visible = pageCountLabel->Visible = pageTextbox->Visible = false;
+	}
+	else
+	{
+		String pageInfo = String::Build("of ", pageCount);
+		pageCountLabel->SetText(pageInfo);
+		int width = Graphics::textwidth(pageInfo);
+
+		pageLabel->Position.X = WINDOWW/2-width-20;
+		pageTextbox->Position.X = WINDOWW/2-width+11;
+		pageTextbox->Size.X = width-4;
+		//pageCountLabel->Position.X = WINDOWW/2+6;
+		pageLabel->Visible = pageCountLabel->Visible = pageTextbox->Visible = true;
+
+		pageInfo = String::Build(sender->GetPageNum());
+		pageTextbox->SetText(pageInfo);
+	}
 	if(sender->GetPageNum() == 1)
 	{
 		previousButton->Visible = false;
@@ -358,7 +416,7 @@ void SearchView::NotifyAuthUserChanged(Client * sender)
 
 void SearchView::CheckAccess()
 {
-	if(c)
+	if (c)
 	{
 		c->ClearSelection();
 
@@ -367,18 +425,18 @@ void SearchView::CheckAccess()
 		if(favButton->GetToggleState())
 			favButton->DoAction();
 	}
-	
-	if(Client::Ref().GetAuthUser().ID)
+
+	if (Client::Ref().GetAuthUser().UserID)
 	{
 		ownButton->Enabled = true;
 		favButton->Enabled = true;
 		favouriteSelected->Enabled = true;
 
-		if(Client::Ref().GetAuthUser().UserElevation == User::ElevationAdmin || Client::Ref().GetAuthUser().UserElevation == User::ElevationModerator)
+		if (Client::Ref().GetAuthUser().UserElevation == User::ElevationAdmin || Client::Ref().GetAuthUser().UserElevation == User::ElevationModerator)
 		{
 			unpublishSelected->Enabled = true;
 			removeSelected->Enabled = true;
-			for(int i = 0; i < saveButtons.size(); i++)
+			for (size_t i = 0; i < saveButtons.size(); i++)
 			{
 				saveButtons[i]->SetSelectable(true);
 			}
@@ -395,7 +453,7 @@ void SearchView::CheckAccess()
 		unpublishSelected->Enabled = false;
 		removeSelected->Enabled = false;
 
-		for(int i = 0; i < saveButtons.size(); i++)
+		for (size_t i = 0; i < saveButtons.size(); i++)
 		{
 			saveButtons[i]->SetSelectable(false);
 			saveButtons[i]->SetSelected(false);
@@ -405,22 +463,24 @@ void SearchView::CheckAccess()
 
 void SearchView::NotifyTagListChanged(SearchModel * sender)
 {
-	int i = 0;
-	int buttonWidth, buttonHeight, saveX = 0, saveY = 0, savesX = 5, savesY = 4, buttonPadding = 1;
-	int buttonAreaWidth, buttonAreaHeight, buttonXOffset, buttonYOffset;
+	int savesY = 4, buttonPadding = 1;
+	int buttonAreaHeight, buttonYOffset;
 
-	int tagWidth, tagHeight, tagX = 0, tagY = 0, tagsX = 6, tagsY = 4, tagPadding = 1;
-	int tagAreaWidth, tagAreaHeight, tagXOffset, tagYOffset;
+	int tagWidth = 0, tagHeight = 0, tagX = 0, tagY = 0, tagsX = 6, tagsY = 4, tagPadding = 1;
+	int tagAreaWidth, tagAreaHeight, tagXOffset = 0, tagYOffset = 0;
 
-	vector<pair<string, int> > tags = sender->GetTagList();
+	vector<pair<ByteString, int> > tags = sender->GetTagList();
 
-	RemoveComponent(motdLabel);
-	motdLabel->SetParentWindow(NULL);
+	if (motdLabel)
+	{
+		RemoveComponent(motdLabel);
+		motdLabel->SetParentWindow(NULL);
+	}
 
 	RemoveComponent(tagsLabel);
 	tagsLabel->SetParentWindow(NULL);
 
-	for(i = 0; i < tagButtons.size(); i++)
+	for (size_t i = 0; i < tagButtons.size(); i++)
 	{
 		RemoveComponent(tagButtons[i]);
 		delete tagButtons[i];
@@ -428,11 +488,9 @@ void SearchView::NotifyTagListChanged(SearchModel * sender)
 	tagButtons.clear();
 
 	buttonYOffset = 28;
-	buttonXOffset = buttonPadding;
-	buttonAreaWidth = Size.X;
 	buttonAreaHeight = Size.Y - buttonYOffset - 18;
 
-	if(sender->GetShowTags())
+	if (sender->GetShowTags())
 	{
 		buttonYOffset += (buttonAreaHeight/savesY) - buttonPadding*2;
 		buttonAreaHeight = Size.Y - buttonYOffset - 18;
@@ -448,30 +506,33 @@ void SearchView::NotifyTagListChanged(SearchModel * sender)
 		AddComponent(tagsLabel);
 		tagsLabel->Position.Y = tagYOffset-16;
 
-		AddComponent(motdLabel);
-		motdLabel->Position.Y = tagYOffset-30;
+		if (motdLabel)
+		{
+			AddComponent(motdLabel);
+			motdLabel->Position.Y = tagYOffset-30;
+		}
 	}
 
 	class TagAction: public ui::ButtonAction
 	{
 		SearchView * v;
-		std::string tag;
+		ByteString tag;
 	public:
-		TagAction(SearchView * v, std::string tag) : v(v), tag(tag) {}
-		virtual void ActionCallback(ui::Button * sender)
+		TagAction(SearchView * v, ByteString tag) : v(v), tag(tag) {}
+		void ActionCallback(ui::Button * sender) override
 		{
-			v->Search(tag);
+			v->Search(tag.FromUtf8());
 		}
 	};
-	if(sender->GetShowTags())
+	if (sender->GetShowTags())
 	{
-		for(i = 0; i < tags.size(); i++)
+		for (size_t i = 0; i < tags.size(); i++)
 		{
 			int maxTagVotes = tags[0].second;
 
-			pair<string, int> tag = tags[i];
-			
-			if(tagX == tagsX)
+			pair<ByteString, int> tag = tags[i];
+
+			if (tagX == tagsX)
 			{
 				if(tagY == tagsY-1)
 					break;
@@ -490,7 +551,7 @@ void SearchView::NotifyTagListChanged(SearchModel * sender)
 						tagYOffset + tagPadding + tagY*(tagHeight+tagPadding*2)
 					),
 				ui::Point(tagWidth, tagHeight),
-				tag.first
+				tag.first.FromUtf8()
 				);
 			tagButton->SetActionCallback(new TagAction(this, tag.first));
 			tagButton->Appearance.BorderInactive = ui::Colour(0, 0, 0);
@@ -510,12 +571,8 @@ void SearchView::NotifyTagListChanged(SearchModel * sender)
 
 void SearchView::NotifySaveListChanged(SearchModel * sender)
 {
-	int i = 0;
 	int buttonWidth, buttonHeight, saveX = 0, saveY = 0, savesX = 5, savesY = 4, buttonPadding = 1;
 	int buttonAreaWidth, buttonAreaHeight, buttonXOffset, buttonYOffset;
-
-	int tagWidth, tagHeight, tagX = 0, tagY = 0, tagsX = 6, tagsY = 4, tagPadding = 1;
-	int tagAreaWidth, tagAreaHeight, tagXOffset, tagYOffset;
 
 	vector<SaveInfo*> saves = sender->GetSaveList();
 	//string messageOfTheDay = sender->GetMessageOfTheDay();
@@ -525,12 +582,11 @@ void SearchView::NotifySaveListChanged(SearchModel * sender)
 	else
 		favouriteSelected->SetText("Favourite");
 
-	Client::Ref().ClearThumbnailRequests();
-	for(i = 0; i < saveButtons.size(); i++)
+	for (size_t i = 0; i < saveButtons.size(); i++)
 	{
 		RemoveComponent(saveButtons[i]);
 	}
-	if(!sender->GetSavesLoaded())
+	if (!sender->GetSavesLoaded())
 	{
 		nextButton->Enabled = false;
 		previousButton->Enabled = false;
@@ -540,7 +596,7 @@ void SearchView::NotifySaveListChanged(SearchModel * sender)
 	{
 		nextButton->Enabled = true;
 		previousButton->Enabled = true;
-		if (Client::Ref().GetAuthUser().ID)
+		if (Client::Ref().GetAuthUser().UserID)
 			favButton->Enabled = true;
 	}
 	if (!sender->GetSavesLoaded() || favButton->GetToggleState())
@@ -550,19 +606,19 @@ void SearchView::NotifySaveListChanged(SearchModel * sender)
 	}
 	else
 	{
-		if (Client::Ref().GetAuthUser().ID)
+		if (Client::Ref().GetAuthUser().UserID)
 			ownButton->Enabled = true;
 		sortButton->Enabled = true;
 	}
-	if(!saves.size())
+	if (!saves.size())
 	{
 		loadingSpinner->Visible = false;
-		if(!errorLabel)
+		if (!errorLabel)
 		{
 			errorLabel = new ui::Label(ui::Point((WINDOWW/2)-100, (WINDOWH/2)-6), ui::Point(200, 12), "Error");
 			AddComponent(errorLabel);
 		}
-		if(!sender->GetSavesLoaded())
+		if (!sender->GetSavesLoaded())
 		{
 			errorLabel->SetText("Loading...");
 			loadingSpinner->Visible = true;
@@ -578,13 +634,13 @@ void SearchView::NotifySaveListChanged(SearchModel * sender)
 	else
 	{
 		loadingSpinner->Visible = false;
-		if(errorLabel)
+		if (errorLabel)
 		{
 			RemoveComponent(errorLabel);
 			delete errorLabel;
 			errorLabel = NULL;
 		}
-		for(i = 0; i < saveButtons.size(); i++)
+		for (size_t i = 0; i < saveButtons.size(); i++)
 		{
 			delete saveButtons[i];
 		}
@@ -595,18 +651,11 @@ void SearchView::NotifySaveListChanged(SearchModel * sender)
 		buttonAreaWidth = Size.X;
 		buttonAreaHeight = Size.Y - buttonYOffset - 18;
 
-		if(sender->GetShowTags())
+		if (sender->GetShowTags())
 		{
 			buttonYOffset += (buttonAreaHeight/savesY) - buttonPadding*2;
 			buttonAreaHeight = Size.Y - buttonYOffset - 18;
 			savesY--;
-
-			tagXOffset = tagPadding;
-			tagYOffset = 60;
-			tagAreaWidth = Size.X;
-			tagAreaHeight = ((buttonAreaHeight/savesY) - buttonPadding*2)-(tagYOffset-28)-5;
-			tagWidth = (tagAreaWidth/tagsX) - tagPadding*2;
-			tagHeight = (tagAreaHeight/tagsY) - tagPadding*2;
 		}
 
 		buttonWidth = (buttonAreaWidth/savesX) - buttonPadding*2;
@@ -619,30 +668,28 @@ void SearchView::NotifySaveListChanged(SearchModel * sender)
 			SearchView * v;
 		public:
 			SaveOpenAction(SearchView * _v) { v = _v; }
-			virtual void ActionCallback(ui::SaveButton * sender)
+			void ActionCallback(ui::SaveButton * sender) override
 			{
 				v->c->OpenSave(sender->GetSave()->GetID(), sender->GetSave()->GetVersion());
 			}
-			virtual void SelectedCallback(ui::SaveButton * sender)
+			void SelectedCallback(ui::SaveButton * sender) override
 			{
 				v->c->Selected(sender->GetSave()->GetID(), sender->GetSelected());
 			}
-			virtual void AltActionCallback(ui::SaveButton * sender)
+			void AltActionCallback(ui::SaveButton * sender) override
 			{
-				stringstream search;
-				search << "history:" << sender->GetSave()->GetID();
-				v->Search(search.str());
+				v->Search(String::Build("history:", sender->GetSave()->GetID()));
 			}
-			virtual void AltActionCallback2(ui::SaveButton * sender)
+			void AltActionCallback2(ui::SaveButton * sender) override
 			{
-				v->Search("user:"+sender->GetSave()->GetUserName());
+				v->Search(String::Build("user:", sender->GetSave()->GetUserName().FromUtf8()));
 			}
 		};
-		for(i = 0; i < saves.size(); i++)
+		for (size_t i = 0; i < saves.size(); i++)
 		{
-			if(saveX == savesX)
+			if (saveX == savesX)
 			{
-				if(saveY == savesY-1)
+				if (saveY == savesY-1)
 					break;
 				saveX = 0;
 				saveY++;
@@ -657,7 +704,7 @@ void SearchView::NotifySaveListChanged(SearchModel * sender)
 						saves[i]);
 			saveButton->AddContextMenu(0);
 			saveButton->SetActionCallback(new SaveOpenAction(this));
-			if(Client::Ref().GetAuthUser().ID)
+			if(Client::Ref().GetAuthUser().UserID)
 				saveButton->SetSelectable(true);
 			if (saves[i]->GetUserName() == Client::Ref().GetAuthUser().Username || Client::Ref().GetAuthUser().UserElevation == User::ElevationAdmin || Client::Ref().GetAuthUser().UserElevation == User::ElevationModerator)
 				saveButton->SetShowVotes(true);
@@ -671,56 +718,82 @@ void SearchView::NotifySaveListChanged(SearchModel * sender)
 void SearchView::NotifySelectedChanged(SearchModel * sender)
 {
 	vector<int> selected = sender->GetSelected();
-	for(int j = 0; j < saveButtons.size(); j++)
+	size_t published = 0;
+	for (size_t j = 0; j < saveButtons.size(); j++)
 	{
 		saveButtons[j]->SetSelected(false);
-		for(int i = 0; i < selected.size(); i++)
+		for (size_t i = 0; i < selected.size(); i++)
 		{
-			if(saveButtons[j]->GetSave()->GetID()==selected[i])
+			if (saveButtons[j]->GetSave()->GetID() == selected[i])
+			{
 				saveButtons[j]->SetSelected(true);
+				if (saveButtons[j]->GetSave()->GetPublished())
+					published++;
+			}
 		}
 	}
 
-	if(selected.size())
+	if (selected.size())
 	{
 		removeSelected->Visible = true;
 		unpublishSelected->Visible = true;
 		favouriteSelected->Visible = true;
 		clearSelection->Visible = true;
+		pageTextbox->Visible = false;
+		pageLabel->Visible = false;
+		pageCountLabel->Visible = false;
+		if (published <= selected.size()/2)
+		{
+			unpublishSelected->SetText("Publish");
+			publishButtonShown = true;
+		}
+		else
+		{
+			unpublishSelected->SetText("Unpublish");
+			publishButtonShown = false;
+		}
 	}
-	else
+	else if (removeSelected->Visible)
 	{
 		removeSelected->Visible = false;
 		unpublishSelected->Visible = false;
 		favouriteSelected->Visible = false;
 		clearSelection->Visible = false;
+		pageTextbox->Visible = true;
+		pageLabel->Visible = true;
+		pageCountLabel->Visible = true;
 	}
 }
 
 void SearchView::OnTick(float dt)
 {
 	c->Update();
+	if (changed && lastChanged < GetTicks())
+	{
+		changed = false;
+		c->SetPage(std::max(pageTextbox->GetText().ToNumber<int>(true), 0));
+	}
 }
 
 void SearchView::OnMouseWheel(int x, int y, int d)
 {
-	if(!d)
-		return;
-	if(d<0)
-		c->NextPage();
-	else
-		c->PrevPage();
+	if (d)
+		c->SetPageRelative(-d);
 }
-void SearchView::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt)
+void SearchView::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
 {
-	if (key == KEY_ESCAPE)
+	if (repeat)
+		return;
+	if (key == SDLK_ESCAPE)
 		c->Exit();
-	else if (key == KEY_LCTRL || key == KEY_RCTRL)
+	else if (key == SDLK_LCTRL || key == SDLK_RCTRL)
 		c->InstantOpen(true);
 }
 
-void SearchView::OnKeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt)
+void SearchView::OnKeyRelease(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
 {
-	if (key == KEY_LCTRL || key == KEY_RCTRL)
+	if (repeat)
+		return;
+	if (key == SDLK_LCTRL || key == SDLK_RCTRL)
 		c->InstantOpen(false);
 }

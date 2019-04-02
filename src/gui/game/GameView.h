@@ -4,7 +4,7 @@
 #include <vector>
 #include <queue>
 #include <deque>
-#include <string>
+#include "common/String.h"
 #include "GameController.h"
 #include "GameModel.h"
 #include "gui/interface/Window.h"
@@ -33,42 +33,45 @@ class GameModel;
 class GameView: public ui::Window
 {
 private:
-	DrawMode drawMode;
-	
-	bool doScreenshot;
-	bool recording;
-	int screenshotIndex;
-	int recordingIndex;
-
 	bool isMouseDown;
+	bool skipDraw;
 	bool zoomEnabled;
 	bool zoomCursorFixed;
+	bool mouseInZoom;
 	bool drawSnap;
 	bool shiftBehaviour;
 	bool ctrlBehaviour;
 	bool altBehaviour;
 	bool showHud;
 	bool showDebug;
+	int delayedActiveMenu;
 	bool wallBrush;
 	bool toolBrush;
+	bool decoBrush;
 	bool windTool;
-	int introText;
-	std::string introTextMessage;
 	int toolIndex;
 	int currentSaveType;
 	int lastMenu;
 
 	int toolTipPresence;
-	std::string toolTip;
+	String toolTip;
 	bool isToolTipFadingIn;
 	ui::Point toolTipPosition;
 	int infoTipPresence;
-	std::string infoTip;
+	String infoTip;
 	int buttonTipShow;
-	std::string buttonTip;
+	String buttonTip;
 	bool isButtonTipFadingIn;
+	int introText;
+	String introTextMessage;
 
-	queue<ui::Point> pointQueue;
+	bool doScreenshot;
+	int screenshotIndex;
+	bool recording;
+	int recordingFolder;
+	int recordingIndex;
+
+	ui::Point currentPoint, lastPoint;
 	GameController * c;
 	Renderer * ren;
 	Brush * activeBrush;
@@ -77,13 +80,13 @@ private:
 	vector<ui::Button*> menuButtons;
 	vector<ToolButton*> toolButtons;
 	vector<ui::Component*> notificationComponents;
-	deque<string> logEntries;
-	float lastLogEntry;
+	deque<std::pair<String, int> > logEntries;
 	ui::Button * scrollBar;
 	ui::Button * searchButton;
 	ui::Button * reloadButton;
 	ui::Button * saveSimulationButton;
 	bool saveSimulationButtonEnabled;
+	bool saveReuploadAllowed;
 	ui::Button * downVoteButton;
 	ui::Button * upVoteButton;
 	ui::Button * tagSimulationButton;
@@ -92,12 +95,11 @@ private:
 	ui::Button * simulationOptionButton;
 	ui::Button * displayModeButton;
 	ui::Button * pauseButton;
-	ui::Point currentMouse;
 
 	ui::Button * colourPicker;
 	vector<ToolButton*> colourPresets;
 
-	bool drawModeReset;
+	DrawMode drawMode;
 	ui::Point drawPoint1;
 	ui::Point drawPoint2;
 
@@ -105,19 +107,19 @@ private:
 	ui::Point selectPoint1;
 	ui::Point selectPoint2;
 
+	ui::Point currentMouse;
 	ui::Point mousePosition;
 
 	VideoBuffer * placeSaveThumb;
+	ui::Point placeSaveOffset;
 
 	SimulationSample sample;
 
-	int lastOffset;
-	void setToolButtonOffset(int offset);
-	virtual ui::Point lineSnapCoords(ui::Point point1, ui::Point point2);
-	virtual ui::Point rectSnapCoords(ui::Point point1, ui::Point point2);
+	void updateToolButtonScroll();
+
+	void SetSaveButtonTooltips();
 
 	void screenshot();
-	void record();
 
 	void enableShiftBehaviour();
 	void disableShiftBehaviour();
@@ -125,6 +127,8 @@ private:
 	void disableCtrlBehaviour();
 	void enableAltBehaviour();
 	void disableAltBehaviour();
+	void UpdateDrawMode();
+	void UpdateToolStrength();
 public:
 	GameView();
 	virtual ~GameView();
@@ -137,12 +141,25 @@ public:
 	void SetDebugHUD(bool mode);
 	bool GetDebugHUD();
 	bool GetPlacingSave();
+	bool GetPlacingZoom();
+	void SetActiveMenuDelayed(int activeMenu) { delayedActiveMenu = activeMenu; }
 	bool CtrlBehaviour(){ return ctrlBehaviour; }
 	bool ShiftBehaviour(){ return shiftBehaviour; }
 	bool AltBehaviour(){ return altBehaviour; }
-	void ExitPrompt();
 	SelectMode GetSelectMode() { return selectMode; }
 	void BeginStampSelection();
+	ui::Point GetPlaceSaveOffset() { return placeSaveOffset; }
+	void SetPlaceSaveOffset(ui::Point offset) { placeSaveOffset = offset; }
+	int Record(bool record);
+
+	//all of these are only here for one debug lines
+	bool GetMouseDown() { return isMouseDown; }
+	bool GetDrawingLine() { return drawMode == DrawLine && isMouseDown; }
+	bool GetDrawSnap() { return drawSnap; }
+	ui::Point GetLineStartCoords() { return drawPoint1; }
+	ui::Point GetLineFinishCoords() { return currentMouse; }
+	ui::Point lineSnapCoords(ui::Point point1, ui::Point point2);
+	ui::Point rectSnapCoords(ui::Point point1, ui::Point point2);
 
 	void AttachController(GameController * _c){ c = _c; }
 	void NotifyRendererChanged(GameModel * sender);
@@ -161,33 +178,35 @@ public:
 	void NotifyColourActivePresetChanged(GameModel * sender);
 	void NotifyPlaceSaveChanged(GameModel * sender);
 	void NotifyNotificationsChanged(GameModel * sender);
-	void NotifyLogChanged(GameModel * sender, string entry);
+	void NotifyLogChanged(GameModel * sender, String entry);
 	void NotifyToolTipChanged(GameModel * sender);
 	void NotifyInfoTipChanged(GameModel * sender);
 	void NotifyQuickOptionsChanged(GameModel * sender);
 	void NotifyLastToolChanged(GameModel * sender);
 
 
-	virtual void ToolTip(ui::Component * sender, ui::Point mousePosition, std::string toolTip);
+	void ToolTip(ui::Point senderPosition, String toolTip) override;
 
-	virtual void OnMouseMove(int x, int y, int dx, int dy);
-	virtual void OnMouseDown(int x, int y, unsigned button);
-	virtual void OnMouseUp(int x, int y, unsigned button);
-	virtual void OnMouseWheel(int x, int y, int d);
-	virtual void OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt);
-	virtual void OnKeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt);
-	virtual void OnTick(float dt);
-	virtual void OnDraw();
-	virtual void OnBlur();
+	void OnMouseMove(int x, int y, int dx, int dy) override;
+	void OnMouseDown(int x, int y, unsigned button) override;
+	void OnMouseUp(int x, int y, unsigned button) override;
+	void OnMouseWheel(int x, int y, int d) override;
+	void OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt) override;
+	void OnKeyRelease(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt) override;
+	void OnTick(float dt) override;
+	void OnDraw() override;
+	void OnBlur() override;
 
 	//Top-level handlers, for Lua interface
-	virtual void DoDraw();
-	virtual void DoMouseMove(int x, int y, int dx, int dy);
-	virtual void DoMouseDown(int x, int y, unsigned button);
-	virtual void DoMouseUp(int x, int y, unsigned button);
-	virtual void DoMouseWheel(int x, int y, int d);
-	virtual void DoKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt);
-	virtual void DoKeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt);
+	void DoExit() override;
+	void DoDraw() override;
+	void DoMouseMove(int x, int y, int dx, int dy) override;
+	void DoMouseDown(int x, int y, unsigned button) override;
+	void DoMouseUp(int x, int y, unsigned button) override;
+	void DoMouseWheel(int x, int y, int d) override;
+	void DoTextInput(String text) override;
+	void DoKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt) override;
+	void DoKeyRelease(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt) override;
 
 	class MenuAction;
 	class ToolAction;

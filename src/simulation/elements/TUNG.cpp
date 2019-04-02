@@ -31,7 +31,6 @@ Element_TUNG::Element_TUNG()
 	HeatConduct = 251;
 	Description = "Tungsten. Brittle metal with a very high melting point.";
 
-	State = ST_SOLID;
 	Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC;
 
 	LowPressure = IPL;
@@ -40,22 +39,19 @@ Element_TUNG::Element_TUNG()
 	HighPressureTransition = NT;
 	LowTemperature = ITL;
 	LowTemperatureTransition = NT;
-	HighTemperature = ITH;
+	HighTemperature = 3695.0f;// TUNG melts in its update function instead of in the normal way, but store the threshold here so that it can be changed from Lua
 	HighTemperatureTransition = NT;
-	/*HighTemperature = 3895.0f;
-	HighTemperatureTransition = PT_LAVA;*/
 
 	Update = &Element_TUNG::update;
 	Graphics = &Element_TUNG::graphics;
-	
 }
-
-#define MELTING_POINT	3695.0
 
 //#TPT-Directive ElementHeader Element_TUNG static int update(UPDATE_FUNC_ARGS)
 int Element_TUNG::update(UPDATE_FUNC_ARGS)
 {
 	bool splode = false;
+	const float MELTING_POINT = sim->elements[PT_TUNG].HighTemperature;
+
 	if(parts[i].temp > 2400.0)
 	{
 		int r, rx, ry;
@@ -64,22 +60,22 @@ int Element_TUNG::update(UPDATE_FUNC_ARGS)
 				if (BOUNDS_CHECK && (rx || ry))
 				{
 					r = pmap[y+ry][x+rx];
-					if((r&0xFF) == PT_O2)
+					if(TYP(r) == PT_O2)
 					{
 						splode = true;
 					}
 				}
 	}
-	if((parts[i].temp > MELTING_POINT && !(rand()%20)) || splode)
+	if((parts[i].temp > MELTING_POINT && RNG::Ref().chance(1, 20)) || splode)
 	{
-		if(!(rand()%50))
+		if (RNG::Ref().chance(1, 50))
 		{
 			sim->pv[y/CELL][x/CELL] += 50.0f;
 		}
-		else if(!(rand()%100))
+		else if (RNG::Ref().chance(1, 100))
 		{
 			sim->part_change_type(i, x, y, PT_FIRE);
-			parts[i].life = rand()%500;
+			parts[i].life = RNG::Ref().between(0, 499);
 			return 1;
 		}
 		else
@@ -90,18 +86,20 @@ int Element_TUNG::update(UPDATE_FUNC_ARGS)
 		}
 		if(splode)
 		{
-			parts[i].temp = MELTING_POINT + (rand()%600) + 200;
+			parts[i].temp = restrict_flt(MELTING_POINT + RNG::Ref().between(200, 799), MIN_TEMP, MAX_TEMP);
 		}
-		parts[i].vx += (rand()%100)-50;
-		parts[i].vy += (rand()%100)-50;
+		parts[i].vx += RNG::Ref().between(-50, 50);
+		parts[i].vy += RNG::Ref().between(-50, 50);
 		return 1;
-	} 
+	}
 	parts[i].pavg[0] = parts[i].pavg[1];
 	parts[i].pavg[1] = sim->pv[y/CELL][x/CELL];
-	if (parts[i].pavg[1]-parts[i].pavg[0] > 0.50f || parts[i].pavg[1]-parts[i].pavg[0] < -0.50f)
+	float diff = parts[i].pavg[1] - parts[i].pavg[0];
+	if (diff > 0.50f || diff < -0.50f)
 	{
 		sim->part_change_type(i,x,y,PT_BRMT);
 		parts[i].ctype = PT_TUNG;
+		return 1;
 	}
 	return 0;
 }
@@ -110,6 +108,7 @@ int Element_TUNG::update(UPDATE_FUNC_ARGS)
 //#TPT-Directive ElementHeader Element_TUNG static int graphics(GRAPHICS_FUNC_ARGS)
 int Element_TUNG::graphics(GRAPHICS_FUNC_ARGS)
 {
+	const float MELTING_POINT = ren->sim->elements[PT_TUNG].HighTemperature;
 	double startTemp = (MELTING_POINT - 1500.0);
 	double tempOver = (((cpart->temp - startTemp)/1500.0)*M_PI) - (M_PI/2.0);
 	if(tempOver > -(M_PI/2.0))

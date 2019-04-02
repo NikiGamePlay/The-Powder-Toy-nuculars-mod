@@ -1,8 +1,7 @@
 #ifndef GRAVITY_H
 #define GRAVITY_H
 
-#include <pthread.h>
-#undef GetUserName //God dammit microsoft!
+#include "common/tpt-thread.h"
 #include "Config.h"
 #include "Simulation.h"
 
@@ -85,7 +84,7 @@ public:
 	void gravity_cleanup();
 	void gravity_update_async();
 
-	static void *update_grav_async_helper(void * context);
+	TH_ENTRY_POINT static void *update_grav_async_helper(void * context);
 	void update_grav_async();
 
 	void start_grav_async();

@@ -1,35 +1,22 @@
 #include "SaveFile.h"
 #include "GameSave.h"
 #include "Client.h"
-#include "gui/search/Thumbnail.h"
 
 SaveFile::SaveFile(SaveFile & save):
 	gameSave(NULL),
-	thumbnail(NULL),
 	filename(save.filename),
-	displayName(save.displayName)
+	displayName(save.displayName),
+	loadingError(save.loadingError)
 {
-	if(save.gameSave)
+	if (save.gameSave)
 		gameSave = new GameSave(*save.gameSave);
-	if(save.thumbnail)
-		thumbnail = new Thumbnail(*save.thumbnail);
 }
 
-Thumbnail * SaveFile::GetThumbnail()
-{
-	return thumbnail;
-}
-
-void SaveFile::SetThumbnail(Thumbnail * thumb)
-{
-	thumbnail = thumb;
-}
-
-SaveFile::SaveFile(std::string filename):
-		filename(filename),
-		displayName(filename),
-		gameSave(NULL),
-		thumbnail(NULL)
+SaveFile::SaveFile(ByteString filename):
+	gameSave(NULL),
+	filename(filename),
+	displayName(filename.FromUtf8()),
+	loadingError("")
 {
 
 }
@@ -44,30 +31,37 @@ void SaveFile::SetGameSave(GameSave * save)
 	gameSave = save;
 }
 
-std::string SaveFile::GetName()
+ByteString SaveFile::GetName()
 {
 	return filename;
 }
 
-void SaveFile::SetFileName(std::string fileName)
+void SaveFile::SetFileName(ByteString fileName)
 {
 	this->filename = fileName;
 }
 
-std::string SaveFile::GetDisplayName()
+String SaveFile::GetDisplayName()
 {
 	return displayName;
 }
 
-void SaveFile::SetDisplayName(std::string displayName)
+void SaveFile::SetDisplayName(String displayName)
 {
 	this->displayName = displayName;
 }
 
+String SaveFile::GetError()
+{
+	return loadingError;
+}
+
+void SaveFile::SetLoadingError(String error)
+{
+	loadingError = error;
+}
+
 SaveFile::~SaveFile() {
-	if(gameSave)
-		delete gameSave;
-	if(thumbnail)
-		delete thumbnail;
+	delete gameSave;
 }
 

@@ -20,6 +20,7 @@ using namespace std;
 
 class GameView;
 class GameController;
+class SaveFile;
 class Simulation;
 class Renderer;
 
@@ -38,10 +39,9 @@ private:
 	vector<Notification*> notifications;
 	//int clipboardSize;
 	//unsigned char * clipboardData;
-	GameSave * stamp;
 	GameSave * clipboard;
 	GameSave * placeSave;
-	deque<string> consoleLog;
+	deque<String> consoleLog;
 	vector<GameView*> observers;
 	vector<Tool*> toolList;
 
@@ -50,6 +50,8 @@ private:
 	//Tools that are present in elementTools, but don't have an associated menu and need to be freed manually
 	vector<Tool*> extraElementTools;
 
+	Simulation * sim;
+	Renderer * ren;
 	vector<Menu*> menuList;
 	vector<QuickOption*> quickOptions;
 	int activeMenu;
@@ -57,8 +59,6 @@ private:
 	vector<Brush *> brushList;
 	SaveInfo * currentSave;
 	SaveFile * currentFile;
-	Simulation * sim;
-	Renderer * ren;
 	Tool * lastTool;
 	Tool ** activeTools;
 	Tool * decoToolset[4];
@@ -66,16 +66,19 @@ private:
 	User currentUser;
 	float toolStrength;
 	std::deque<Snapshot*> history;
+	Snapshot *redoHistory;
+	unsigned int historyPosition;
+	unsigned int undoHistoryLimit;
 
-	int activeColourPreset;
+	size_t activeColourPreset;
 	std::vector<ui::Colour> colourPresets;
 	bool colourSelector;
 	ui::Colour colour;
 
 	int edgeMode;
 
-	std::string infoTip;
-	std::string toolTip;
+	String infoTip;
+	String toolTip;
 	//bool zoomEnabled;
 	void notifyRendererChanged();
 	void notifySimulationChanged();
@@ -95,7 +98,7 @@ private:
 	void notifyColourPresetsChanged();
 	void notifyColourActivePresetChanged();
 	void notifyNotificationsChanged();
-	void notifyLogChanged(string entry);
+	void notifyLogChanged(String entry);
 	void notifyInfoTipChanged();
 	void notifyToolTipChanged();
 	void notifyQuickOptionsChanged();
@@ -107,8 +110,8 @@ public:
 	void SetEdgeMode(int edgeMode);
 	int GetEdgeMode();
 
-	void SetActiveColourPreset(int preset);
-	int GetActiveColourPreset();
+	void SetActiveColourPreset(size_t preset);
+	size_t GetActiveColourPreset();
 
 	void SetPresetColour(ui::Colour colour);
 
@@ -120,16 +123,23 @@ public:
 	void SetColourSelectorColour(ui::Colour colour);
 	ui::Colour GetColourSelectorColour();
 
-	void SetToolTip(std::string text);
-	void SetInfoTip(std::string text);
-	std::string GetToolTip();
-	std::string GetInfoTip();
+	void SetToolTip(String text);
+	void SetInfoTip(String text);
+	String GetToolTip();
+	String GetInfoTip();
 
 	void BuildMenus();
+	void BuildFavoritesMenu();
 	void BuildQuickOptionMenu(GameController * controller);
 
 	std::deque<Snapshot*> GetHistory();
+	unsigned int GetHistoryPosition();
 	void SetHistory(std::deque<Snapshot*> newHistory);
+	void SetHistoryPosition(unsigned int newHistoryPosition);
+	Snapshot * GetRedoHistory();
+	void SetRedoHistory(Snapshot * redo);
+	unsigned int GetUndoHistoryLimit();
+	void SetUndoHistoryLimit(unsigned int undoHistoryLimit_);
 
 	void UpdateQuickOptions();
 
@@ -139,7 +149,7 @@ public:
 	float GetToolStrength();
 	Tool * GetLastTool();
 	void SetLastTool(Tool * newTool);
-	Tool * GetToolFromIdentifier(std::string identifier);
+	Tool * GetToolFromIdentifier(ByteString identifier);
 	Tool * GetElementTool(int elementID);
 	vector<Tool*> GetToolList();
 	vector<Tool*> GetUnlistedTools();
@@ -162,6 +172,8 @@ public:
 	void SetDecoration(bool decorationState);
 	bool GetAHeatEnable();
 	void SetAHeatEnable(bool aHeat);
+	bool GetNewtonianGrvity();
+	void SetNewtonianGravity(bool newtonainGravity);
 	bool GetGravityGrid();
 	void ShowGravityGrid(bool showGrid);
 	void ClearSimulation();
@@ -182,17 +194,15 @@ public:
 	int GetZoomFactor();
 	void SetZoomPosition(ui::Point position);
 	ui::Point GetZoomPosition();
+	bool MouseInZoom(ui::Point position);
 	ui::Point AdjustZoomCoords(ui::Point position);
 	void SetZoomWindowPosition(ui::Point position);
 	ui::Point GetZoomWindowPosition();
-	void SetStamp(GameSave * newStamp);
-	std::string AddStamp(GameSave * save);
 	void SetClipboard(GameSave * save);
 	void SetPlaceSave(GameSave * save);
-	void Log(string message);
-	deque<string> GetLog();
+	void Log(String message, bool printToFile);
+	deque<String> GetLog();
 	GameSave * GetClipboard();
-	GameSave * GetStamp();
 	GameSave * GetPlaceSave();
 
 	std::vector<Notification*> GetNotifications();

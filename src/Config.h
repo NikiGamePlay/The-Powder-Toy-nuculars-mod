@@ -16,25 +16,39 @@
 #endif
 
 #ifndef SAVE_VERSION
-#define SAVE_VERSION 89
+#define SAVE_VERSION 94
 #endif
 
 #ifndef MINOR_VERSION
-#define MINOR_VERSION 2
+#define MINOR_VERSION 1
 #endif
 
 #ifndef BUILD_NUM
-#define BUILD_NUM 001
+#define BUILD_NUM 343
 #endif
 
 #ifndef SNAPSHOT_ID
 #define SNAPSHOT_ID 0
 #endif
+
+// Mod ID, used on the https://starcatcher.us/TPT build server
+// The build server will compile for all platforms for you, and send updates in game
+// See jacob1 to get a mod ID
+#ifndef MOD_ID
+#define MOD_ID 0
+#endif
+
+#if defined(SNAPSHOT) || defined(DEBUG)
+#define FUTURE_SAVE_VERSION 94
+#define FUTURE_MINOR_VERSION 1
+#endif
 //VersionInfoEnd
 
 #define IGNORE_UPDATES //uncomment this for mods, to not get any update notifications
 
+#if !(defined(MACOSX) && defined(DEBUG))
 #define HIGH_QUALITY_RESAMPLE			//High quality image resampling, slower but much higher quality than my terribad linear interpolation
+#endif
 
 #if defined(SNAPSHOT)
 #define IDENT_RELTYPE "S"
@@ -47,18 +61,14 @@
 #if defined(WIN)
 #if defined(_64BIT)
 #define IDENT_PLATFORM "WIN64"
-#elif defined(_32BIT)
-#define IDENT_PLATFORM "WIN32"
 #else
-#define IDENT_PLATFORM "WIN"
+#define IDENT_PLATFORM "WIN32"
 #endif
 #elif defined(LIN)
 #if defined(_64BIT)
 #define IDENT_PLATFORM "LIN64"
-#elif defined(_32BIT)
-#define IDENT_PLATFORM "LIN32"
 #else
-#define IDENT_PLATFORM "LIN"
+#define IDENT_PLATFORM "LIN32"
 #endif
 #elif defined(MACOSX)
 #define IDENT_PLATFORM "MACOSX"
@@ -79,8 +89,9 @@
 #define MTOS_EXPAND(str) #str
 #define MTOS(str) MTOS_EXPAND(str)
 
+#define SCHEME "https://"
 #define SERVER "powdertoy.co.uk"
-#define SCRIPTSERVER "powdertoy.co.uk"
+#define STATICSCHEME "https://"
 #define STATICSERVER "static.powdertoy.co.uk"
 
 #define LOCAL_SAVE_DIR "Saves"
@@ -89,18 +100,9 @@
 
 #define BRUSH_DIR "Brushes"
 
-//Number of unique thumbnails to have in cache at one time
-#define THUMB_CACHE_SIZE 256
-
-#ifndef M_PI
-#define M_PI 3.14159265f
-#endif
 #ifndef M_GRAV
 #define M_GRAV 6.67300e-1
 #endif
-
-//Number of asynchronous connections used to retrieve thumbnails
-#define IMGCONNS 5
 
 #ifdef RENDERER
 #define MENUSIZE 0
@@ -113,8 +115,8 @@
 #define YRES	384
 #define NPART XRES*YRES
 
-#define XCNTR   306
-#define YCNTR   192
+#define XCNTR   XRES/2
+#define YCNTR   YRES/2
 
 #define WINDOWW (XRES+BARSIZE)
 #define WINDOWH (YRES+MENUSIZE)
@@ -158,30 +160,6 @@
 #define GLASS_IOR		1.9
 #define GLASS_DISP		0.07
 
-//some compatibility stuff for non-standard compilers
-#if defined(WIN) && !defined(strcasecmp)
-#define strcasecmp stricmp
-#endif
-#if defined(_MSC_VER)
-#if _MSC_VER < 1800
-#define fmin min
-#define fminf min
-#define fmax max
-#define fmaxf max
-#else
-#include <algorithm>
-#endif
-#endif
-
-#if defined(_MSC_VER)
-#define TPT_INLINE _inline
-#elif defined(__llvm__)
-#define TPT_INLINE
-#else
-#define TPT_INLINE inline
-#endif
-
 #define SDEUT
-//#define REALHEAT
 
 #endif /* CONFIG_H */

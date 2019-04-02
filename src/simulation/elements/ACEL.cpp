@@ -8,7 +8,7 @@ Element_ACEL::Element_ACEL()
 	MenuVisible = 1;
 	MenuSection = SC_FORCE;
 	Enabled = 1;
-	
+
 	Advection = 0.0f;
 	AirDrag = 0.00f * CFDS;
 	AirLoss = 0.90f;
@@ -18,21 +18,20 @@ Element_ACEL::Element_ACEL()
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 0;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 1;
-	
+
 	Weight = 100;
-	
+
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 251;
 	Description = "Accelerator, speeds up nearby elements.";
-	
-	State = ST_NONE;
+
 	Properties = TYPE_SOLID;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -41,14 +40,14 @@ Element_ACEL::Element_ACEL()
 	LowTemperatureTransition = NT;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	
+
 	Update = &Element_ACEL::update;
 	Graphics = &Element_ACEL::graphics;
 }
 
 //#TPT-Directive ElementHeader Element_ACEL static int update(UPDATE_FUNC_ARGS)
 int Element_ACEL::update(UPDATE_FUNC_ARGS)
- {
+{
 	int r, rx, ry;
 	float multiplier;
 	if (parts[i].life!=0)
@@ -63,17 +62,17 @@ int Element_ACEL::update(UPDATE_FUNC_ARGS)
 	parts[i].tmp = 0;
 	for (rx=-1; rx<2; rx++)
 		for (ry=-1; ry<2; ry++)
-			if (BOUNDS_CHECK && (rx || ry) && !(rx && ry))
+			if (BOUNDS_CHECK && (!rx != !ry))
 			{
 				r = pmap[y+ry][x+rx];
 				if(!r)
 					r = sim->photons[y+ry][x+rx];
 				if (!r)
 					continue;
-				if(sim->elements[r&0xFF].Properties & (TYPE_PART | TYPE_LIQUID | TYPE_GAS | TYPE_ENERGY))
+				if(sim->elements[TYP(r)].Properties & (TYPE_PART | TYPE_LIQUID | TYPE_GAS | TYPE_ENERGY))
 				{
-					parts[r>>8].vx *= multiplier;
-					parts[r>>8].vy *= multiplier;
+					parts[ID(r)].vx *= multiplier;
+					parts[ID(r)].vy *= multiplier;
 					parts[i].tmp = 1;
 				}
 			}

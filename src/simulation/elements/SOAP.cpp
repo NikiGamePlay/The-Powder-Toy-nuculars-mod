@@ -8,7 +8,7 @@ Element_SOAP::Element_SOAP()
 	MenuVisible = 1;
 	MenuSection = SC_LIQUID;
 	Enabled = 1;
-	
+
 	Advection = 0.6f;
 	AirDrag = 0.01f * CFDS;
 	AirLoss = 0.98f;
@@ -18,45 +18,43 @@ Element_SOAP::Element_SOAP()
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 2;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 20;
-	
+
 	Weight = 35;
-	
+
 	Temperature = R_TEMP-2.0f	+273.15f;
 	HeatConduct = 29;
 	Description = "Soap. Creates bubbles, washes off deco color, and cures virus.";
-	
-	State = ST_LIQUID;
+
 	Properties = TYPE_LIQUID|PROP_NEUTPENETRATE|PROP_LIFE_DEC;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
 	HighPressureTransition = NT;
 	LowTemperature = ITL;
 	LowTemperatureTransition = NT;
-	HighTemperature = ITL;
+	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	
+
 	Update = &Element_SOAP::update;
 	Graphics = &Element_SOAP::graphics;
-	
 }
 
 //#TPT-Directive ElementHeader Element_SOAP static void detach(Simulation * sim, int i)
 void Element_SOAP::detach(Simulation * sim, int i)
 {
-	if ((sim->parts[i].ctype&2) == 2 && sim->parts[sim->parts[i].tmp].type == PT_SOAP)
+	if ((sim->parts[i].ctype&2) == 2 && sim->parts[i].tmp >= 0 && sim->parts[i].tmp < NPART && sim->parts[sim->parts[i].tmp].type == PT_SOAP)
 	{
 		if ((sim->parts[sim->parts[i].tmp].ctype&4) == 4)
 			sim->parts[sim->parts[i].tmp].ctype ^= 4;
 	}
 
-	if ((sim->parts[i].ctype&4) == 4 && sim->parts[sim->parts[i].tmp2].type == PT_SOAP)
+	if ((sim->parts[i].ctype&4) == 4 && sim->parts[i].tmp2 >= 0 && sim->parts[i].tmp2 < NPART && sim->parts[sim->parts[i].tmp2].type == PT_SOAP)
 	{
 		if ((sim->parts[sim->parts[i].tmp2].ctype&2) == 2)
 			sim->parts[sim->parts[i].tmp2].ctype ^= 2;
@@ -87,21 +85,27 @@ void Element_SOAP::attach(Particle * parts, int i1, int i2)
 }
 
 #define FREEZING 248.15f
+#define BLEND 0.85f
 
 //#TPT-Directive ElementHeader Element_SOAP static int update(UPDATE_FUNC_ARGS)
 int Element_SOAP::update(UPDATE_FUNC_ARGS)
- 
+
 {
 	int r, rx, ry, nr, ng, nb, na;
 	float tr, tg, tb, ta;
-	float blend;
-	
+
 	//0x01 - bubble on/off
 	//0x02 - first mate yes/no
 	//0x04 - "back" mate yes/no
 
 	if (parts[i].ctype&1)
 	{
+		// reset invalid SOAP links
+		if (parts[i].tmp < 0 || parts[i].tmp >= NPART || parts[i].tmp2 < 0 || parts[i].tmp2 >= NPART)
+		{
+			parts[i].tmp = parts[i].tmp2 = parts[i].ctype = 0;
+			return 0;
+		}
 		if (parts[i].temp>FREEZING)
 		{
 			if (parts[i].life<=0)
@@ -142,8 +146,8 @@ int Element_SOAP::update(UPDATE_FUNC_ARGS)
 						r = pmap[y+ry][x+rx];
 						if (!r)
 							continue;
-						if ((parts[r>>8].type == PT_SOAP) && (parts[r>>8].ctype&1) && !(parts[r>>8].ctype&4))
-							Element_SOAP::attach(parts, i, r>>8);
+						if ((parts[ID(r)].type == PT_SOAP) && (parts[ID(r)].ctype&1) && !(parts[ID(r)].ctype&4))
+							Element_SOAP::attach(parts, i, ID(r));
 					}
 		}
 		else
@@ -159,34 +163,34 @@ int Element_SOAP::update(UPDATE_FUNC_ARGS)
 							if (parts[i].temp>FREEZING)
 							{
 								if (sim->bmap[(y+ry)/CELL][(x+rx)/CELL]
-								    || (r && sim->elements[r&0xFF].State != ST_GAS
-								    && (r&0xFF) != PT_SOAP && (r&0xFF) != PT_GLAS))
+									|| (r && !(sim->elements[TYP(r)].Properties&TYPE_GAS)
+								    && TYP(r) != PT_SOAP && TYP(r) != PT_GLAS))
 								{
 									detach(sim, i);
 									continue;
 								}
 							}
-							if ((r&0xFF) == PT_SOAP)
+							if (TYP(r) == PT_SOAP)
 							{
-								if (parts[r>>8].ctype == 1)
+								if (parts[ID(r)].ctype == 1)
 								{
 									int buf = parts[i].tmp;
 
-									parts[i].tmp = r>>8;
+									parts[i].tmp = ID(r);
 									if (parts[buf].type == PT_SOAP)
-										parts[buf].tmp2 = r>>8;
-									parts[r>>8].tmp2 = i;
-									parts[r>>8].tmp = buf;
-									parts[r>>8].ctype = 7;
+										parts[buf].tmp2 = ID(r);
+									parts[ID(r)].tmp2 = i;
+									parts[ID(r)].tmp = buf;
+									parts[ID(r)].ctype = 7;
 								}
-								else if (parts[r>>8].ctype == 7 && parts[i].tmp != r>>8 && parts[i].tmp2 != r>>8)
+								else if (parts[ID(r)].ctype == 7 && parts[i].tmp != ID(r) && parts[i].tmp2 != ID(r))
 								{
 									if (parts[parts[i].tmp].type == PT_SOAP)
-										parts[parts[i].tmp].tmp2 = parts[r>>8].tmp2;
-									if (parts[parts[r>>8].tmp2].type == PT_SOAP)
-										parts[parts[r>>8].tmp2].tmp = parts[i].tmp;
-									parts[r>>8].tmp2 = i;
-									parts[i].tmp = r>>8;
+										parts[parts[i].tmp].tmp2 = parts[ID(r)].tmp2;
+									if (parts[parts[ID(r)].tmp2].type == PT_SOAP)
+										parts[parts[ID(r)].tmp2].tmp = parts[i].tmp;
+									parts[ID(r)].tmp2 = i;
+									parts[i].tmp = ID(r);
 								}
 							}
 						}
@@ -233,13 +237,13 @@ int Element_SOAP::update(UPDATE_FUNC_ARGS)
 					r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
-					if ((r&0xFF) == PT_OIL)
+					if (TYP(r) == PT_OIL)
 					{
 						float ax, ay;
-						ax = (parts[i].vx*0.5f + parts[r>>8].vx)/2;
-						ay = ((parts[i].vy-0.1f)*0.5f + parts[r>>8].vy)/2;
-						parts[i].vx = parts[r>>8].vx = ax;
-						parts[i].vy = parts[r>>8].vy = ay;
+						ax = (parts[i].vx*0.5f + parts[ID(r)].vx)/2;
+						ay = ((parts[i].vy-0.1f)*0.5f + parts[ID(r)].vy)/2;
+						parts[i].vx = parts[ID(r)].vx = ax;
+						parts[i].vy = parts[ID(r)].vy = ay;
 					}
 				}
 	}
@@ -250,18 +254,17 @@ int Element_SOAP::update(UPDATE_FUNC_ARGS)
 				r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if ((r&0xFF)!=PT_SOAP)
+				if (TYP(r)!=PT_SOAP)
 				{
-					blend = 0.85f;
-					tr = (parts[r>>8].dcolour>>16)&0xFF;
-					tg = (parts[r>>8].dcolour>>8)&0xFF;
-					tb = (parts[r>>8].dcolour)&0xFF;
-					ta = (parts[r>>8].dcolour>>24)&0xFF;
-					nr = (tr*blend);
-					ng = (tg*blend);
-					nb = (tb*blend);
-					na = (ta*blend);
-					parts[r>>8].dcolour = nr<<16 | ng<<8 | nb | na<<24;
+					tr = (parts[ID(r)].dcolour>>16)&0xFF;
+					tg = (parts[ID(r)].dcolour>>8)&0xFF;
+					tb = (parts[ID(r)].dcolour)&0xFF;
+					ta = (parts[ID(r)].dcolour>>24)&0xFF;
+					nr = (tr*BLEND);
+					ng = (tg*BLEND);
+					nb = (tb*BLEND);
+					na = (ta*BLEND);
+					parts[ID(r)].dcolour = nr<<16 | ng<<8 | nb | na<<24;
 				}
 			}
 
