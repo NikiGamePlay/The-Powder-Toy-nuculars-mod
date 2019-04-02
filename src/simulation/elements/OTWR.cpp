@@ -1,5 +1,5 @@
 #include "simulation/Elements.h"
-//#TPT-Directive ElementClass Element_OTWR PT_OTWR 180
+//#TPT-Directive ElementClass Element_OTWR PT_OTWR 203
 Element_OTWR::Element_OTWR()
 {
 	Identifier = "DEFAULT_PT_OTWR";

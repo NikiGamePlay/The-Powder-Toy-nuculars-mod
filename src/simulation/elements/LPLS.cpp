@@ -1,5 +1,5 @@
 #include "simulation/Elements.h"
-//#TPT-Directive ElementClass Element_LPLS PT_LPLS 181
+//#TPT-Directive ElementClass Element_LPLS PT_LPLS 208
 Element_LPLS::Element_LPLS()
 {
 	Identifier = "DEFAULT_PT_LPLS";

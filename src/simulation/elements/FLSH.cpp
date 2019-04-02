@@ -1,5 +1,5 @@
 #include "simulation/Elements.h"
-//#TPT-Directive ElementClass Element_FLSH PT_FLSH 178
+//#TPT-Directive ElementClass Element_FLSH PT_FLSH 200
 Element_FLSH::Element_FLSH()
 {
 	Identifier = "DEFAULT_PT_FLSH";
