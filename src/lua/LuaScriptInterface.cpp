@@ -201,6 +201,9 @@ LuaScriptInterface::LuaScriptInterface(GameController * c, GameModel * m):
 	luacon_mousebutton = 0;
 
 	luacon_currentCommand = &currentCommand;
+	luacon_lastError = &lastError;
+
+	lastCode = "";
 
 	//Replace print function with our screen logging thingy
 	lua_pushcfunction(l, luatpt_log);
@@ -3467,10 +3470,11 @@ int LuaScriptInterface::Command(String command)
 			if (err.Contains("near '<eof>'")) //the idea stolen from lua-5.1.5/lua.c
 				lastError = "...";
 			else
-				return new CommandInterface::EvalResult(CommandInterface::EvalFail, "\x0F\xFF\x73\x73" + err);
+				lastCode = "";
 		}
 		else
 		{
+			lastCode = "";
 			ret = lua_pcall(l, 0, LUA_MULTRET, 0);
 			if (ret)
 				lastError = luacon_geterror();
@@ -3495,6 +3499,8 @@ int LuaScriptInterface::Command(String command)
 
 			}
 		}
+		currentCommand = false;
+		return ret;
 	}
 }
 

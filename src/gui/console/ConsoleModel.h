@@ -4,27 +4,24 @@
 #include <vector>
 #include <deque>
 #include "ConsoleView.h"
-#include "lua/CommandInterface.h"
+#include "ConsoleCommand.h"
 
 class ConsoleView;
 class ConsoleModel {
 	size_t currentCommandIndex;
 	std::vector<ConsoleView*> observers;
-	std::deque<std::string> previousCommands;
-	std::string command;
-	std::string promptHistory;
-	std::string history;
+	std::deque<ConsoleCommand> previousCommands;
 	void notifyPreviousCommandsChanged();
 	void notifyCurrentCommandChanged();
-	void notifyHistoryChanged();
 public:
 	size_t GetCurrentCommandIndex();
 	void SetCurrentCommandIndex(size_t index);
 	ConsoleCommand GetCurrentCommand();
 
+	std::deque<ConsoleCommand> GetPreviousCommands();
 	ConsoleModel();
 	void AddObserver(ConsoleView * observer);
-	void ProcessResult(std::string command, std::string highlighted, CommandInterface::EvalResult * result);
+	void AddLastCommand(ConsoleCommand command);
 	virtual ~ConsoleModel();
 };
 

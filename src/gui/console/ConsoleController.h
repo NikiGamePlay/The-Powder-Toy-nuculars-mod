@@ -10,8 +10,7 @@
 
 class ConsoleModel;
 class ConsoleView;
-class ConsoleController
-{
+class ConsoleController {
 	ControllerCallback * callback;
 	ConsoleView * consoleView;
 	ConsoleModel * consoleModel;

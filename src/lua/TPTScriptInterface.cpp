@@ -32,8 +32,9 @@ int TPTScriptInterface::Command(String command)
 		}
 		catch (GeneralException & e)
 		{
-			free(rawCommand);
-			return new CommandInterface::EvalResult(CommandInterface::EvalFail, "\br" + e.GetExceptionMessage());
+			retCode = -1;
+			lastError = e.GetExceptionMessage();
+			break;
 		}
 	}
 	if(commandWords.size())
@@ -484,12 +485,14 @@ AnyType TPTScriptInterface::tptS_load(std::deque<String> * words)
 {
 	//Arguments from stack
 	NumberType saveID = eval(words);
-	if(saveID.Value()<0)
-		throw GeneralException("Invalid SaveID");
-	c->HideConsole();
-	c->OpenSavePreview(saveID.Value(), 0, false);
 
-	return NumberType(0);
+	if (saveID.Value() > 0)
+	{
+		c->OpenSavePreview(saveID.Value(), 0, false);
+		return NumberType(0);
+	}
+	else
+		throw GeneralException("Invalid save ID");
 }
 
 AnyType TPTScriptInterface::tptS_bubble(std::deque<String> * words)

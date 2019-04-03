@@ -19,7 +19,8 @@ CommandInterface::CommandInterface(GameController * c, GameModel * m) {
 
 int CommandInterface::Command(String command)
 {
-	return new EvalResult(EvalFail, "No interpreter");
+	lastError = "No interpreter";
+	return -1;
 }
 
 String CommandInterface::FormatCommand(String command)

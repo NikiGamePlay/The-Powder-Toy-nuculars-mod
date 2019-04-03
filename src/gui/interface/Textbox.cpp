@@ -41,21 +41,6 @@ Textbox::~Textbox()
 	delete actionCallback;
 }
 
-void Textbox::updateCursor()
-{
-	if(cursor)
-	{
-		int linenum = 0;
-		if(multiline)
-			linenum = std::count(textLines.begin(), textLines.begin() + cursor, '\n') - std::count(text.begin(), text.begin() + cursor, '\n');
-		Graphics::PositionAtCharIndex((char*)(multiline?textLines:text).c_str(), cursor+linenum, cursorPositionX, cursorPositionY);
-	}
-	else
-	{
-		cursorPositionY = cursorPositionX = 0;
-	}
-}
-
 void Textbox::SetHidden(bool hidden)
 {
 	menu->RemoveItem(0);

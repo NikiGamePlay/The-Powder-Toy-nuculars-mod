@@ -186,7 +186,6 @@ public:
 
 	ui::Window * Window;
 	lua_State *l;
-	std::string buffer;
 	LuaScriptInterface(GameController * c, GameModel * m);
 
 	void OnTick() override;

@@ -5,7 +5,6 @@
 #include <queue>
 #include "gui/interface/Label.h"
 #include "gui/interface/Window.h"
-#include "gui/interface/ScrollPanel.h"
 #include "ConsoleController.h"
 #include "ConsoleModel.h"
 #include "gui/interface/Textbox.h"
@@ -26,9 +25,8 @@ public:
 	void DoKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt) override;
 	void DoTextInput(String text) override;
 	void AttachController(ConsoleController * c_) { c = c_; }
-	void Highlight();
-	void NotifyHistoryChanged(ConsoleModel * sender, std::string command, std::string prompthistory, std::string history);
-	void ResizePrompt();
+	void NotifyPreviousCommandsChanged(ConsoleModel * sender);
+	void NotifyCurrentCommandChanged(ConsoleModel * sender);
 	virtual ~ConsoleView();
 };
 

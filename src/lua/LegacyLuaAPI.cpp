@@ -537,10 +537,9 @@ int luatpt_log(lua_State* l)
 	}
 	if((*luacon_currentCommand))
 	{
-		if(luacon_ci->buffer.length())
-			luacon_ci->buffer += "\n" + text;
-		else
-			luacon_ci->buffer = text;
+		if(luacon_lastError->length())
+			*luacon_lastError += "; ";
+		*luacon_lastError += text;
 	}
 	else
 		luacon_ci->Log(CommandInterface::LogNotice, text.c_str());
