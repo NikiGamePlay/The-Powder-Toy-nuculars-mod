@@ -30,7 +30,6 @@ Element_SEED::Element_SEED()
 	HeatConduct = 70;
 	Description = "Drop it on SOIL and watch it grow!";
 	
-	State = ST_SOLID;
 	Properties = TYPE_PART;
 	
 	LowPressure = IPL;

@@ -93,9 +93,9 @@ int Element_DSTW::update(UPDATE_FUNC_ARGS)
 					}
 					break;
 				case PT_MGMP:
-					if (chance==0)
+					if (RNG::Ref().chance(1, 15))
 						sim->part_change_type(i,x,y,PT_H2);
-					else if (chance==1)
+					else if (RNG::Ref().chance(1, 15))
 						sim->part_change_type(i,x,y,PT_SOAP);
 					break;
 				default:

@@ -31,7 +31,6 @@ Element_BULB::Element_BULB()
 	HeatConduct = 100;
 	Description = "Light bulb. Decorator, glows when constantly sparked.";
 
-	State = ST_SOLID;
 	Properties = TYPE_SOLID|PROP_HOT_GLOW|PROP_LIFE_DEC;
 
 	LowPressure = IPL;

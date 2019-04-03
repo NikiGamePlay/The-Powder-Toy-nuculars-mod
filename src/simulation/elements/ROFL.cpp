@@ -30,7 +30,6 @@ Element_ROFL::Element_ROFL()
 	HeatConduct = 0;
 	Description = "Pretty weird element, moves around and transforms everything.";
 
-	State = ST_SOLID;
 	Properties = TYPE_SOLID;
 
 	LowPressure = IPL;

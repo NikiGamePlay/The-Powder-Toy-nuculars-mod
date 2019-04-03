@@ -30,7 +30,6 @@ Element_MUD::Element_MUD()
 	HeatConduct = 29;
 	Description = "Mud. Can be heated into BRCK.";
 	
-	State = ST_LIQUID;
 	Properties = TYPE_LIQUID|PROP_LIFE_DEC|PROP_NEUTPENETRATE;
 	
 	LowPressure = IPL;

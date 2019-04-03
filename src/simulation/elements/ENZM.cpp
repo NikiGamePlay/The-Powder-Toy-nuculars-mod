@@ -30,7 +30,6 @@ Element_ENZM::Element_ENZM()
 	HeatConduct = 150;
 	Description = "Enzyme, breaks down things into OIL, grows with GOO, cures VIRS like SOAP does.";
 	
-	State = ST_SOLID;
 	Properties = TYPE_PART;
 	
 	LowPressure = IPL;

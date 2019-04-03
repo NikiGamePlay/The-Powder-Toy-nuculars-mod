@@ -30,7 +30,6 @@ Element_BASE::Element_BASE()
 	HeatConduct = 34;
 	Description = "Base. Acts like ACID, but neutralises it to SALT.";
 	
-	State = ST_LIQUID;
 	Properties = TYPE_LIQUID|PROP_DEADLY;
 	
 	LowPressure = IPL;

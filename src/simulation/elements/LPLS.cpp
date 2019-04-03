@@ -30,7 +30,6 @@ Element_LPLS::Element_LPLS()
 	HeatConduct = 60;
 	Description = "Liquid Plastic. Not THAT useful. Slightly flammable.";
 	
-	State = ST_LIQUID;
 	Properties = TYPE_LIQUID|PROP_LIFE_DEC;
 	
 	LowPressure = IPL;

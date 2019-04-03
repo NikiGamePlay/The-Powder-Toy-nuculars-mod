@@ -81,9 +81,9 @@ int Element_O2::update(UPDATE_FUNC_ARGS)
 		float gravy = sim->gravy[gravPos];
 		if (gravx*gravx + gravy*gravy > 400)
 		{
+			int j;
 			if (RNG::Ref().chance(1, 5))
 			{
-				int j;
 				sim->create_part(i,x,y,PT_BRMT);
 
 				j = sim->create_part(-3,x,y,PT_NEUT);

@@ -30,7 +30,6 @@ Element_PLST::Element_PLST()
 	HeatConduct = 75;
 	Description = "Plastic. Made from OIL, deforms under high pressure, melts at moderate temperatures. Slightly flammable.";
 	
-	State = ST_SOLID;
 	Properties = TYPE_SOLID|PROP_LIFE_DEC;
 	
 	LowPressure = IPL;

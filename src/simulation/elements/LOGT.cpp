@@ -30,7 +30,6 @@ Element_LOGT::Element_LOGT()
     HeatConduct = 0;
     Description = "Universal Logic Gate, PSCN for input, NSCN for output, TMP 1: AND, 2: OR, 3: NOT, 4: NAND, 5: NOR, 6: XOR, 7: XNOR";
     
-    State = ST_SOLID;
     Properties = TYPE_SOLID;
     
     LowPressure = IPL;

@@ -30,8 +30,7 @@ Element_RVRS::Element_RVRS()
 	Temperature = 80.0f;
 	HeatConduct = 70;
 	Description = "Reversium, reverses changes to elements. Explodes extremely powerful on contact with GRVT! Also the heaviest liquid.";
-	
-	State = ST_LIQUID;
+
 	Properties = TYPE_LIQUID;
 	
 	LowPressure = IPL;

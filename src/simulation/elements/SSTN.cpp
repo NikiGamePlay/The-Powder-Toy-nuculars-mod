@@ -30,7 +30,6 @@ Element_SSTN::Element_SSTN()
 	HeatConduct = 150;
 	Description = "Sandstone. Erodes easily with ACID or BASE.";
 
-	State = ST_SOLID;
 	Properties = TYPE_SOLID|PROP_HOT_GLOW;
 
 	LowPressure = -7.0f;

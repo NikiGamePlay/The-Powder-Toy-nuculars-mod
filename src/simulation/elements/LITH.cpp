@@ -30,7 +30,6 @@ Element_LITH::Element_LITH()
 	HeatConduct = 50;
 	Description = "Lithium, rusts in empty space, explosive, produces ELEC when in contact to BIZR. Recharges when sparked with GOLD.";
 	
-	State = ST_SOLID;
 	Properties = TYPE_SOLID|PROP_HOT_GLOW|PROP_CONDUCTS|PROP_LIFE_DEC;
 	
 	LowPressure = IPL;

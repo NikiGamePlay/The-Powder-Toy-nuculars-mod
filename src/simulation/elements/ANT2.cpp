@@ -30,7 +30,6 @@ Element_ANT2::Element_ANT2()
 	HeatConduct = 0;
 	Description = "ANT can walk on here.";
 
-	State = ST_SOLID;
 	Properties = TYPE_SOLID;
 
 	LowPressure = IPL;

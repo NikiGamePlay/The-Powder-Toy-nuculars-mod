@@ -37,8 +37,7 @@ Element_ANT::Element_ANT()
 	HeatConduct = 0;
 	Description = "Langton's Ant. Turing machine. Basically LIFE, but better. If you color the ANT, it will leave a colored trail.";
 
-	State = ST_GAS;
-	Properties = TYPE_ENERGY;
+	Properties = TYPE_GAS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;

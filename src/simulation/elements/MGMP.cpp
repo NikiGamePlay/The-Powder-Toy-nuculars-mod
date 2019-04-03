@@ -30,7 +30,6 @@ Element_MGMP::Element_MGMP()
 	HeatConduct = 211;
 	Description = "Magnesium Powder. It's much easier to ignite than MGSM and also burns hotter.";
 	
-	State = ST_SOLID;
 	Properties = TYPE_PART|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_HOT_GLOW;
 	
 	LowPressure = IPL;

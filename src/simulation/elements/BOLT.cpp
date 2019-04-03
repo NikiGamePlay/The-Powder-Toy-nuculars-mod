@@ -30,7 +30,6 @@ Element_BOLT::Element_BOLT()
 	HeatConduct = 106;
 	Description = "Gas that creates lightnings and fusionates on heat. Freezes to VIBR, heats up with NEUT.";
 
-	State = ST_GAS;
 	Properties = TYPE_GAS|PROP_LIFE_DEC;
 
 	LowPressure = IPL;

@@ -30,7 +30,6 @@ Element_PLDM::Element_PLDM()
 	HeatConduct = 251;
 	Description = "Palladium. Can absorb HYGN, converts it into CO2, NBLE and OXYG if sparked.";
 
-	State = ST_SOLID;
 	Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_HOT_GLOW|PROP_LIFE_DEC;
 
 	LowPressure = IPL;

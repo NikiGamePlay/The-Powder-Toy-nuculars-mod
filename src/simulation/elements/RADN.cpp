@@ -30,7 +30,6 @@ Element_RADN::Element_RADN()
 	HeatConduct = 100;
 	Description = "Radon, emits NEUT, decays into DEUT and HYGN. Fusionates to BOLT around 6500 C.";
 
-	State = ST_GAS;
 	Properties = TYPE_GAS;
 
 	LowPressure = IPL;

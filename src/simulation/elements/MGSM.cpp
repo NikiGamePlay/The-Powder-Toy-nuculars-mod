@@ -30,7 +30,6 @@ Element_MGSM::Element_MGSM()
 	HeatConduct = 251;
 	Description = "Magnesium. A flammable metal, it burns very hot but also requires significant heat to ignite.";
 	
-	State = ST_SOLID;
 	Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_HOT_GLOW;
 	
 	LowPressure = IPL;

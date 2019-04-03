@@ -30,7 +30,6 @@ Element_FLSH::Element_FLSH()
 	HeatConduct = 97;
 	Description = "Flash Powder. Explodes with a flame coloured like itself, and small pressure.";
 
-	State = ST_SOLID;
 	Properties = TYPE_PART;
 
 	LowPressure = IPL;

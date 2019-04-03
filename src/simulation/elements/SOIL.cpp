@@ -29,8 +29,7 @@ Element_SOIL::Element_SOIL()
     Temperature = R_TEMP+0.0f   +273.15f;
     HeatConduct = 70;
     Description = "Soil. SEED can grow to PLNT on this. Mix with WATR to produce MUD.";
-    
-    State = ST_SOLID;
+
     Properties = TYPE_PART;
     
     LowPressure = IPL;

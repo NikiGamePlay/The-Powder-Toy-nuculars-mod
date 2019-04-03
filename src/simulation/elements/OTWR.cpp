@@ -29,8 +29,7 @@ Element_OTWR::Element_OTWR()
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 251;
 	Description = "One time wire. Since every mod seems to have one.";
-
-	State = ST_SOLID;
+	
 	Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_HOT_GLOW;
 
 	LowPressure = IPL;
